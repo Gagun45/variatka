@@ -1,6 +1,6 @@
+import NewCategoryForm from "@/forms/add-category/NewCategoryForm";
 import { getCategories, getIngredients } from "@/lib/actions";
 import DashboardTabs from "./tabs/DashboardTabs";
-import AddCategory from "../add-cat/AddCategory";
 
 const Dashboard = async () => {
   const categories = await getCategories();
@@ -10,7 +10,7 @@ const Dashboard = async () => {
       <div className="space-y-6 text-center mx-auto">
         <h1>No categories yet</h1>
         <p>Create your first category to get started.</p>
-        <AddCategory />
+        <NewCategoryForm />;
       </div>
     );
   }

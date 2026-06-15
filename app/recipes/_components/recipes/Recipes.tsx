@@ -11,15 +11,19 @@ interface Props {
 
 const Recipes = ({ recipes }: Props) => {
   const searchQuery = useSearch((s) => s.query);
-  const searchedRecipes = recipes.filter((r) =>
-    r.title.toLowerCase().includes(searchQuery.toLowerCase()),
+  const searchedRecipes = recipes.filter(
+    (r) =>
+      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.ingredients.some((i) =>
+        i.ingredient.title.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
   );
 
   if (searchQuery && searchedRecipes.length === 0)
     return (
       <p>
         {searchedRecipes.length} recipes include{" "}
-        <span className="italic">{searchQuery}</span> in title
+        <span className="italic">{searchQuery}</span> in title or in ingredients
       </p>
     );
   return (

@@ -13,14 +13,14 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { ICategory } from "@/lib/prisma.args";
 import { FieldSet } from "@/components/ui/field";
-import { Badge } from "@/components/ui/badge";
+import CategorySelectField from "./fields/CategoryField";
 
 interface Props {
-  category: ICategory;
+  categories: ICategory[];
 }
 
-const NewIngredientForm = ({ category }: Props) => {
-  const { id, title } = category;
+const NewIngredientForm = ({ categories }: Props) => {
+  const { id } = categories[0];
   const schema = zodSchemas.ingredient.create;
   const form = useForm<ICreateIngredientFormValues>({
     resolver: zodResolver(schema),
@@ -36,13 +36,16 @@ const NewIngredientForm = ({ category }: Props) => {
     reset,
     formState: { isSubmitting },
   } = form;
-  useEffect(() => {
-    form.setValue("categoryId", id);
-  }, [id, form]);
+
   const onSubmit = async (values: ICreateIngredientFormValues) => {
     const { message, success } = await createIngredient(values);
     if (success) {
-      reset();
+      reset({
+        description: "",
+        isInStock: false,
+        title: "",
+        categoryId: values.categoryId,
+      });
       toast.success(message);
     } else {
       toast.error(message);
@@ -52,12 +55,8 @@ const NewIngredientForm = ({ category }: Props) => {
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex justify-center">
-          <Badge variant="secondary" className="h-10 text-lg w-full">
-            Creating: {title}
-          </Badge>
-        </div>
         <FieldSet disabled={isSubmitting} className="space-y-4">
+          <CategorySelectField categories={categories} />
           <NameField />
           <DescriptionField />
           <IsInStockField />
