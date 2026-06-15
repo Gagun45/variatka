@@ -16,7 +16,7 @@ interface Props {
 const DashboardTabs = ({ categories, ingredients }: Props) => {
   const searchQuery = useSearch((s) => s.query);
   const [activeCategory, setActiveCategory] = useState(
-    categories[0].name ?? "",
+    categories[0]?.name ?? "",
   );
 
   const active = categories.find((c) => c.name === activeCategory);
