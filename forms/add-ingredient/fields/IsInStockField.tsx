@@ -1,10 +1,10 @@
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
-import { ICreateIngredientFormValues } from "@/zod/ingredient.schema";
+import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
 const IsInStockField = () => {
-  const { control } = useFormContext<ICreateIngredientFormValues>();
+  const { control } = useFormContext<IIngredientFormValues>();
 
   return (
     <Controller

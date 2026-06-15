@@ -9,19 +9,19 @@ import {
 import { IIngredient, IIngredientCategory } from "@/lib/prisma.args";
 import {
   ICreateIngredientCategoryDto,
-  ICreateIngredientFormValues,
+  IIngredientFormValues,
 } from "@/zod/ingredient.schema";
 
 export const ingredientService = {
   get: (): Promise<IIngredient[]> => getIngredients(),
   getOne: (id: number): Promise<IIngredient> => getIngredient(id),
-  create: (dto: ICreateIngredientFormValues): Promise<IIngredient> =>
+  create: (dto: IIngredientFormValues): Promise<IIngredient> =>
     createIngredient(dto),
   getCategories: (): Promise<IIngredientCategory[]> =>
     getIngredientCategories(),
   createCategory: (
     dto: ICreateIngredientCategoryDto,
   ): Promise<IIngredientCategory> => createIngredientCategory(dto),
-  edit: (id: number, dto: ICreateIngredientFormValues): Promise<IIngredient> =>
+  edit: (id: number, dto: IIngredientFormValues): Promise<IIngredient> =>
     editIngredient(id, dto),
 };

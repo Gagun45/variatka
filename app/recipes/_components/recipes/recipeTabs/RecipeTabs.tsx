@@ -7,14 +7,14 @@ import { useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
 import NewRecipeCategoryForm from "@/forms/add-recipe-category/NewRecipeCategoryForm";
-import RecipesAccordion from "../accordion/RecipesAccordion";
+import RecipesAccordion from "./accordion/RecipesAccordion";
 
 interface Props {
   categories: IRecipeCategory[];
   recipes: IRecipe[];
 }
 
-const RecipeTasb = ({ categories, recipes }: Props) => {
+const RecipeTabs = ({ categories, recipes }: Props) => {
   const searchQuery = useSearch((s) => s.query);
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 
@@ -69,4 +69,4 @@ const RecipeTasb = ({ categories, recipes }: Props) => {
   );
 };
 
-export default RecipeTasb;
+export default RecipeTabs;

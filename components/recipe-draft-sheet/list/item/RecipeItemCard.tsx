@@ -31,11 +31,21 @@ const RecipeItemCard = ({ item }: Props) => {
         <Input
           id={id.toString()}
           type="text"
+          list="quantity-suggestions"
           placeholder="e.g. 200 g"
           value={amount}
           onChange={(e) => updateAmount(id, e.target.value)}
           className="w-28 text-right"
         />
+        <datalist id="quantity-suggestions">
+          <option value="0.25" />
+          <option value="0.5" />
+          <option value="0.75" />
+          <option value="1" />
+          <option value="2" />
+          <option value="3" />
+          <option value="5" />
+        </datalist>
         <Button
           type="button"
           variant="destructive"
