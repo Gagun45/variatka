@@ -20,12 +20,10 @@ const Dashboard = () => {
     isError: isIngredientsError,
   } = useIngredients();
 
-  // Combine the loading states: if either is loading, show the loader
   if (isCategoriesLoading || isIngredientsLoading) {
     return <Loader />;
   }
 
-  // Combine the error or missing data states
   if (isCategoriesError || isIngredientsError || !categories || !ingredients) {
     return <StateScreen title="Something went wrong" />;
   }

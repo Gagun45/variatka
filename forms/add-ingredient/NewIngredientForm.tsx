@@ -1,19 +1,18 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { FieldSet } from "@/components/ui/field";
+import { useCreateIngredient } from "@/features/ingredient/hooks/useCreateIngredient";
+import { ICategory } from "@/lib/prisma.args";
 import { ICreateIngredientFormValues } from "@/zod/ingredient.schema";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
-import NameField from "./fields/NameField";
+import { toast } from "sonner";
+import CategorySelectField from "./fields/CategoryField";
 import DescriptionField from "./fields/DescriptionField";
 import IsInStockField from "./fields/IsInStockField";
-import { createIngredient } from "@/lib/actions";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
-import { ICategory } from "@/lib/prisma.args";
-import { FieldSet } from "@/components/ui/field";
-import CategorySelectField from "./fields/CategoryField";
+import NameField from "./fields/NameField";
 
 interface Props {
   categories: ICategory[];
@@ -21,6 +20,7 @@ interface Props {
 
 const NewIngredientForm = ({ categories }: Props) => {
   const { id } = categories[0];
+  const { mutate } = useCreateIngredient();
   const schema = zodSchemas.ingredient.create;
   const form = useForm<ICreateIngredientFormValues>({
     resolver: zodResolver(schema),
@@ -37,19 +37,21 @@ const NewIngredientForm = ({ categories }: Props) => {
     formState: { isSubmitting },
   } = form;
 
-  const onSubmit = async (values: ICreateIngredientFormValues) => {
-    const { message, success } = await createIngredient(values);
-    if (success) {
-      reset({
-        description: "",
-        isInStock: false,
-        title: "",
-        categoryId: values.categoryId,
-      });
-      toast.success(message);
-    } else {
-      toast.error(message);
-    }
+  const onSubmit = (values: ICreateIngredientFormValues) => {
+    mutate(values, {
+      onSuccess: () => {
+        reset({
+          description: "",
+          isInStock: false,
+          title: "",
+          categoryId: values.categoryId,
+        });
+        toast.success("Ingredient created successfully!");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
   };
 
   return (

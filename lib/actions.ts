@@ -1,14 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
-import { IRecipeIngredientItem } from "@/prisma/store/recipe";
 import { ICreateCategoryFormValues } from "@/zod/category.schema";
 import { ICreateIngredientFormValues } from "@/zod/ingredient.schema";
-import { ICreateRecipeFormValues } from "@/zod/recipe.schema";
 import { prisma } from "./prisma";
 import { ICategory, IIngredient, IRecipe, recipeArgs } from "./prisma.args";
-import { IResponse } from "./types";
+import { ICreateRecipeDto } from "./types";
 
 export const getCategories = async (): Promise<ICategory[]> => {
   const categories = await prisma.category.findMany();
@@ -18,6 +14,11 @@ export const getCategories = async (): Promise<ICategory[]> => {
 export const getIngredients = async (): Promise<IIngredient[]> => {
   const ingredients = await prisma.ingredient.findMany();
   return ingredients;
+};
+
+export const getRecipes = async (): Promise<IRecipe[]> => {
+  const recipes = await prisma.recipe.findMany(recipeArgs);
+  return recipes;
 };
 
 export const createCategory = async (
@@ -40,54 +41,40 @@ export const createCategory = async (
 
 export const createIngredient = async (
   dto: ICreateIngredientFormValues,
-): Promise<IResponse> => {
+): Promise<IIngredient> => {
   const { categoryId, title } = dto;
   try {
     const existingCategory = await prisma.category.findUnique({
       where: { id: categoryId },
     });
     if (!existingCategory)
-      return {
-        success: false,
-        message: `A category #${categoryId} not found`,
-      };
+      throw new Error(`A category #${categoryId} not found`);
+
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { title },
     });
     if (existingIngredient)
-      return {
-        success: false,
-        message: "An ingredient with this title already exists.",
-      };
-    await prisma.ingredient.create({
+      throw new Error("An ingredient with this title already exists.");
+
+    const newIngredient = await prisma.ingredient.create({
       data: dto,
     });
-    revalidatePath("/ingredients");
-    return { success: true, message: "Ingredient created" };
+    return newIngredient;
   } catch (e) {
-    console.log(e);
-    return {
-      success: false,
-      message: "Something went wrong. Please try again.",
-    };
+    console.error("Database error in createIngredient:", e);
+    throw new Error("Something went wrong");
   }
 };
 
-export const createRecipe = async (
-  values: ICreateRecipeFormValues,
-  items: IRecipeIngredientItem[],
-): Promise<IResponse> => {
-  const { title, description, notes } = values;
+export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
+  const { title, description, notes, items } = dto;
   try {
     const existingRecipe = await prisma.recipe.findFirst({
       where: { title },
     });
     if (existingRecipe)
-      return {
-        success: false,
-        message: "A recipe with this title already exists.",
-      };
-    await prisma.recipe.create({
+      throw new Error("A recipe with this title already exists.");
+    const newRecipe = await prisma.recipe.create({
       data: {
         description,
         notes,
@@ -95,23 +82,15 @@ export const createRecipe = async (
         ingredients: {
           create: items.map((item) => ({
             amount: item.amount,
-            ingredientId: item.ingredient.id,
+            ingredientId: item.ingredientId,
           })),
         },
       },
+      ...recipeArgs,
     });
-    revalidatePath("/recipes");
-    return { success: true, message: "Recipe created" };
+    return newRecipe;
   } catch (e) {
-    console.log(e);
-    return {
-      success: false,
-      message: "Something went wrong. Please try again.",
-    };
+    console.error("Database error in createRecipe:", e);
+    throw new Error("Something went wrong");
   }
-};
-
-export const getRecipes = async (): Promise<IRecipe[]> => {
-  const recipes = await prisma.recipe.findMany(recipeArgs);
-  return recipes;
 };

@@ -1,38 +1,18 @@
 "use client";
 
-import { IRecipe } from "@/lib/prisma.args";
-import RecipeCard from "./recipe/RecipeCard";
-import { useSearch } from "@/prisma/store/search";
-import { Accordion } from "@/components/ui/accordion";
+import Loader from "@/components/loader/Loader";
+import StateScreen from "@/components/state-screen/StateScreen";
+import { useRecipes } from "@/features/recipe/hooks/useRecipes";
+import RecipesAccordion from "./accordion/RecipesAccordion";
 
-interface Props {
-  recipes: IRecipe[];
-}
+const Recipes = () => {
+  const { data: recipes, isLoading, isError } = useRecipes();
+  if (isLoading) return <Loader />;
+  if (isError || !recipes) return <StateScreen title="Something went wrong" />;
+  if (recipes.length === 0)
+    return <p className="text-center">No recipes added yet</p>;
 
-const Recipes = ({ recipes }: Props) => {
-  const searchQuery = useSearch((s) => s.query);
-  const searchedRecipes = recipes.filter(
-    (r) =>
-      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.ingredients.some((i) =>
-        i.ingredient.title.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
-  );
-
-  if (searchQuery && searchedRecipes.length === 0)
-    return (
-      <p>
-        {searchedRecipes.length} recipes include{" "}
-        <span className="italic">{searchQuery}</span> in title or in ingredients
-      </p>
-    );
-  return (
-    <Accordion type="multiple" className="w-full space-y-2">
-      {searchedRecipes.map((rec) => (
-        <RecipeCard key={rec.id} recipe={rec} />
-      ))}
-    </Accordion>
-  );
+  return <RecipesAccordion recipes={recipes} />;
 };
 
 export default Recipes;
