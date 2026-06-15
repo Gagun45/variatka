@@ -15,8 +15,15 @@ import { toast } from "sonner";
 import DescriptionField from "./fields/DescriptionField";
 import NotesField from "./fields/NotesField";
 import TitleField from "./fields/TitleField";
+import { IRecipeCategory } from "@/lib/prisma.args";
+import CategorySelectField from "./fields/CategorySelectField";
 
-const RecipeForm = () => {
+interface Props {
+  categories: IRecipeCategory[];
+}
+
+const RecipeForm = ({ categories }: Props) => {
+  const categoryId = categories[0].id;
   const items = useRecipeStore((s) => s.items);
   const clear = useRecipeStore((s) => s.clear);
   const { mutate, isPending } = useCreateRecipe();
@@ -27,6 +34,7 @@ const RecipeForm = () => {
       title: "",
       description: "",
       notes: "",
+      categoryId,
     },
   });
   const { reset, handleSubmit, setError } = form;
@@ -64,6 +72,7 @@ const RecipeForm = () => {
           New recipe
         </p>
         <FieldSet disabled={isPending}>
+          <CategorySelectField categories={categories} />
           <TitleField />
           <DescriptionField />
           <NotesField />

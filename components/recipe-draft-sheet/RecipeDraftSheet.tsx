@@ -9,9 +9,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../ui/sheet";
+import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 
 const RecipeDraftSheet = () => {
   const items = useRecipeStore((s) => s.items);
+  const { data: categories } = useRecipeCategories();
+  if (!categories) return <p>No recipe categories</p>;
 
   return (
     <Sheet>
@@ -33,7 +36,7 @@ const RecipeDraftSheet = () => {
             </p>
           ) : (
             <>
-              <RecipeForm />
+              <RecipeForm categories={categories} />
             </>
           )}
         </div>
