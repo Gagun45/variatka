@@ -39,7 +39,7 @@ const NewIngredientForm = ({ categories }: Props) => {
       onSuccess: () => {
         reset({
           description: "",
-          isInStock: false,
+          isInStock: values.isInStock,
           title: "",
           categoryId: values.categoryId,
         });
