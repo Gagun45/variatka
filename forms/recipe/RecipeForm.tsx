@@ -4,6 +4,7 @@ import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
+import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import RecipeItemsList from "@/components/recipe-draft-sheet/list/RecipeItemsList";
 import { Button } from "@/components/ui/button";
 import { FieldSet } from "@/components/ui/field";
@@ -18,7 +19,7 @@ import TitleField from "./fields/TitleField";
 const RecipeForm = () => {
   const items = useRecipeStore((s) => s.items);
   const clear = useRecipeStore((s) => s.clear);
-  const { mutate } = useCreateRecipe();
+  const { mutate, isPending } = useCreateRecipe();
   const schema = zodSchemas.recipe.create;
   const form = useForm<ICreateRecipeFormValues>({
     resolver: zodResolver(schema),
@@ -28,12 +29,7 @@ const RecipeForm = () => {
       notes: "",
     },
   });
-  const {
-    reset,
-    handleSubmit,
-    setError,
-    formState: { isSubmitting },
-  } = form;
+  const { reset, handleSubmit, setError } = form;
   const onSubmit = async (values: ICreateRecipeFormValues) => {
     const noAmount = items.some((i) => !i.amount);
     if (noAmount) {
@@ -67,7 +63,7 @@ const RecipeForm = () => {
         <p className="text-center text-2xl font-semibold tracking-widest">
           New recipe
         </p>
-        <FieldSet disabled={isSubmitting}>
+        <FieldSet disabled={isPending}>
           <TitleField />
           <DescriptionField />
           <NotesField />
@@ -82,10 +78,9 @@ const RecipeForm = () => {
           >
             Clear
           </Button>
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Adding..." : "Add recipe"}
-          </Button>
+          <LoadingButton isPending={isPending} type="submit">
+            Create recipe
+          </LoadingButton>
         </FieldSet>
 
         {form.formState.errors.root && (

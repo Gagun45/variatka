@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -12,14 +13,9 @@ import z from "zod";
 
 const NewCategoryForm = () => {
   const schema = zodSchemas.category.create;
-  const { mutate } = useCreateCategory();
+  const { mutate, isPending } = useCreateCategory();
   type formType = z.infer<typeof schema>;
-  const {
-    control,
-    reset,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = useForm<formType>({
+  const { control, reset, handleSubmit } = useForm<formType>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: "",
@@ -38,7 +34,7 @@ const NewCategoryForm = () => {
   };
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <FieldSet disabled={isSubmitting}>
+      <FieldSet disabled={isPending}>
         <Controller
           name="title"
           control={control}
@@ -50,9 +46,9 @@ const NewCategoryForm = () => {
             </Field>
           )}
         />
-        <Button type="submit">
-          {isSubmitting ? "Adding..." : "Add category"}
-        </Button>
+        <LoadingButton isPending={isPending} type="submit">
+          Add category
+        </LoadingButton>
       </FieldSet>
     </form>
   );

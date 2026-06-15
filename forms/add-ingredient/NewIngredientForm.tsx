@@ -13,6 +13,7 @@ import CategorySelectField from "./fields/CategoryField";
 import DescriptionField from "./fields/DescriptionField";
 import IsInStockField from "./fields/IsInStockField";
 import NameField from "./fields/NameField";
+import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 
 interface Props {
   categories: ICategory[];
@@ -20,7 +21,7 @@ interface Props {
 
 const NewIngredientForm = ({ categories }: Props) => {
   const { id } = categories[0];
-  const { mutate } = useCreateIngredient();
+  const { mutate, isPending } = useCreateIngredient();
   const schema = zodSchemas.ingredient.create;
   const form = useForm<ICreateIngredientFormValues>({
     resolver: zodResolver(schema),
@@ -31,11 +32,7 @@ const NewIngredientForm = ({ categories }: Props) => {
       isInStock: false,
     },
   });
-  const {
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = form;
+  const { handleSubmit, reset } = form;
 
   const onSubmit = (values: ICreateIngredientFormValues) => {
     mutate(values, {
@@ -57,14 +54,14 @@ const NewIngredientForm = ({ categories }: Props) => {
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <FieldSet disabled={isSubmitting} className="space-y-4">
+        <FieldSet disabled={isPending} className="space-y-4">
           <CategorySelectField categories={categories} />
           <NameField />
           <DescriptionField />
           <IsInStockField />
-          <Button type="submit">
-            {isSubmitting ? "Adding..." : "Add ingredient"}
-          </Button>
+          <LoadingButton isPending={isPending} type="submit">
+            Add ingredient
+          </LoadingButton>
         </FieldSet>
       </form>
     </FormProvider>
