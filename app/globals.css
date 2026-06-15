@@ -128,6 +128,9 @@
     @apply font-sans;
   }
   main {
-    @apply py-4! px-8! max-w-7xl! w-full! mx-auto!;
+    @apply py-4 px-8 max-w-7xl w-full mx-auto;
+  }
+  h1 {
+    @apply text-center py-4 text-4xl font-semibold
   }
 }

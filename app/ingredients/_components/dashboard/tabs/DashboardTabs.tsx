@@ -33,8 +33,8 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
       {isSearching ? (
         <>
           <p>
-            {searchedIngredients.length} results include{" "}
-            <span className="italic">{searchQuery}</span>
+            {searchedIngredients.length} ingredients include{" "}
+            <span className="italic">{searchQuery}</span> in title
           </p>
           {searchedIngredients.length !== 0 && (
             <IngredienstList ingredients={searchedIngredients} />

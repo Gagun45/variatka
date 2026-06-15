@@ -1,26 +1,52 @@
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IRecipe } from "@/lib/prisma.args";
 
-interface Props {
+type Props = {
   recipe: IRecipe;
-}
+};
 
 const RecipeCard = ({ recipe }: Props) => {
-  const { description, ingredients, title, notes } = recipe;
   return (
-    <div className="border p-2 flex flex-col gap-2">
-      <span>{title}</span>
-      <span>{description}</span>
-      <span>{notes}</span>
-      <div className="flex flex-col bg-gray-500 p-2 gap-1">
-        {ingredients.map(({ amount, ingredient }) => (
-          <div key={ingredient.id}>
-            <span>
-              {ingredient.title} x {amount}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <AccordionItem
+      value={recipe.id.toString()}
+      className="border rounded-md px-4"
+    >
+      <AccordionTrigger className="py-3 hover:no-underline">
+        <div className="flex flex-col items-start text-left">
+          <span className="text-sm font-semibold">{recipe.title}</span>
+
+          <span className="text-xs text-muted-foreground">
+            {recipe.description}
+          </span>
+        </div>
+      </AccordionTrigger>
+      <AccordionContent className="pb-4 space-y-3">
+        <div className="flex flex-col gap-2">
+          {recipe.ingredients.map((item) => (
+            <div
+              key={item.ingredient.id}
+              className="flex items-center justify-between rounded-md border px-3 py-2"
+            >
+              <span className="text-sm font-medium">
+                {item.ingredient.title}
+              </span>
+
+              <span className="text-sm font-semibold text-muted-foreground">
+                {item.amount}
+              </span>
+            </div>
+          ))}
+        </div>
+        {recipe.notes && (
+          <p className="text-xs text-muted-foreground italic">{recipe.notes}</p>
+        )}
+      </AccordionContent>
+    </AccordionItem>
   );
 };
 

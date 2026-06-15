@@ -5,7 +5,7 @@ const SearchBar = () => {
   const query = useSearch((s) => s.query);
   const setQuery = useSearch((s) => s.setQuery);
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 max-w-xl">
       <Input
         placeholder="Search..."
         type="search"

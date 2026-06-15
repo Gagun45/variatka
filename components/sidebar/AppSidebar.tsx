@@ -3,6 +3,7 @@
 import { LINKS } from "@/lib/links";
 import {
   Sidebar,
+  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
@@ -10,6 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import SidebarLink from "./link/SidebarLink";
+import ThemeToggle from "../theme-toggle/ThemeToggle";
 
 export function AppSidebar() {
   return (
@@ -39,6 +41,11 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarGroup>
+      <SidebarFooter className="mt-auto pb-4">
+        <div className="flex justify-center">
+          <ThemeToggle />
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
