@@ -6,6 +6,7 @@ import { AppSidebar } from "../components/sidebar/AppSidebar";
 import "./globals.css";
 import Providers from "../providers/Providers";
 import { Toaster } from "@/components/ui/sonner";
+import QueryPrefetcher from "@/components/QueryPrefetcher";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -44,6 +45,7 @@ export default function RootLayout({
     >
       <body>
         <Providers>
+          <QueryPrefetcher />
           <AppSidebar />
           <div className="flex flex-col min-h-screen w-full">
             <Header />
