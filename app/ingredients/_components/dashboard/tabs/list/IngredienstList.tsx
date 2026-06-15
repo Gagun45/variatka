@@ -7,7 +7,7 @@ interface Props {
 
 const IngredienstList = ({ ingredients }: Props) => {
   return (
-    <div className="flex flex-col gap-2 border p-2">
+    <div className="flex flex-wrap gap-4 py-2">
       {ingredients.map((ing) => (
         <IngredientCard key={ing.id} ingredient={ing} />
       ))}
