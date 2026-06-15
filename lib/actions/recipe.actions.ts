@@ -67,3 +67,24 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
     throw new Error("Something went wrong");
   }
 };
+
+export const getRecipesByIngredientId = async (
+  ingredientId: number,
+): Promise<IRecipe[]> => {
+  try {
+    const recipes = await prisma.recipe.findMany({
+      where: {
+        ingredients: {
+          some: {
+            ingredientId,
+          },
+        },
+      },
+      ...recipeArgs,
+    });
+    return recipes;
+  } catch (e) {
+    console.error("Database error in getRecipesByIngredientId:", e);
+    throw new Error("Something went wrong");
+  }
+};

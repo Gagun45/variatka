@@ -3,6 +3,7 @@ import {
   createRecipeCategory,
   getRecipeCategories,
   getRecipes,
+  getRecipesByIngredientId,
 } from "@/lib/actions/recipe.actions";
 import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
 import { ICreateRecipeDto } from "@/lib/types";
@@ -14,4 +15,6 @@ export const recipeService = {
   getCategories: (): Promise<IRecipeCategory[]> => getRecipeCategories(),
   createCategory: (dto: ICreateRecipeCategoryDto): Promise<IRecipeCategory> =>
     createRecipeCategory(dto),
+  getRecipesByIngredientId: (ingredientId: number): Promise<IRecipe[]> =>
+    getRecipesByIngredientId(ingredientId),
 };

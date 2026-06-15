@@ -8,7 +8,18 @@ import { prisma } from "../prisma";
 import { IIngredient, IIngredientCategory } from "../prisma.args";
 
 export const getIngredients = async (): Promise<IIngredient[]> => {
-  const ingredients = await prisma.ingredient.findMany();
+  const ingredients = await prisma.ingredient.findMany({
+    orderBy: [
+      {
+        recipeIngredients: {
+          _count: "desc",
+        },
+      },
+      {
+        title: "asc",
+      },
+    ],
+  });
   return ingredients;
 };
 

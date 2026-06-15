@@ -1,4 +1,5 @@
 import Ingredient from "./_components/Ingredient";
+import IngredientRecipes from "./_components/recipes/IngredientRecipes";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -10,6 +11,7 @@ const IngredientPage = async ({ params }: Props) => {
   return (
     <main>
       <Ingredient id={ingredientId} />
+      <IngredientRecipes id={ingredientId} />
     </main>
   );
 };
