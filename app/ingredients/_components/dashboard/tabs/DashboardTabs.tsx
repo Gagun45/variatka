@@ -6,7 +6,6 @@ import { useSearch } from "@/prisma/store/search";
 import { useState } from "react";
 import FormsDialog from "./forms-dialog/FormsDialog";
 import IngredienstList from "./list/IngredienstList";
-import NewIngredientAccordion from "./new-ing-accordion/NewIngredientAccordion";
 import { Separator } from "@/components/ui/separator";
 
 interface Props {
