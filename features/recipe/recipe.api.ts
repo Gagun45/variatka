@@ -3,7 +3,7 @@ import {
   createRecipeCategory,
   getRecipeCategories,
   getRecipes,
-} from "@/lib/actions";
+} from "@/lib/actions/recipe.actions";
 import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
 import { ICreateRecipeDto } from "@/lib/types";
 import { ICreateRecipeCategoryDto } from "@/zod/recipe.schema";
