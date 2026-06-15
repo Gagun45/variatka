@@ -12,30 +12,36 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { ICategory } from "@/lib/prisma.args";
+import { FieldSet } from "@/components/ui/field";
 
 interface Props {
   category: ICategory;
 }
 
 const NewIngredientForm = ({ category }: Props) => {
-  const { id, name } = category;
+  const { id, title } = category;
   const schema = zodSchemas.ingredient.create;
   const form = useForm<ICreateIngredientFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
+      title: "",
       description: "",
       categoryId: id,
       isInStock: false,
     },
   });
+  const {
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = form;
   useEffect(() => {
     form.setValue("categoryId", id);
   }, [id, form]);
   const onSubmit = async (values: ICreateIngredientFormValues) => {
     const { message, success } = await createIngredient(values);
     if (success) {
-      form.reset();
+      reset();
       toast.success(message);
     } else {
       toast.error(message);
@@ -44,12 +50,16 @@ const NewIngredientForm = ({ category }: Props) => {
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <span>Creating: {name}</span>
-        <NameField />
-        <DescriptionField />
-        <IsInStockField />
-        <Button type="submit">Add ingredient</Button>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <span>Creating: {title}</span>
+        <FieldSet disabled={isSubmitting}>
+          <NameField />
+          <DescriptionField />
+          <IsInStockField />
+          <Button type="submit">
+            {isSubmitting ? "Adding..." : "Add ingredient"}
+          </Button>
+        </FieldSet>
       </form>
     </FormProvider>
   );

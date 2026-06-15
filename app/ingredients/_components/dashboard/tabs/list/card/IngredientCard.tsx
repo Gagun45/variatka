@@ -7,7 +7,7 @@ interface Props {
 }
 
 const IngredientCard = ({ ingredient }: Props) => {
-  const { name, description, isInStock, id } = ingredient;
+  const { title, description, isInStock, id } = ingredient;
 
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.ingredient.id === id),
@@ -17,7 +17,7 @@ const IngredientCard = ({ ingredient }: Props) => {
   const addItem = useRecipeStore((state) => state.addItem);
   return (
     <div className="flex flex-col gap-2 bg-gray-500">
-      <span>Name: {name}</span>
+      <span>Name: {title}</span>
       <span>Description: {description}</span>
       <span>Is in stock: {isInStock ? "Yes" : "No"}</span>
       <Button

@@ -15,7 +15,7 @@ const RecipeCard = ({ recipe }: Props) => {
         {ingredients.map(({ amount, ingredient }) => (
           <div key={ingredient.id}>
             <span>
-              {ingredient.name} x {amount}
+              {ingredient.title} x {amount}
             </span>
           </div>
         ))}

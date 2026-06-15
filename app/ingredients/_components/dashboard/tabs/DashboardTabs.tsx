@@ -16,15 +16,15 @@ interface Props {
 const DashboardTabs = ({ categories, ingredients }: Props) => {
   const searchQuery = useSearch((s) => s.query);
   const [activeCategory, setActiveCategory] = useState(
-    categories[0]?.name ?? "",
+    categories[0]?.title ?? "",
   );
 
-  const active = categories.find((c) => c.name === activeCategory);
+  const active = categories.find((c) => c.title === activeCategory);
   const filteredIngredients = ingredients.filter(
     (i) => i.categoryId === active?.id,
   );
   const searchedIngredients = ingredients.filter((ing) =>
-    ing.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    ing.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
   const isSearching = searchQuery.trim() !== "";
   return (
@@ -39,7 +39,7 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
         <>
           <div className="flex flex-wrap gap-4 justify-center">
             {categories.map((cat) => {
-              const isActive = cat.name === activeCategory;
+              const isActive = cat.title === activeCategory;
               const items = ingredients.filter((i) => i.categoryId === cat.id);
               const totalItems = items.length;
 
@@ -47,10 +47,10 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
                 <Button
                   key={cat.id}
                   variant={isActive ? "default" : "outline"}
-                  onClick={() => setActiveCategory(cat.name)}
+                  onClick={() => setActiveCategory(cat.title)}
                   className="min-w-36 text-xl h-12"
                 >
-                  {cat.name} ({totalItems})
+                  {cat.title} ({totalItems})
                 </Button>
               );
             })}

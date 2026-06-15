@@ -2,7 +2,7 @@
 import z from "zod";
 
 export const createIngredientSchema = z.object({
-  name: z.string().min(1, "Ingredient name is required"),
+  title: z.string().min(1, "Ingredient title is required"),
 
   description: z.string(),
 

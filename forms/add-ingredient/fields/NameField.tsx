@@ -7,7 +7,7 @@ const NameField = () => {
   const { control } = useFormContext<ICreateIngredientFormValues>();
   return (
     <Controller
-      name="name"
+      name="title"
       control={control}
       render={({ field, fieldState }) => (
         <Field>

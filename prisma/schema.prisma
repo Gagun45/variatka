@@ -13,13 +13,13 @@ datasource db {
 
 model Category {
   id          Int          @id @default(autoincrement())
-  name        String       @unique
+  title       String       @unique
   ingredients Ingredient[] // A category can have many ingredients
 }
 
 model Ingredient {
   id          Int      @id @default(autoincrement())
-  name        String   @unique
+  title       String   @unique
   description String
   isInStock   Boolean  @default(false)
   createdAt   DateTime @default(now())

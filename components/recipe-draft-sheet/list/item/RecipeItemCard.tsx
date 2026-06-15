@@ -10,7 +10,10 @@ interface Props {
 }
 
 const RecipeItemCard = ({ item }: Props) => {
-  const { ingredient, amount } = item;
+  const {
+    ingredient: { id, title },
+    amount,
+  } = item;
   const updateAmount = useRecipeStore((state) => state.updateAmount);
   const removeItem = useRecipeStore((s) => s.removeItem);
   return (
@@ -18,27 +21,27 @@ const RecipeItemCard = ({ item }: Props) => {
       <CardContent className="flex items-center justify-between gap-2 p-2">
         <div className="min-w-0 flex-1">
           <Label
-            htmlFor={`${ingredient.id}`}
+            htmlFor={id.toString()}
             className="text-sm font-medium break-all"
           >
-            {item.ingredient.name}
+            {title}
           </Label>
         </div>
 
         <Input
-          id={`${ingredient.id}`}
+          id={id.toString()}
           type="text"
           placeholder="e.g. 200 g"
           value={amount}
-          onChange={(e) => updateAmount(ingredient.id, e.target.value)}
+          onChange={(e) => updateAmount(id, e.target.value)}
           className="w-28 text-right"
         />
         <Button
           type="button"
           variant="destructive"
           size="icon"
-          onClick={() => removeItem(ingredient.id)}
-          aria-label={`Remove ${item.ingredient.name}`}
+          onClick={() => removeItem(id)}
+          aria-label={`Remove ${title}`}
         >
           <X className="h-4 w-4" />
         </Button>

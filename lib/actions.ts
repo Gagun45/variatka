@@ -25,12 +25,12 @@ export const createCategory = async (
 ): Promise<IResponse> => {
   try {
     const existingCategory = await prisma.category.findUnique({
-      where: { name: dto.name },
+      where: { title: dto.title },
     });
     if (existingCategory)
       return {
         success: false,
-        message: "A category with this name already exists.",
+        message: "A category with this title already exists.",
       };
     await prisma.category.create({ data: dto });
     revalidatePath("/ingredients");
@@ -46,7 +46,7 @@ export const createCategory = async (
 export const createIngredient = async (
   dto: ICreateIngredientFormValues,
 ): Promise<IResponse> => {
-  const { categoryId, name } = dto;
+  const { categoryId, title } = dto;
   try {
     const existingCategory = await prisma.category.findUnique({
       where: { id: categoryId },
@@ -57,12 +57,12 @@ export const createIngredient = async (
         message: `A category #${categoryId} not found`,
       };
     const existingIngredient = await prisma.ingredient.findUnique({
-      where: { name },
+      where: { title },
     });
     if (existingIngredient)
       return {
         success: false,
-        message: "An ingredient with this name already exists.",
+        message: "An ingredient with this title already exists.",
       };
     await prisma.ingredient.create({
       data: dto,

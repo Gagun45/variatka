@@ -13,6 +13,7 @@ import RecipeItemsList from "@/components/recipe-draft-sheet/list/RecipeItemsLis
 import { createRecipe } from "@/lib/actions";
 import { useRecipeStore } from "@/prisma/store/recipe";
 import { toast } from "sonner";
+import { FieldSet } from "@/components/ui/field";
 
 const RecipeForm = () => {
   const items = useRecipeStore((s) => s.items);
@@ -26,15 +27,21 @@ const RecipeForm = () => {
       notes: "",
     },
   });
+  const {
+    reset,
+    handleSubmit,
+    setError,
+    formState: { isSubmitting },
+  } = form;
   const onSubmit = async (values: ICreateRecipeFormValues) => {
     const noAmount = items.some((i) => !i.amount);
     if (noAmount) {
-      form.setError("root", { message: "Some items has no amount set!" });
+      setError("root", { message: "Some items has no amount set!" });
       return;
     }
     const { message, success } = await createRecipe(values, items);
     if (success) {
-      form.reset();
+      reset();
       clear();
       toast.success(message);
     } else {
@@ -44,28 +51,30 @@ const RecipeForm = () => {
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <p className="text-center text-2xl font-semibold tracking-widest">
           New recipe
         </p>
-        <TitleField />
-        <DescriptionField />
-        <NotesField />
+        <FieldSet disabled={isSubmitting}>
+          <TitleField />
+          <DescriptionField />
+          <NotesField />
 
-        <RecipeItemsList items={items} />
+          <RecipeItemsList items={items} />
 
-        <Button
-          type="reset"
-          className="w-full"
-          variant={"destructive"}
-          onClick={clear}
-        >
-          Clear
-        </Button>
+          <Button
+            type="reset"
+            className="w-full"
+            variant={"destructive"}
+            onClick={clear}
+          >
+            Clear
+          </Button>
 
-        <Button type="submit" className="w-full">
-          Create recipe
-        </Button>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Adding..." : "Add recipe"}
+          </Button>
+        </FieldSet>
 
         {form.formState.errors.root && (
           <p className="text-sm text-destructive">
