@@ -11,10 +11,16 @@ datasource db {
   provider = "postgresql"
 }
 
-model Category {
+model IngredientCategory {
   id          Int          @id @default(autoincrement())
   title       String       @unique
   ingredients Ingredient[] // A category can have many ingredients
+}
+
+model RecipeCategory {
+  id      Int      @id @default(autoincrement())
+  title   String   @unique
+  recipes Recipe[] // A category can have many ingredients
 }
 
 model Ingredient {
@@ -27,7 +33,7 @@ model Ingredient {
 
   // Foreign key and Relation definitions
   categoryId        Int
-  category          Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category          IngredientCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   recipeIngredients RecipeIngredient[]
 }
 
@@ -40,7 +46,9 @@ model Recipe {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ingredients RecipeIngredient[]
+  ingredients      RecipeIngredient[]
+  recipeCategory   RecipeCategory     @relation(fields: [recipeCategoryId], references: [id])
+  recipeCategoryId Int
 }
 
 model RecipeIngredient {

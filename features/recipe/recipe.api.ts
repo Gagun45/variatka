@@ -1,8 +1,17 @@
-import { createRecipe, getRecipes } from "@/lib/actions";
-import { IRecipe } from "@/lib/prisma.args";
+import {
+  createRecipe,
+  createRecipeCategory,
+  getRecipeCategories,
+  getRecipes,
+} from "@/lib/actions";
+import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
 import { ICreateRecipeDto } from "@/lib/types";
+import { ICreateRecipeCategoryDto } from "@/zod/recipe.schema";
 
 export const recipeService = {
   get: (): Promise<IRecipe[]> => getRecipes(),
   create: (dto: ICreateRecipeDto): Promise<IRecipe> => createRecipe(dto),
+  getCategories: (): Promise<IRecipeCategory[]> => getRecipeCategories(),
+  createCategory: (dto: ICreateRecipeCategoryDto): Promise<IRecipeCategory> =>
+    createRecipeCategory(dto),
 };

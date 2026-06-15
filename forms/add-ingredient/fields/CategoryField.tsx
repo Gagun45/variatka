@@ -9,10 +9,10 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Controller, useFormContext } from "react-hook-form";
 import type { ICreateIngredientFormValues } from "@/zod/ingredient.schema";
-import { ICategory } from "@/lib/prisma.args";
+import { IIngredientCategory } from "@/lib/prisma.args";
 
 type Props = {
-  categories: ICategory[];
+  categories: IIngredientCategory[];
 };
 
 const CategorySelectField = ({ categories }: Props) => {

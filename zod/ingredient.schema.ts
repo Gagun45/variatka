@@ -12,10 +12,19 @@ export const createIngredientSchema = z.object({
   categoryId: z.number().int("Category ID must be an integer."),
 });
 
+export const createIngredientCategorySchema = z.object({
+  title: z.string().min(1, "Category required"),
+});
+
 export const ingredientSchemas = {
   create: createIngredientSchema,
+  createCategory: createIngredientCategorySchema,
 };
 
 export type ICreateIngredientFormValues = z.infer<
   typeof createIngredientSchema
+>;
+
+export type ICreateIngredientCategoryDto = z.infer<
+  typeof createIngredientCategorySchema
 >;

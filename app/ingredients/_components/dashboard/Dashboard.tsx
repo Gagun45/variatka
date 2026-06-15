@@ -1,18 +1,18 @@
 "use client";
 
-import NewCategoryForm from "@/forms/add-category/NewCategoryForm";
+import NewCategoryForm from "@/forms/add-ing-category/NewIngredientCategoryForm";
 import DashboardTabs from "./tabs/DashboardTabs";
-import { useCategories } from "@/features/category/hooks/useCategories";
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
+import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
 
 const Dashboard = () => {
   const {
     data: categories,
     isLoading: isCategoriesLoading,
     isError: isCategoriesError,
-  } = useCategories();
+  } = useIngredientCategories();
 
   const {
     data: ingredients,

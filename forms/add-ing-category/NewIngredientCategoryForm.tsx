@@ -1,19 +1,18 @@
 "use client";
 
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
-import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useCreateCategory } from "@/features/category/hooks/useCreateCategory";
+import { useCreateIngredientCategory } from "@/features/ingredient/hooks/useCreateIngredientCategory";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
-const NewCategoryForm = () => {
-  const schema = zodSchemas.category.create;
-  const { mutate, isPending } = useCreateCategory();
+const NewIngredientCategoryForm = () => {
+  const schema = zodSchemas.ingredient.createCategory;
+  const { mutate, isPending } = useCreateIngredientCategory();
   type formType = z.infer<typeof schema>;
   const { control, reset, handleSubmit } = useForm<formType>({
     resolver: zodResolver(schema),
@@ -54,4 +53,4 @@ const NewCategoryForm = () => {
   );
 };
 
-export default NewCategoryForm;
+export default NewIngredientCategoryForm;

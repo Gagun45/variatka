@@ -11,5 +11,6 @@ export const recipeArgs = {
 } satisfies Omit<Prisma.RecipeFindManyArgs, "where">;
 
 export type IRecipe = Prisma.RecipeGetPayload<typeof recipeArgs>;
-export type ICategory = Prisma.CategoryGetPayload<object>;
+export type IIngredientCategory = Prisma.IngredientCategoryGetPayload<object>;
+export type IRecipeCategory = Prisma.RecipeCategoryGetPayload<object>;
 export type IIngredient = Prisma.IngredientGetPayload<object>;

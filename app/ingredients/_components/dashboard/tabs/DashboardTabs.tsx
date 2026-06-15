@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ICategory, IIngredient } from "@/lib/prisma.args";
+import { IIngredient, IIngredientCategory } from "@/lib/prisma.args";
 import { useSearch } from "@/prisma/store/search";
 import { useState } from "react";
 import FormsDialog from "./forms-dialog/FormsDialog";
@@ -9,7 +9,7 @@ import IngredienstList from "./list/IngredienstList";
 import { Separator } from "@/components/ui/separator";
 
 interface Props {
-  categories: ICategory[];
+  categories: IIngredientCategory[];
   ingredients: IIngredient[];
 }
 
@@ -56,7 +56,6 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
                 </Button>
               );
             })}
-            {/* <NewCategoryDialog /> */}
             <FormsDialog categories={categories} />
           </div>
           <Separator />

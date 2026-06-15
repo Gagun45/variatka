@@ -1,7 +1,5 @@
 "use client";
 
-import { categoryService } from "@/features/category/category.api";
-import { categoryKeys } from "@/features/category/category.keys";
 import { ingredientService } from "@/features/ingredient/ingredient.api";
 import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
 import { recipeService } from "@/features/recipe/recipe.api";
@@ -13,12 +11,17 @@ const QueryPrefetcher = () => {
   const qclient = useQueryClient();
   useEffect(() => {
     qclient.prefetchQuery({
-      queryKey: categoryKeys.categories,
-      queryFn: categoryService.get,
+      queryKey: ingredientKeys.categories(),
+      queryFn: ingredientService.getCategories,
     });
     qclient.prefetchQuery({
       queryKey: ingredientKeys.ingredients,
       queryFn: ingredientService.get,
+    });
+
+    qclient.prefetchQuery({
+      queryKey: recipeKeys.categories(),
+      queryFn: recipeService.getCategories,
     });
     qclient.prefetchQuery({
       queryKey: recipeKeys.recipes,
