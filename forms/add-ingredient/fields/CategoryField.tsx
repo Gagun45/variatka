@@ -8,7 +8,7 @@ import {
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Controller, useFormContext } from "react-hook-form";
-import type { ICreateIngredientFormValues } from "@/zod/ingredient.schema";
+import type { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { IIngredientCategory } from "@/lib/prisma.args";
 
 type Props = {
@@ -16,7 +16,7 @@ type Props = {
 };
 
 const CategorySelectField = ({ categories }: Props) => {
-  const { control } = useFormContext<ICreateIngredientFormValues>();
+  const { control } = useFormContext<IIngredientFormValues>();
 
   return (
     <Controller

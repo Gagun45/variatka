@@ -7,8 +7,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCreateIngredient } from "@/features/ingredient/hooks/useCreateIngredient";
 import NewCategoryForm from "@/forms/add-ing-category/NewIngredientCategoryForm";
-import NewIngredientForm from "@/forms/add-ingredient/NewIngredientForm";
+import NewIngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { IIngredientCategory } from "@/lib/prisma.args";
 import { PlusCircle } from "lucide-react";
 import React from "react";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 const FormsDialog = ({ categories }: Props) => {
+  const { mutate, isPending } = useCreateIngredient();
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -45,7 +47,11 @@ const FormsDialog = ({ categories }: Props) => {
 
           {/* Ingredient form */}
           <TabsContent value="ingredient" className="mt-4">
-            <NewIngredientForm categories={categories} />
+            <NewIngredientForm
+              isPending={isPending}
+              onClick={mutate}
+              categories={categories}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>

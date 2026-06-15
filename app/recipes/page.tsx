@@ -1,10 +1,10 @@
-import Recipes from "./_components/recipes/Recipes";
+import RecipeDashboard from "./_components/recipes/RecipeDashboard";
 
 const RecipesPage = () => {
   return (
     <main>
       <h1 className="text-center">Recipes</h1>
-      <Recipes />
+      <RecipeDashboard />
     </main>
   );
 };

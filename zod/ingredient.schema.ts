@@ -1,7 +1,7 @@
 // src/zod/ingredient.schema.ts
 import z from "zod";
 
-export const createIngredientSchema = z.object({
+export const ingredientSchema = z.object({
   title: z.string().min(1, "Ingredient title is required"),
 
   description: z.string().optional(),
@@ -17,13 +17,12 @@ export const createIngredientCategorySchema = z.object({
 });
 
 export const ingredientSchemas = {
-  create: createIngredientSchema,
+  create: ingredientSchema,
+  edit: ingredientSchema,
   createCategory: createIngredientCategorySchema,
 };
 
-export type ICreateIngredientFormValues = z.infer<
-  typeof createIngredientSchema
->;
+export type IIngredientFormValues = z.infer<typeof ingredientSchema>;
 
 export type ICreateIngredientCategoryDto = z.infer<
   typeof createIngredientCategorySchema

@@ -10,11 +10,13 @@ import {
   SheetTrigger,
 } from "../ui/sheet";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
+import Loader from "../loader/Loader";
 
 const RecipeDraftSheet = () => {
   const items = useRecipeStore((s) => s.items);
-  const { data: categories } = useRecipeCategories();
-  if (!categories) return <p>No recipe categories</p>;
+  const { data: categories, isLoading, isError } = useRecipeCategories();
+  if (isLoading) return <Loader />;
+  if (isError || !categories) return <p>No recipe categories</p>;
 
   return (
     <Sheet>
@@ -34,6 +36,8 @@ const RecipeDraftSheet = () => {
             <p className="text-sm text-muted-foreground">
               No ingredients added yet
             </p>
+          ) : categories.length === 0 ? (
+            <p>Add recipe category!</p>
           ) : (
             <>
               <RecipeForm categories={categories} />

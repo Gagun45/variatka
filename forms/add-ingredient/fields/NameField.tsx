@@ -1,10 +1,10 @@
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { ICreateIngredientFormValues } from "@/zod/ingredient.schema";
+import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
 const NameField = () => {
-  const { control } = useFormContext<ICreateIngredientFormValues>();
+  const { control } = useFormContext<IIngredientFormValues>();
   return (
     <Controller
       name="title"

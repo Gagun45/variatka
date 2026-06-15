@@ -5,9 +5,9 @@ import StateScreen from "@/components/state-screen/StateScreen";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import NewRecipeCategoryForm from "@/forms/add-recipe-category/NewRecipeCategoryForm";
-import RecipeTasb from "./recipeTabs/RecipeTabs";
+import RecipeTabs from "./recipeTabs/RecipeTabs";
 
-const Recipes = () => {
+const RecipeDashboard = () => {
   const {
     data: categories,
     isLoading: isCategoriesLoading,
@@ -36,7 +36,7 @@ const Recipes = () => {
     );
   }
 
-  return <RecipeTasb categories={categories} recipes={recipes} />;
+  return <RecipeTabs categories={categories} recipes={recipes} />;
 };
 
-export default Recipes;
+export default RecipeDashboard;
