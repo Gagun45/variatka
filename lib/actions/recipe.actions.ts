@@ -15,6 +15,15 @@ export const getRecipes = async (): Promise<IRecipe[]> => {
   return recipes;
 };
 
+export const getRecipe = async (id: number): Promise<IRecipe> => {
+  const recipe = await prisma.recipe.findUnique({
+    where: { id },
+    ...recipeArgs,
+  });
+  if (!recipe) throw new Error("Not found");
+  return recipe;
+};
+
 export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
   try {
     const existingCategory = await prisma.recipeCategory.findUnique({
@@ -64,6 +73,27 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
     return newRecipe;
   } catch (e) {
     console.error("Database error in createRecipe:", e);
+    throw new Error("Something went wrong");
+  }
+};
+
+export const getRecipesByIngredientId = async (
+  ingredientId: number,
+): Promise<IRecipe[]> => {
+  try {
+    const recipes = await prisma.recipe.findMany({
+      where: {
+        ingredients: {
+          some: {
+            ingredientId,
+          },
+        },
+      },
+      ...recipeArgs,
+    });
+    return recipes;
+  } catch (e) {
+    console.error("Database error in getRecipesByIngredientId:", e);
     throw new Error("Something went wrong");
   }
 };

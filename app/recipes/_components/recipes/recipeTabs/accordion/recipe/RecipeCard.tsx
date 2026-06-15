@@ -4,6 +4,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { IRecipe } from "@/lib/prisma.args";
+import Link from "next/link";
 
 type Props = {
   recipe: IRecipe;
@@ -44,6 +45,7 @@ const RecipeCard = ({ recipe }: Props) => {
         {recipe.notes && (
           <p className="text-xs text-muted-foreground italic">{recipe.notes}</p>
         )}
+        <Link href={`/recipes/${recipe.id}`}>Go to</Link>
       </AccordionContent>
     </AccordionItem>
   );
