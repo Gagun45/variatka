@@ -1,6 +1,7 @@
 "use client";
 
 import RecipeDraftSheet from "../recipe-draft-sheet/RecipeDraftSheet";
+import SearchBar from "../search-bar/SearchBar";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
 
 const Header = () => {
@@ -10,6 +11,7 @@ const Header = () => {
   "
     >
       <ThemeToggle />
+      <SearchBar />
       <RecipeDraftSheet />
     </header>
   );
