@@ -1,3 +1,5 @@
+"use client";
+
 import { categoryService } from "@/features/category/category.api";
 import { categoryKeys } from "@/features/category/category.keys";
 import { ingredientService } from "@/features/ingredient/ingredient.api";
