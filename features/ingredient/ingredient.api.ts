@@ -1,6 +1,7 @@
 import {
   createIngredient,
   createIngredientCategory,
+  editIngredient,
   getIngredient,
   getIngredientCategories,
   getIngredients,
@@ -21,4 +22,6 @@ export const ingredientService = {
   createCategory: (
     dto: ICreateIngredientCategoryDto,
   ): Promise<IIngredientCategory> => createIngredientCategory(dto),
+  edit: (id: number, dto: ICreateIngredientFormValues): Promise<IIngredient> =>
+    editIngredient(id, dto),
 };

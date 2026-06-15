@@ -2,7 +2,7 @@
 
 import {
   ICreateIngredientCategoryDto,
-  ICreateIngredientFormValues,
+  IIngredientFormValues,
 } from "@/zod/ingredient.schema";
 import { prisma } from "../prisma";
 import { IIngredient, IIngredientCategory } from "../prisma.args";
@@ -38,7 +38,7 @@ export const createIngredientCategory = async (
 };
 
 export const createIngredient = async (
-  dto: ICreateIngredientFormValues,
+  dto: IIngredientFormValues,
 ): Promise<IIngredient> => {
   const { categoryId, title } = dto;
   try {
@@ -78,9 +78,9 @@ export const getIngredient = async (id: number): Promise<IIngredient> => {
   }
 };
 
-export const updateIngredient = async (
+export const editIngredient = async (
   id: number,
-  dto: ICreateIngredientFormValues,
+  dto: IIngredientFormValues,
 ): Promise<IIngredient> => {
   try {
     const updatedIngredient = await prisma.ingredient.update({

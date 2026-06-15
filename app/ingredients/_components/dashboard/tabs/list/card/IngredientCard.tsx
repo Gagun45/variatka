@@ -30,7 +30,7 @@ const IngredientCard = ({ ingredient }: Props) => {
             {title}
           </Link>
 
-          <Badge variant={isInStock ? "outline" : "default"}>
+          <Badge variant={isInStock ? "outline" : "destructive"}>
             {isInStock ? "In stock" : "Out of stock"}
           </Badge>
         </div>
