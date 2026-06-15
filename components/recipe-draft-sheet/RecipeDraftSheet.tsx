@@ -29,7 +29,7 @@ const RecipeDraftSheet = () => {
         <div className="mt-6 px-2 overflow-y-auto">
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No ingredients added yet.
+              No ingredients added yet
             </p>
           ) : (
             <>
