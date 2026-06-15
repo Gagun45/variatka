@@ -82,8 +82,13 @@ export const createIngredient = async (
     if (!existingCategory)
       throw new Error(`A category #${categoryId} not found`);
 
-    const existingIngredient = await prisma.ingredient.findUnique({
-      where: { title },
+    const existingIngredient = await prisma.ingredient.findFirst({
+      where: {
+        title: {
+          equals: title,
+          mode: "insensitive",
+        },
+      },
     });
     if (existingIngredient)
       throw new Error("An ingredient with this title already exists.");
