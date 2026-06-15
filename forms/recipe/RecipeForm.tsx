@@ -87,16 +87,15 @@ const RecipeForm = ({ categories }: Props) => {
           >
             Clear
           </Button>
+          {form.formState.errors.root && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.root.message}
+            </p>
+          )}
           <LoadingButton isPending={isPending} type="submit">
             Create recipe
           </LoadingButton>
         </FieldSet>
-
-        {form.formState.errors.root && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.root.message}
-          </p>
-        )}
       </form>
     </FormProvider>
   );

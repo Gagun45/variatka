@@ -15,6 +15,15 @@ export const getRecipes = async (): Promise<IRecipe[]> => {
   return recipes;
 };
 
+export const getRecipe = async (id: number): Promise<IRecipe> => {
+  const recipe = await prisma.recipe.findUnique({
+    where: { id },
+    ...recipeArgs,
+  });
+  if (!recipe) throw new Error("Not found");
+  return recipe;
+};
+
 export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
   try {
     const existingCategory = await prisma.recipeCategory.findUnique({

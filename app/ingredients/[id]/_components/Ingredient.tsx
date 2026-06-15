@@ -7,6 +7,7 @@ import { useIngredient } from "@/features/ingredient/hooks/useIngredient";
 import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
 import IngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
+import { toast } from "sonner";
 
 interface Props {
   id: number;
@@ -17,10 +18,20 @@ const Ingredient = ({ id }: Props) => {
   const { data: ingredient, isLoading, isError } = useIngredient(id);
   const { mutate, isPending } = useEditIngredient();
   const onSubmit = (dto: IIngredientFormValues) => {
-    mutate({
-      dto,
-      id,
-    });
+    mutate(
+      {
+        dto,
+        id,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Ingredient edited successfully!");
+        },
+        onError: (e) => {
+          toast.error(e.message);
+        },
+      },
+    );
   };
 
   if (isLoading) {

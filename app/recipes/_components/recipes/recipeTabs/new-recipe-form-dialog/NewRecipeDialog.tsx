@@ -20,7 +20,9 @@ const NewRecipeDialog = () => {
 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-center text-xl">Create new</DialogTitle>
+          <DialogTitle className="text-center text-xl">
+            New recipe category
+          </DialogTitle>
         </DialogHeader>
         <NewRecipeCategoryForm />
       </DialogContent>

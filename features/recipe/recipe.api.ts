@@ -1,6 +1,7 @@
 import {
   createRecipe,
   createRecipeCategory,
+  getRecipe,
   getRecipeCategories,
   getRecipes,
   getRecipesByIngredientId,
@@ -17,4 +18,5 @@ export const recipeService = {
     createRecipeCategory(dto),
   getRecipesByIngredientId: (ingredientId: number): Promise<IRecipe[]> =>
     getRecipesByIngredientId(ingredientId),
+  getRecipe: (id: number): Promise<IRecipe> => getRecipe(id),
 };

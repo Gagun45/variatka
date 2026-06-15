@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import NewRecipeCategoryForm from "@/forms/add-recipe-category/NewRecipeCategoryForm";
 import RecipesAccordion from "./accordion/RecipesAccordion";
+import NewRecipeDialog from "./new-recipe-form-dialog/NewRecipeDialog";
 
 interface Props {
   categories: IRecipeCategory[];
@@ -59,7 +60,7 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
                 </Button>
               );
             })}
-            <NewRecipeCategoryForm />
+            <NewRecipeDialog />
           </div>
           <Separator />
           {active && <RecipesAccordion recipes={filteredRecipes} />}

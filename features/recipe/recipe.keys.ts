@@ -5,4 +5,5 @@ export const recipeKeys = {
     ...recipeKeys.recipes,
     ingredientId,
   ],
+  recipe: (id: number) => [...recipeKeys.recipes, id],
 };
