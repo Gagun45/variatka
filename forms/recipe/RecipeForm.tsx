@@ -4,20 +4,21 @@ import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
+import RecipeItemsList from "@/components/recipe-draft-sheet/list/RecipeItemsList";
 import { Button } from "@/components/ui/button";
+import { FieldSet } from "@/components/ui/field";
+import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
+import { useRecipeStore } from "@/prisma/store/recipe";
 import { ICreateRecipeFormValues } from "@/zod/recipe.schema";
-import TitleField from "./fields/TitleField";
+import { toast } from "sonner";
 import DescriptionField from "./fields/DescriptionField";
 import NotesField from "./fields/NotesField";
-import RecipeItemsList from "@/components/recipe-draft-sheet/list/RecipeItemsList";
-import { createRecipe } from "@/lib/actions";
-import { useRecipeStore } from "@/prisma/store/recipe";
-import { toast } from "sonner";
-import { FieldSet } from "@/components/ui/field";
+import TitleField from "./fields/TitleField";
 
 const RecipeForm = () => {
   const items = useRecipeStore((s) => s.items);
   const clear = useRecipeStore((s) => s.clear);
+  const { mutate } = useCreateRecipe();
   const schema = zodSchemas.recipe.create;
   const form = useForm<ICreateRecipeFormValues>({
     resolver: zodResolver(schema),
@@ -39,14 +40,25 @@ const RecipeForm = () => {
       setError("root", { message: "Some items has no amount set!" });
       return;
     }
-    const { message, success } = await createRecipe(values, items);
-    if (success) {
-      reset();
-      clear();
-      toast.success(message);
-    } else {
-      toast.error(message);
-    }
+    mutate(
+      {
+        ...values,
+        items: items.map((i) => ({
+          amount: i.amount,
+          ingredientId: i.ingredient.id,
+        })),
+      },
+      {
+        onSuccess: () => {
+          reset();
+          clear();
+          toast.success("Recipe created!");
+        },
+        onError: () => {
+          toast.error("Something went wrong");
+        },
+      },
+    );
   };
 
   return (

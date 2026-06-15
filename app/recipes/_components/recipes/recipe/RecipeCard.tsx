@@ -3,7 +3,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IRecipe } from "@/lib/prisma.args";
 
 type Props = {
@@ -14,7 +13,7 @@ const RecipeCard = ({ recipe }: Props) => {
   return (
     <AccordionItem
       value={recipe.id.toString()}
-      className="border rounded-md px-4"
+      className="border rounded-md px-4 bg-card py-2"
     >
       <AccordionTrigger className="py-3 hover:no-underline">
         <div className="flex flex-col items-start text-left">
@@ -30,7 +29,7 @@ const RecipeCard = ({ recipe }: Props) => {
           {recipe.ingredients.map((item) => (
             <div
               key={item.ingredient.id}
-              className="flex items-center justify-between rounded-md border px-3 py-2"
+              className="flex items-center bg-muted justify-between rounded-md border px-3 py-2"
             >
               <span className="text-sm font-medium">
                 {item.ingredient.title}

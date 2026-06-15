@@ -5,14 +5,13 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "../ui/sheet";
 
 const RecipeDraftSheet = () => {
-  const { items, clear } = useRecipeStore();
+  const items = useRecipeStore((s) => s.items);
 
   return (
     <Sheet>

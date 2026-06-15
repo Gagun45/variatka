@@ -28,7 +28,7 @@ const FormsDialog = ({ categories }: Props) => {
 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create new</DialogTitle>
+          <DialogTitle className="text-center text-xl">Create new</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="ingredient" className="w-full">

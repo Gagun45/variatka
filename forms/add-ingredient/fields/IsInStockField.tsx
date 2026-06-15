@@ -12,18 +12,22 @@ const IsInStockField = () => {
       control={control}
       render={({ field, fieldState }) => (
         <Field>
-          <div className="flex items-center justify-between rounded-md border bg-muted/30 px-4 py-3 transition hover:bg-muted/50">
-            <FieldLabel htmlFor="isinstock" className="text-sm font-medium">
-              Is in stock
-            </FieldLabel>
+          <FieldLabel
+            htmlFor="isinstock"
+            className={`
+          flex items-center justify-between rounded-md border px-4 py-3 font-medium transition cursor-pointer
+          ${field.value ? "border-green-600!" : "border-red-600"}
+        `}
+          >
+            <span className="text-sm">Is in stock</span>
 
             <Switch
               id="isinstock"
               checked={field.value}
               onCheckedChange={field.onChange}
-              className="data-[state=checked]:bg-green-500 scale-110"
+              className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-600! scale-110"
             />
-          </div>
+          </FieldLabel>
 
           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
         </Field>
