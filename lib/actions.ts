@@ -22,24 +22,19 @@ export const getIngredients = async (): Promise<IIngredient[]> => {
 
 export const createCategory = async (
   dto: ICreateCategoryFormValues,
-): Promise<IResponse> => {
+): Promise<ICategory> => {
   try {
     const existingCategory = await prisma.category.findUnique({
       where: { title: dto.title },
     });
     if (existingCategory)
-      return {
-        success: false,
-        message: "A category with this title already exists.",
-      };
-    await prisma.category.create({ data: dto });
-    revalidatePath("/ingredients");
-    return { success: true, message: "Category created" };
-  } catch {
-    return {
-      success: false,
-      message: "Something went wrong. Please try again.",
-    };
+      throw new Error("A category with this title already exists.");
+    const newCategory = await prisma.category.create({ data: dto });
+
+    return newCategory;
+  } catch (e) {
+    console.error("Database error in createCategory:", e);
+    throw new Error("Something went wrong");
   }
 };
 
