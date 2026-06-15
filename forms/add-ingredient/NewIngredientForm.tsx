@@ -1,9 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { FieldSet } from "@/components/ui/field";
 import { useCreateIngredient } from "@/features/ingredient/hooks/useCreateIngredient";
-import { ICategory } from "@/lib/prisma.args";
 import { ICreateIngredientFormValues } from "@/zod/ingredient.schema";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,10 +12,10 @@ import CategorySelectField from "./fields/CategoryField";
 import DescriptionField from "./fields/DescriptionField";
 import IsInStockField from "./fields/IsInStockField";
 import NameField from "./fields/NameField";
-import { LoadingButton } from "@/components/loading-btn/LoadingButton";
+import { IIngredientCategory } from "@/lib/prisma.args";
 
 interface Props {
-  categories: ICategory[];
+  categories: IIngredientCategory[];
 }
 
 const NewIngredientForm = ({ categories }: Props) => {

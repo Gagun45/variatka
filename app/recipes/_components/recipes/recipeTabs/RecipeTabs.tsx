@@ -1,27 +1,28 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { IIngredient, IIngredientCategory } from "@/lib/prisma.args";
+import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
 import { useSearch } from "@/prisma/store/search";
 import { useState } from "react";
-import FormsDialog from "./forms-dialog/FormsDialog";
-import IngredienstList from "./list/IngredienstList";
+
 import { Separator } from "@/components/ui/separator";
+import NewRecipeCategoryForm from "@/forms/add-recipe-category/NewRecipeCategoryForm";
+import RecipesAccordion from "../accordion/RecipesAccordion";
 
 interface Props {
-  categories: IIngredientCategory[];
-  ingredients: IIngredient[];
+  categories: IRecipeCategory[];
+  recipes: IRecipe[];
 }
 
-const DashboardTabs = ({ categories, ingredients }: Props) => {
+const RecipeTasb = ({ categories, recipes }: Props) => {
   const searchQuery = useSearch((s) => s.query);
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 
   const active = categories.find((c) => c.title === activeCategory);
-  const filteredIngredients = ingredients.filter(
-    (i) => i.categoryId === active?.id,
+  const filteredRecipes = recipes.filter(
+    (i) => i.recipeCategoryId === active?.id,
   );
-  const searchedIngredients = ingredients.filter((ing) =>
+  const searchedRecipes = recipes.filter((ing) =>
     ing.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
   const isSearching = searchQuery.trim() !== "";
@@ -30,11 +31,11 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
       {isSearching ? (
         <>
           <p>
-            {searchedIngredients.length} ingredients include{" "}
+            {searchedRecipes.length} ingredients include{" "}
             <span className="italic">{searchQuery}</span> in title
           </p>
-          {searchedIngredients.length !== 0 && (
-            <IngredienstList ingredients={searchedIngredients} />
+          {searchedRecipes.length !== 0 && (
+            <RecipesAccordion recipes={searchedRecipes} />
           )}
         </>
       ) : (
@@ -42,7 +43,9 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
           <div className="flex flex-wrap gap-4 justify-center">
             {categories.map((cat) => {
               const isActive = cat.title === activeCategory;
-              const items = ingredients.filter((i) => i.categoryId === cat.id);
+              const items = recipes.filter(
+                (i) => i.recipeCategoryId === cat.id,
+              );
               const totalItems = items.length;
 
               return (
@@ -56,14 +59,14 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
                 </Button>
               );
             })}
-            <FormsDialog categories={categories} />
+            <NewRecipeCategoryForm />
           </div>
           <Separator />
-          {active && <IngredienstList ingredients={filteredIngredients} />}
+          {active && <RecipesAccordion recipes={filteredRecipes} />}
         </>
       )}
     </div>
   );
 };
 
-export default DashboardTabs;
+export default RecipeTasb;

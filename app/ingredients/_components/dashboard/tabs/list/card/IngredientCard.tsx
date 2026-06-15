@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IIngredient } from "@/lib/prisma.args";
 import { useRecipeStore } from "@/prisma/store/recipe";
-import { Minus, MinusIcon, Plus, PlusIcon } from "lucide-react";
+import { MinusIcon, PlusIcon } from "lucide-react";
 
 interface Props {
   ingredient: IIngredient;

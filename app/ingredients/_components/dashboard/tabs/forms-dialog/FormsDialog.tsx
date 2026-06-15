@@ -7,14 +7,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import NewCategoryForm from "@/forms/add-category/NewCategoryForm";
+import NewCategoryForm from "@/forms/add-ing-category/NewIngredientCategoryForm";
 import NewIngredientForm from "@/forms/add-ingredient/NewIngredientForm";
-import { ICategory } from "@/lib/prisma.args";
+import { IIngredientCategory } from "@/lib/prisma.args";
 import { PlusCircle } from "lucide-react";
 import React from "react";
 
 interface Props {
-  categories: ICategory[];
+  categories: IIngredientCategory[];
 }
 
 const FormsDialog = ({ categories }: Props) => {
