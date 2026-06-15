@@ -20,7 +20,7 @@ model Category {
 model Ingredient {
   id          Int      @id @default(autoincrement())
   title       String   @unique
-  description String
+  description String?
   isInStock   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

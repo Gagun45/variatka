@@ -4,7 +4,7 @@ import z from "zod";
 export const createIngredientSchema = z.object({
   title: z.string().min(1, "Ingredient title is required"),
 
-  description: z.string(),
+  description: z.string().optional(),
 
   isInStock: z.boolean(),
 

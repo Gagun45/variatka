@@ -127,4 +127,7 @@
   html {
     @apply font-sans;
   }
+  main {
+    @apply py-4 px-8 max-w-7xl w-full mx-auto;
+  }
 }

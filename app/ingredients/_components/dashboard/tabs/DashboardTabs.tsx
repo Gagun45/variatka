@@ -1,12 +1,13 @@
 "use client";
 
+import NewCategoryDialog from "@/components/new-cat-dialog/NewCategoryDialog";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { ICategory, IIngredient } from "@/lib/prisma.args";
 import NewIngredientForm from "@/forms/add-ingredient/NewIngredientForm";
-import IngredienstList from "./list/IngredienstList";
-import { Input } from "@/components/ui/input";
+import { ICategory, IIngredient } from "@/lib/prisma.args";
 import { useSearch } from "@/prisma/store/search";
+import { useState } from "react";
+import IngredienstList from "./list/IngredienstList";
+import NewIngredientAccordion from "./new-ing-accordion/NewIngredientAccordion";
 
 interface Props {
   categories: ICategory[];
@@ -28,13 +29,17 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
   );
   const isSearching = searchQuery.trim() !== "";
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-4 w-full mx-auto">
       {isSearching ? (
-        searchedIngredients.length === 0 ? (
-          <p>No ingredients include {searchQuery} in the name</p>
-        ) : (
-          <IngredienstList ingredients={searchedIngredients} />
-        )
+        <>
+          <p>
+            {searchedIngredients.length} results include{" "}
+            <span className="italic">{searchQuery}</span>
+          </p>
+          {searchedIngredients.length !== 0 && (
+            <IngredienstList ingredients={searchedIngredients} />
+          )}
+        </>
       ) : (
         <>
           <div className="flex flex-wrap gap-4 justify-center">
@@ -54,11 +59,12 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
                 </Button>
               );
             })}
+            <NewCategoryDialog />
           </div>
 
           {active && (
             <div className="flex flex-col gap-2">
-              <NewIngredientForm category={active} />
+              <NewIngredientAccordion category={active} />
               <IngredienstList ingredients={filteredIngredients} />
             </div>
           )}

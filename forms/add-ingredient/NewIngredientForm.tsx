@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { ICategory } from "@/lib/prisma.args";
 import { FieldSet } from "@/components/ui/field";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   category: ICategory;
@@ -51,8 +52,12 @@ const NewIngredientForm = ({ category }: Props) => {
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <span>Creating: {title}</span>
-        <FieldSet disabled={isSubmitting}>
+        <div className="flex justify-center">
+          <Badge variant="secondary" className="h-10 text-lg w-full">
+            Creating: {title}
+          </Badge>
+        </div>
+        <FieldSet disabled={isSubmitting} className="space-y-4">
           <NameField />
           <DescriptionField />
           <IsInStockField />

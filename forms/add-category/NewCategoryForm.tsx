@@ -42,7 +42,7 @@ const NewCategoryForm = () => {
           render={({ field, fieldState }) => (
             <Field>
               <FieldLabel>Category</FieldLabel>
-              <Input {...field} placeholder="For example, SAUCES" />
+              <Input autoFocus {...field} placeholder="For example, SAUCES" />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
