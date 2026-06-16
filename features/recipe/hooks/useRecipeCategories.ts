@@ -4,7 +4,7 @@ import { recipeService } from "../recipe.api";
 
 export const useRecipeCategories = () => {
   return useQuery({
-    queryKey: recipeKeys.categories(),
+    queryKey: recipeKeys.categories,
     queryFn: recipeService.getCategories,
   });
 };

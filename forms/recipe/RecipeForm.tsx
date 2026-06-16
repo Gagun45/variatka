@@ -5,95 +5,72 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
-import RecipeItemsList from "@/components/recipe-draft-sheet/list/RecipeItemsList";
 import { Button } from "@/components/ui/button";
 import { FieldSet } from "@/components/ui/field";
-import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
-import { useRecipeStore } from "@/prisma/store/recipe";
-import { ICreateRecipeFormValues } from "@/zod/recipe.schema";
-import { toast } from "sonner";
+import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
+import { IRecipeDto } from "@/zod/recipe.schema";
+import CategorySelectField from "./fields/CategorySelectField";
 import DescriptionField from "./fields/DescriptionField";
 import NotesField from "./fields/NotesField";
 import TitleField from "./fields/TitleField";
-import { IRecipeCategory } from "@/lib/prisma.args";
-import CategorySelectField from "./fields/CategorySelectField";
 
 interface Props {
   categories: IRecipeCategory[];
+  onSubmit: (dto: IRecipeDto) => void;
+  recipe?: IRecipe;
+  isPending: boolean;
+  message?: string;
 }
 
-const RecipeForm = ({ categories }: Props) => {
-  const categoryId = categories[0].id;
-  const items = useRecipeStore((s) => s.items);
-  const clear = useRecipeStore((s) => s.clear);
-  const { mutate, isPending } = useCreateRecipe();
+const RecipeForm = ({
+  categories,
+  onSubmit,
+  recipe,
+  isPending,
+  message,
+}: Props) => {
   const schema = zodSchemas.recipe.create;
-  const form = useForm<ICreateRecipeFormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      title: "",
-      description: "",
-      notes: "",
-      categoryId,
-    },
-  });
-  const { reset, handleSubmit, setError } = form;
-  const onSubmit = async (values: ICreateRecipeFormValues) => {
-    const noAmount = items.some((i) => !i.amount);
-    if (noAmount) {
-      setError("root", { message: "Some items has no amount set!" });
-      return;
-    }
-    mutate(
-      {
-        ...values,
-        items: items.map((i) => ({
-          amount: i.amount,
-          ingredientId: i.ingredient.id,
-        })),
-      },
-      {
-        onSuccess: () => {
-          reset();
-          clear();
-          toast.success("Recipe created!");
-        },
-        onError: () => {
-          toast.error("Something went wrong");
-        },
-      },
-    );
+  const defaultValues: IRecipeDto = {
+    recipeCategoryId: recipe?.recipeCategoryId ?? categories[0].id,
+    description: recipe?.description ?? "",
+    notes: recipe?.notes ?? "",
+    title: recipe?.title ?? "",
   };
+  const form = useForm<IRecipeDto>({
+    resolver: zodResolver(schema),
+    defaultValues,
+  });
+  const {
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = form;
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <p className="text-center text-2xl font-semibold tracking-widest">
-          New recipe
-        </p>
-        <FieldSet disabled={isPending}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <FieldSet disabled={isPending} className="space-y-4">
           <CategorySelectField categories={categories} />
           <TitleField />
           <DescriptionField />
           <NotesField />
 
-          <RecipeItemsList items={items} />
-
           <Button
             type="reset"
             className="w-full"
+            disabled={!isDirty}
             variant={"destructive"}
-            onClick={clear}
+            onClick={() => reset()}
           >
-            Clear
+            Reset
           </Button>
-          {form.formState.errors.root && (
-            <p className="text-sm text-destructive">
-              {form.formState.errors.root.message}
-            </p>
-          )}
-          <LoadingButton isPending={isPending} type="submit">
-            Create recipe
+          {message && <p className="text-sm text-destructive">{message}</p>}
+          <LoadingButton
+            isPending={isPending}
+            disabled={!isDirty}
+            type="submit"
+          >
+            {recipe ? "Save" : "Add"}
           </LoadingButton>
         </FieldSet>
       </form>

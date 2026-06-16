@@ -2,12 +2,14 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import { useEditIngredient } from "@/features/ingredient/hooks/useEditIngredient";
-import { useIngredient } from "@/features/ingredient/hooks/useIngredient";
+import { buttonVariants } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
-import IngredientForm from "@/forms/add-ingredient/IngredientForm";
-import { IIngredientFormValues } from "@/zod/ingredient.schema";
-import { toast } from "sonner";
+import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
+import Link from "next/link";
+import IngredientRecipes from "./recipes/IngredientRecipes";
+import IngredientView from "./view/IngredientView";
+import { frontendUrls } from "@/lib/urls";
 
 interface Props {
   id: number;
@@ -15,30 +17,13 @@ interface Props {
 
 const Ingredient = ({ id }: Props) => {
   const { data: categories } = useIngredientCategories();
-  const { data: ingredient, isLoading, isError } = useIngredient(id);
-  const { mutate, isPending } = useEditIngredient();
-  const onSubmit = (dto: IIngredientFormValues) => {
-    mutate(
-      {
-        dto,
-        id,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Ingredient edited successfully!");
-        },
-        onError: (e) => {
-          toast.error(e.message);
-        },
-      },
-    );
-  };
+  const { data: ingredients, isLoading, isError } = useIngredients();
 
   if (isLoading) {
     return <Loader />;
   }
 
-  if (isError || !ingredient || !categories) {
+  if (isError || !ingredients || !categories) {
     return (
       <StateScreen
         title="Couldn't load this ingredient"
@@ -46,13 +31,20 @@ const Ingredient = ({ id }: Props) => {
       />
     );
   }
+  const ingredient = ingredients.find((ing) => ing.id === id);
+  if (!ingredient) return <StateScreen title="Ingredient not found" />;
   return (
-    <IngredientForm
-      isPending={isPending}
-      onClick={onSubmit}
-      ingredient={ingredient}
-      categories={categories}
-    />
+    <>
+      <IngredientView ingredient={ingredient} />
+      <Link
+        className={buttonVariants({ className: "px-8 text-base!" })}
+        href={frontendUrls.ingredients.edit(id)}
+      >
+        Edit
+      </Link>
+      <Separator />
+      <IngredientRecipes id={id} />
+    </>
   );
 };
 

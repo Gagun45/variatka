@@ -8,19 +8,20 @@ import {
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { IRecipeCategory } from "@/lib/prisma.args";
-import { ICreateRecipeFormValues } from "@/zod/recipe.schema";
+
 import { Controller, useFormContext } from "react-hook-form";
+import { IRecipeDto } from "@/zod/recipe.schema";
 
 type Props = {
   categories: IRecipeCategory[];
 };
 
 const CategorySelectField = ({ categories }: Props) => {
-  const { control } = useFormContext<ICreateRecipeFormValues>();
+  const { control } = useFormContext<IRecipeDto>();
 
   return (
     <Controller
-      name="categoryId"
+      name="recipeCategoryId"
       control={control}
       render={({ field, fieldState }) => (
         <Field>

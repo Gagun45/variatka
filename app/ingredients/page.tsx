@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Dashboard from "./_components/dashboard/Dashboard";
 import { buttonVariants } from "@/components/ui/button";
+import { frontendUrls } from "@/lib/urls";
 
 const IngredientsPage = () => {
   return (
@@ -8,7 +9,7 @@ const IngredientsPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-4xl tracking-widest font-bold">Ingredients</h1>
 
-        <Link href="/recipes" className={buttonVariants()}>
+        <Link href={frontendUrls.recipes.index} className={buttonVariants()}>
           Recipes →
         </Link>
       </div>

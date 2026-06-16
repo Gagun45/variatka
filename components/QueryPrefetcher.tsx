@@ -11,7 +11,7 @@ const QueryPrefetcher = () => {
   const qclient = useQueryClient();
   useEffect(() => {
     qclient.prefetchQuery({
-      queryKey: ingredientKeys.categories(),
+      queryKey: ingredientKeys.categories,
       queryFn: ingredientService.getCategories,
     });
     qclient.prefetchQuery({
@@ -20,7 +20,7 @@ const QueryPrefetcher = () => {
     });
 
     qclient.prefetchQuery({
-      queryKey: recipeKeys.categories(),
+      queryKey: recipeKeys.categories,
       queryFn: recipeService.getCategories,
     });
     qclient.prefetchQuery({

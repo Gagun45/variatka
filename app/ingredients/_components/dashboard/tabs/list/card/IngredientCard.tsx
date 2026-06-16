@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IIngredient } from "@/lib/prisma.args";
+import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/prisma/store/recipe";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
@@ -24,7 +25,7 @@ const IngredientCard = ({ ingredient }: Props) => {
       <CardContent className="flex items-center justify-between px-4 gap-4">
         <div className="flex flex-col gap-1">
           <Link
-            href={`/ingredients/${id}`}
+            href={frontendUrls.ingredients.view(id)}
             className="font-medium text-base hover:underline"
           >
             {title}

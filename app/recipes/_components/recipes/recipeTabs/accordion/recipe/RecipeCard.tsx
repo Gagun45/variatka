@@ -4,6 +4,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { IRecipe } from "@/lib/prisma.args";
+import { frontendUrls } from "@/lib/urls";
 import Link from "next/link";
 
 type Props = {
@@ -11,23 +12,22 @@ type Props = {
 };
 
 const RecipeCard = ({ recipe }: Props) => {
+  const { id, description, title, notes, ingredients } = recipe;
   return (
     <AccordionItem
-      value={recipe.id.toString()}
+      value={id.toString()}
       className="border rounded-md px-4 bg-card py-2"
     >
       <AccordionTrigger className="py-3 hover:no-underline">
         <div className="flex flex-col items-start text-left">
-          <span className="text-sm font-semibold">{recipe.title}</span>
+          <span className="text-sm font-semibold">{title}</span>
 
-          <span className="text-xs text-muted-foreground">
-            {recipe.description}
-          </span>
+          <span className="text-xs text-muted-foreground">{description}</span>
         </div>
       </AccordionTrigger>
       <AccordionContent className="pb-4 space-y-3">
         <div className="flex flex-col gap-2">
-          {recipe.ingredients.map((item) => (
+          {ingredients.map((item) => (
             <div
               key={item.ingredient.id}
               className="flex items-center bg-muted justify-between rounded-md border px-3 py-2"
@@ -42,10 +42,10 @@ const RecipeCard = ({ recipe }: Props) => {
             </div>
           ))}
         </div>
-        {recipe.notes && (
-          <p className="text-xs text-muted-foreground italic">{recipe.notes}</p>
+        {notes && (
+          <p className="text-xs text-muted-foreground italic">{notes}</p>
         )}
-        <Link href={`/recipes/${recipe.id}`}>Go to</Link>
+        <Link href={frontendUrls.recipes.view(id)}>Go to</Link>
       </AccordionContent>
     </AccordionItem>
   );

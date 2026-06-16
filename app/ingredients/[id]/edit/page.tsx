@@ -1,20 +1,20 @@
 import PageBreadcrumb from "@/components/bread/PageBreadcrumb";
-import Ingredient from "./_components/Ingredient";
+import IngredientEdit from "./_components/IngredientEdit";
 import { BREADCRUMB_ITEMS } from "@/lib/constants/bread.constants";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-const IngredientPage = async ({ params }: Props) => {
+const EditIngredientPage = async ({ params }: Props) => {
   const { id } = await params;
   const ingredientId = +id;
   return (
     <main className="space-y-8">
-      <PageBreadcrumb items={BREADCRUMB_ITEMS.ingredients.view(ingredientId)} />
-      <Ingredient id={ingredientId} />
+      <PageBreadcrumb items={BREADCRUMB_ITEMS.ingredients.edit(ingredientId)} />
+      <IngredientEdit id={ingredientId} />
     </main>
   );
 };
 
-export default IngredientPage;
+export default EditIngredientPage;

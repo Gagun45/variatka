@@ -2,28 +2,39 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import { useRecipe } from "@/features/recipe/hooks/useRecipe";
+import RecipeView from "./view/RecipeView";
+import Link from "next/link";
+import { useRecipes } from "@/features/recipe/hooks/useRecipes";
+import { frontendUrls } from "@/lib/urls";
+import { buttonVariants } from "@/components/ui/button";
 
 interface Props {
   id: number;
 }
 
 const Recipe = ({ id }: Props) => {
-  const { data: recipe, isLoading, isError } = useRecipe(id);
+  const { data: recipes, isLoading, isError } = useRecipes();
 
   if (isLoading) {
     return <Loader />;
   }
 
-  if (isError || !recipe) {
-    return (
-      <StateScreen
-        title="Couldn't load this recipe"
-        description="Please try again in a moment."
-      />
-    );
+  if (isError || !recipes) {
+    return <StateScreen title="Something went wrong" />;
   }
-  return <div>Recipe = {recipe.id}</div>;
+  const recipe = recipes.find((r) => r.id === id);
+  if (!recipe) return <StateScreen title="Recipe not found" />;
+  return (
+    <>
+      <RecipeView recipe={recipe} />
+      <Link
+        className={buttonVariants({ className: "px-8 text-base!" })}
+        href={frontendUrls.recipes.edit(id)}
+      >
+        Edit{" "}
+      </Link>
+    </>
+  );
 };
 
 export default Recipe;

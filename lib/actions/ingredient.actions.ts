@@ -102,3 +102,23 @@ export const editIngredient = async (
     throw new Error("Something went wrong");
   }
 };
+
+export const deleteIngredient = async (id: number) => {
+  const ingredient = await prisma.ingredient.findUnique({
+    where: { id },
+    select: {
+      _count: {
+        select: {
+          recipeIngredients: true,
+        },
+      },
+    },
+  });
+  if (!ingredient) throw new Error("Ingredient not found");
+  if (ingredient._count.recipeIngredients > 0)
+    throw new Error("Cannot delete ingredients used in recipes");
+  return prisma.ingredient.delete({
+    where: { id },
+    ...ingredientArgs,
+  });
+};

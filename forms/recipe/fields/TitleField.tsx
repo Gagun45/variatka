@@ -1,10 +1,10 @@
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { ICreateRecipeFormValues } from "@/zod/recipe.schema";
+import { IRecipeDto } from "@/zod/recipe.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
 const TitleField = () => {
-  const { control } = useFormContext<ICreateRecipeFormValues>();
+  const { control } = useFormContext<IRecipeDto>();
   return (
     <Controller
       name="title"

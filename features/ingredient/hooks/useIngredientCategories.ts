@@ -4,7 +4,7 @@ import { ingredientService } from "../ingredient.api";
 
 export const useIngredientCategories = () => {
   return useQuery({
-    queryKey: ingredientKeys.categories(),
+    queryKey: ingredientKeys.categories,
     queryFn: ingredientService.getCategories,
   });
 };

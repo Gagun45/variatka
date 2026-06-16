@@ -13,7 +13,7 @@ export const useCreateIngredientCategory = () => {
   >({
     mutationFn: ingredientService.createCategory,
     onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: ingredientKeys.categories() });
+      qclient.invalidateQueries({ queryKey: ingredientKeys.categories });
     },
   });
   return mutation;

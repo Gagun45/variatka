@@ -1,6 +1,6 @@
 "use server";
 
-import { ICreateRecipeCategoryDto } from "@/zod/recipe.schema";
+import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
 import { prisma } from "../prisma";
 import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
 import { ICreateRecipeDto } from "../types";
@@ -41,13 +41,13 @@ export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
 };
 
 export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
-  const { title, description, notes, items, categoryId } = dto;
+  const { title, description, notes, items, recipeCategoryId } = dto;
   try {
     const existingCategory = await prisma.recipeCategory.findUnique({
-      where: { id: categoryId },
+      where: { id: recipeCategoryId },
     });
     if (!existingCategory)
-      throw new Error(`A category #${categoryId} not found`);
+      throw new Error(`A category #${recipeCategoryId} not found`);
 
     const existingRecipe = await prisma.recipe.findFirst({
       where: { title },
@@ -60,7 +60,7 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
         description,
         notes,
         title,
-        recipeCategoryId: categoryId,
+        recipeCategoryId,
         ingredients: {
           create: items.map((item) => ({
             amount: item.amount,
@@ -94,6 +94,24 @@ export const getRecipesByIngredientId = async (
     return recipes;
   } catch (e) {
     console.error("Database error in getRecipesByIngredientId:", e);
+    throw new Error("Something went wrong");
+  }
+};
+
+export const updateRecipeFields = async (
+  id: number,
+  dto: IRecipeDto,
+): Promise<IRecipe> => {
+  try {
+    return prisma.recipe.update({
+      where: {
+        id,
+      },
+      data: dto,
+      ...recipeArgs,
+    });
+  } catch (e) {
+    console.error("Database error in updateRecipeFields:", e);
     throw new Error("Something went wrong");
   }
 };
