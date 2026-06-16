@@ -5,12 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
-import RecipeItemsList from "@/components/recipe-draft-sheet/list/RecipeItemsList";
 import { Button } from "@/components/ui/button";
 import { FieldSet } from "@/components/ui/field";
-import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
 import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
-import { useRecipeStore } from "@/prisma/store/recipe";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import CategorySelectField from "./fields/CategorySelectField";
 import DescriptionField from "./fields/DescriptionField";
@@ -34,7 +31,7 @@ const RecipeForm = ({
 }: Props) => {
   const schema = zodSchemas.recipe.create;
   const defaultValues: IRecipeDto = {
-    categoryId: recipe?.recipeCategoryId ?? categories[0].id,
+    recipeCategoryId: recipe?.recipeCategoryId ?? categories[0].id,
     description: recipe?.description ?? "",
     notes: recipe?.notes ?? "",
     title: recipe?.title ?? "",
@@ -43,33 +40,11 @@ const RecipeForm = ({
     resolver: zodResolver(schema),
     defaultValues,
   });
-  const { handleSubmit, reset } = form;
-  // const onSubmit = async (values: IRecipeDto) => {
-  //   const noAmount = items.some((i) => !i.amount);
-  //   if (noAmount) {
-  //     setError("root", { message: "Some items has no amount set!" });
-  //     return;
-  //   }
-  //   mutate(
-  //     {
-  //       ...values,
-  //       items: items.map((i) => ({
-  //         amount: i.amount,
-  //         ingredientId: i.ingredient.id,
-  //       })),
-  //     },
-  //     {
-  //       onSuccess: () => {
-  //         reset();
-  //         clear();
-  //         toast.success("Recipe created!");
-  //       },
-  //       onError: () => {
-  //         toast.error("Something went wrong");
-  //       },
-  //     },
-  //   );
-  // };
+  const {
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = form;
 
   return (
     <FormProvider {...form}>
@@ -83,14 +58,19 @@ const RecipeForm = ({
           <Button
             type="reset"
             className="w-full"
+            disabled={!isDirty}
             variant={"destructive"}
             onClick={() => reset()}
           >
             Reset
           </Button>
           {message && <p className="text-sm text-destructive">{message}</p>}
-          <LoadingButton isPending={isPending} type="submit">
-            Create recipe
+          <LoadingButton
+            isPending={isPending}
+            disabled={!isDirty}
+            type="submit"
+          >
+            {recipe ? "Save" : "Add"}
           </LoadingButton>
         </FieldSet>
       </form>

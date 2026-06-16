@@ -5,7 +5,7 @@ export const recipeSchema = z.object({
   title: z.string().min(1, "Recipe title is required"),
   description: z.string(),
   notes: z.string(),
-  categoryId: z.number().int("Category ID must be an integer."),
+  recipeCategoryId: z.number().int("Category ID must be an integer."),
 });
 
 export const createRecipeCategorySchema = z.object({

@@ -1,11 +1,11 @@
-import { ICreateRecipeFormValues } from "@/zod/recipe.schema";
+import { IRecipeDto } from "@/zod/recipe.schema";
 
 export interface IResponse {
   success: boolean;
   message: string;
 }
 
-export type ICreateRecipeDto = ICreateRecipeFormValues & {
+export type ICreateRecipeDto = IRecipeDto & {
   items: {
     amount: string;
     ingredientId: number;
