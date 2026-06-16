@@ -9,4 +9,5 @@ export const frontendUrls = {
     view: (id: number) => `/recipes/${id}`,
     edit: (id: number) => `/recipes/${id}/edit`,
   },
+  auth: "/auth",
 };
