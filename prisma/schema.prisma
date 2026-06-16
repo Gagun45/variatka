@@ -27,6 +27,7 @@ model Ingredient {
   id          Int      @id @default(autoincrement())
   title       String   @unique
   description String?
+  isAdded     Boolean  @default(false)
   isInStock   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

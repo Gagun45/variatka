@@ -5,6 +5,7 @@ import {
   editIngredient,
   getIngredientCategories,
   getIngredients,
+  toggleMyIngredient,
 } from "@/lib/actions/ingredient.actions";
 import { IIngredient, IIngredientCategory } from "@/lib/prisma.args";
 import {
@@ -24,4 +25,5 @@ export const ingredientService = {
   edit: (id: number, dto: IIngredientFormValues): Promise<IIngredient> =>
     editIngredient(id, dto),
   delete: (id: number) => deleteIngredient(id),
+  toggle: (id: number, add: boolean) => toggleMyIngredient(id, add),
 };
