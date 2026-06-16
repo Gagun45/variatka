@@ -11,6 +11,7 @@ import {
 } from "../ui/sheet";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import Loader from "../loader/Loader";
+import { List } from "lucide-react";
 
 const RecipeDraftSheet = () => {
   const items = useRecipeStore((s) => s.items);
@@ -21,7 +22,15 @@ const RecipeDraftSheet = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline">Ingredients ({items.length})</Button>
+        <Button variant="outline" size="icon" className="relative">
+          <List />
+
+          {items.length > 0 && (
+            <span className="absolute -top-1 -right-1 text-[10px] bg-primary text-primary-foreground rounded-full px-1.5">
+              {items.length}
+            </span>
+          )}
+        </Button>
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
