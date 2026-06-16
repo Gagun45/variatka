@@ -33,6 +33,9 @@ const IngredientCard = ({ ingredient }: Props) => {
           <Badge variant={isInStock ? "outline" : "destructive"}>
             {isInStock ? "In stock" : "Out of stock"}
           </Badge>
+          <span className="text-xs text-muted-foreground">
+            {ingredient._count.recipeIngredients}
+          </span>
         </div>
 
         <Button

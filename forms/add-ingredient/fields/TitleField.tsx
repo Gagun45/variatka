@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
-const NameField = () => {
+const TitleField = () => {
   const { control } = useFormContext<IIngredientFormValues>();
   return (
     <Controller
@@ -11,8 +11,8 @@ const NameField = () => {
       control={control}
       render={({ field, fieldState }) => (
         <Field>
-          <FieldLabel>Name</FieldLabel>
-          <Input {...field} placeholder="Name" />
+          <FieldLabel>Title</FieldLabel>
+          <Input {...field} placeholder="Title" />
           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
         </Field>
       )}
@@ -20,4 +20,4 @@ const NameField = () => {
   );
 };
 
-export default NameField;
+export default TitleField;

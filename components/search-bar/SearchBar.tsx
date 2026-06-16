@@ -30,8 +30,6 @@ const SearchBar = () => {
     ];
   }, [query, ingredients, recipes]);
 
-  // Close the dropdown if the user clicks anywhere outside this component
-
   return (
     <div className="relative flex w-full">
       <Input
@@ -44,19 +42,25 @@ const SearchBar = () => {
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
       />
       {open && suggestions.length > 0 && (
         <div className="absolute w-fit top-full rounded-md border bg-background shadow-lg z-50">
           {suggestions.map((item) => (
             <div
               key={`${item.type}-${item.id}`}
-              className="px-3 py-2 text-sm hover:bg-muted cursor-pointer"
+              className="px-3 py-2 space-x-2 text-sm hover:bg-muted cursor-pointer"
               onMouseDown={() => {
                 setQuery(item.title);
                 setOpen(false);
               }}
             >
               <span>{item.title}</span>
+              <span
+                className={`text-xs px-2 rounded-md text-muted-foreground ${item.type === "recipe" ? "bg-accent" : ""}`}
+              >
+                {item.type}
+              </span>
             </div>
           ))}
         </div>

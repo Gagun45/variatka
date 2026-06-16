@@ -6,22 +6,48 @@ import { useSearch } from "@/prisma/store/search";
 import { useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
-import NewRecipeCategoryForm from "@/forms/add-recipe-category/NewRecipeCategoryForm";
 import RecipesAccordion from "./accordion/RecipesAccordion";
 import NewRecipeDialog from "./new-recipe-form-dialog/NewRecipeDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Props {
   categories: IRecipeCategory[];
   recipes: IRecipe[];
 }
 
+type SortType = "name-asc" | "name-desc" | "created-desc" | "created-asc";
+
 const RecipeTabs = ({ categories, recipes }: Props) => {
   const searchQuery = useSearch((s) => s.query);
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 
+  const [sort, setSort] = useState<SortType>("created-desc");
+
+  const sorters = {
+    "name-asc": (a: IRecipe, b: IRecipe) => a.title.localeCompare(b.title),
+
+    "name-desc": (a: IRecipe, b: IRecipe) => b.title.localeCompare(a.title),
+
+    "created-desc": (a: IRecipe, b: IRecipe) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+
+    "created-asc": (a: IRecipe, b: IRecipe) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  } satisfies Record<SortType, (a: IRecipe, b: IRecipe) => number>;
+
+  const applySorting = (list: IRecipe[]) => {
+    return [...list].sort(sorters[sort]);
+  };
+
   const active = categories.find((c) => c.title === activeCategory);
-  const filteredRecipes = recipes.filter(
-    (i) => i.recipeCategoryId === active?.id,
+  const filteredRecipes = applySorting(
+    recipes.filter((i) => i.recipeCategoryId === active?.id),
   );
   const searchedRecipes = recipes.filter((ing) =>
     ing.title.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -63,7 +89,28 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
             <NewRecipeDialog />
           </div>
           <Separator />
-          {active && <RecipesAccordion recipes={filteredRecipes} />}
+          {active && (
+            <>
+              <div className="flex justify-end">
+                <Select
+                  value={sort}
+                  onValueChange={(v) => setSort(v as SortType)}
+                >
+                  <SelectTrigger className="w-45">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="created-desc">New to old</SelectItem>
+                    <SelectItem value="created-asc">Old to new</SelectItem>
+                    <SelectItem value="name-asc">A-Z</SelectItem>
+                    <SelectItem value="name-desc">Z-A</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <RecipesAccordion recipes={filteredRecipes} />
+            </>
+          )}
         </>
       )}
     </div>

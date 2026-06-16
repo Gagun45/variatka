@@ -9,7 +9,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import CategorySelectField from "./fields/CategoryField";
 import DescriptionField from "./fields/DescriptionField";
 import IsInStockField from "./fields/IsInStockField";
-import NameField from "./fields/NameField";
+import TitleField from "./fields/TitleField";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
@@ -50,7 +50,11 @@ const IngredientForm = ({
     });
   }, [ingredient, categories, form]);
 
-  const { handleSubmit, reset } = form;
+  const {
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = form;
 
   const onSubmit = (dto: IIngredientFormValues) => {
     onClick(dto);
@@ -66,18 +70,31 @@ const IngredientForm = ({
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 border p-2">
         <FieldSet disabled={isPending} className="space-y-4">
           <CategorySelectField categories={categories} />
-          <NameField />
+          <TitleField />
           <DescriptionField />
           <IsInStockField />
-          <Button type="button" variant={"destructive"} onClick={() => reset()}>
-            Reset
-          </Button>
-          <LoadingButton isPending={isPending} type="submit">
-            {ingredient ? "Save" : "Add"}
-          </LoadingButton>
+          <div className="flex justify-center gap-4">
+            <Button
+              disabled={!isDirty}
+              type="button"
+              className="w-full max-w-48"
+              variant={"destructive"}
+              onClick={() => reset()}
+            >
+              Reset
+            </Button>
+            <LoadingButton
+              disabled={!isDirty}
+              isPending={isPending}
+              className="w-full max-w-48"
+              type="submit"
+            >
+              {ingredient ? "Save" : "Add"}
+            </LoadingButton>
+          </div>
         </FieldSet>
       </form>
     </FormProvider>
