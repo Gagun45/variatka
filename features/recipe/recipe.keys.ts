@@ -1,9 +1,9 @@
 export const recipeKeys = {
   recipes: ["recipes"] as const,
-  categories: () => [...recipeKeys.recipes, "categories"],
+  categories: () => ["recipe-categories"],
   recipesByIngredientId: (ingredientId: number) => [
-    ...recipeKeys.recipes,
+    "ing-recipes",
     ingredientId,
   ],
-  recipe: (id: number) => [...recipeKeys.recipes, id],
+  recipe: (id: number) => ["recipe", id],
 };
