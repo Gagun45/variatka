@@ -2,13 +2,13 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
+import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useIngredient } from "@/features/ingredient/hooks/useIngredient";
 import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
+import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import Link from "next/link";
 import IngredientRecipes from "./recipes/IngredientRecipes";
 import IngredientView from "./view/IngredientView";
-import { buttonVariants } from "@/components/ui/button";
 
 interface Props {
   id: number;
@@ -16,13 +16,13 @@ interface Props {
 
 const Ingredient = ({ id }: Props) => {
   const { data: categories } = useIngredientCategories();
-  const { data: ingredient, isLoading, isError } = useIngredient(id);
+  const { data: ingredients, isLoading, isError } = useIngredients();
 
   if (isLoading) {
     return <Loader />;
   }
 
-  if (isError || !ingredient || !categories) {
+  if (isError || !ingredients || !categories) {
     return (
       <StateScreen
         title="Couldn't load this ingredient"
@@ -30,6 +30,8 @@ const Ingredient = ({ id }: Props) => {
       />
     );
   }
+  const ingredient = ingredients.find((ing) => ing.id === id);
+  if (!ingredient) return <StateScreen title="Ingredient not found" />;
   return (
     <>
       <IngredientView ingredient={ingredient} />

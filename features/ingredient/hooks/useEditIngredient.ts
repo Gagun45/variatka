@@ -12,8 +12,7 @@ export const useEditIngredient = () => {
     { id: number; dto: IIngredientFormValues }
   >({
     mutationFn: ({ dto, id }) => ingredientService.edit(id, dto),
-    onSuccess: (_, { id }) => {
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredient(id) });
+    onSuccess: () => {
       qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
     },
   });

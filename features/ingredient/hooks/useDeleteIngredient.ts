@@ -7,9 +7,8 @@ export const useDeleteIngredient = () => {
   const qclient = useQueryClient();
   const mutation = useMutation<IIngredient, Error, number>({
     mutationFn: ingredientService.delete,
-    onSuccess: (_, id) => {
+    onSuccess: () => {
       qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredient(id) });
     },
   });
   return mutation;

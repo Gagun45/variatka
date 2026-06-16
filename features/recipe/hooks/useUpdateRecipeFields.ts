@@ -10,9 +10,8 @@ export const useUpdateRecipeFields = () => {
   const mutation = useMutation<IRecipe, Error, { id: number; dto: IRecipeDto }>(
     {
       mutationFn: ({ dto, id }) => recipeService.updateFields(id, dto),
-      onSuccess: (_, { id }) => {
+      onSuccess: () => {
         qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
-        qclient.invalidateQueries({ queryKey: recipeKeys.recipe(id) });
       },
     },
   );

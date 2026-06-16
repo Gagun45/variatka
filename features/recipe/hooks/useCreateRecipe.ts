@@ -10,14 +10,9 @@ export const useCreateRecipe = () => {
   const qclient = useQueryClient();
   const mutation = useMutation<IRecipe, Error, ICreateRecipeDto>({
     mutationFn: recipeService.create,
-    onSuccess: (_, { items }) => {
+    onSuccess: () => {
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
       qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
-      items.forEach((item) => {
-        qclient.invalidateQueries({
-          queryKey: recipeKeys.recipesByIngredientId(item.ingredientId),
-        });
-      });
     },
   });
   return mutation;
