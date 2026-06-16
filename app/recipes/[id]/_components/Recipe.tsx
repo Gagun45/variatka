@@ -2,11 +2,9 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import RecipeView from "./view/RecipeView";
-import Link from "next/link";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
-import { frontendUrls } from "@/lib/urls";
-import { buttonVariants } from "@/components/ui/button";
+import RecipeView from "./view/RecipeView";
+import SimilarRecipes from "./similar/SimilarRecipes";
 
 interface Props {
   id: number;
@@ -25,15 +23,10 @@ const Recipe = ({ id }: Props) => {
   const recipe = recipes.find((r) => r.id === id);
   if (!recipe) return <StateScreen title="Recipe not found" />;
   return (
-    <>
+    <div className="space-y-24">
       <RecipeView recipe={recipe} />
-      <Link
-        className={buttonVariants({ className: "px-8 text-base!" })}
-        href={frontendUrls.recipes.edit(id)}
-      >
-        Edit{" "}
-      </Link>
-    </>
+      <SimilarRecipes allRecipes={recipes} recipe={recipe} />
+    </div>
   );
 };
 

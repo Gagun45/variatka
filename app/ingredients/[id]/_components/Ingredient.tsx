@@ -2,14 +2,11 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
-import Link from "next/link";
 import IngredientRecipes from "./recipes/IngredientRecipes";
 import IngredientView from "./view/IngredientView";
-import { frontendUrls } from "@/lib/urls";
 
 interface Props {
   id: number;
@@ -36,12 +33,6 @@ const Ingredient = ({ id }: Props) => {
   return (
     <>
       <IngredientView ingredient={ingredient} />
-      <Link
-        className={buttonVariants({ className: "px-8 text-base!" })}
-        href={frontendUrls.ingredients.edit(id)}
-      >
-        Edit
-      </Link>
       <Separator />
       <IngredientRecipes id={id} />
     </>
