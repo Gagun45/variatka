@@ -1,4 +1,6 @@
+import Loader from "@/components/loader/Loader";
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
+import StateScreen from "@/components/state-screen/StateScreen";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,9 +12,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 import { Button } from "@/components/ui/button";
 import { useDeleteIngredient } from "@/features/ingredient/hooks/useDeleteIngredient";
+import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { frontendUrls } from "@/lib/urls";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -23,8 +27,12 @@ interface Props {
 }
 
 const DeleteIngredientButton = ({ id }: Props) => {
+  const { data: recipes, isLoading, isError } = useRecipes();
+
   const { mutate, isPending } = useDeleteIngredient();
   const router = useRouter();
+  if (isLoading) return <Loader />;
+  if (!recipes || isError) return <StateScreen title="Something went wrong" />;
 
   const handleDelete = () => {
     mutate(id, {
@@ -38,15 +46,21 @@ const DeleteIngredientButton = ({ id }: Props) => {
     });
   };
 
+  const isUsedInRecipes = recipes.some((r) =>
+    r.ingredients.some((i) => i.ingredientId === id),
+  );
+
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
+      <AlertDialogTrigger asChild disabled={isUsedInRecipes}>
         <Button
           className="w-full py-8 text-2xl items-center gap-4"
           variant="destructive"
         >
           <TrashIcon className="size-7" />
-          Delete ingredient
+          {isUsedInRecipes
+            ? "Used in recipes — cannot be deleted"
+            : "Delete ingredient"}
         </Button>
       </AlertDialogTrigger>
 
