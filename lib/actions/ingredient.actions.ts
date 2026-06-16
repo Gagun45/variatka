@@ -5,20 +5,15 @@ import {
   IIngredientFormValues,
 } from "@/zod/ingredient.schema";
 import { prisma } from "../prisma";
-import { IIngredient, IIngredientCategory } from "../prisma.args";
+import {
+  IIngredient,
+  IIngredientCategory,
+  ingredientArgs,
+} from "../prisma.args";
 
 export const getIngredients = async (): Promise<IIngredient[]> => {
   const ingredients = await prisma.ingredient.findMany({
-    orderBy: [
-      {
-        recipeIngredients: {
-          _count: "desc",
-        },
-      },
-      {
-        title: "asc",
-      },
-    ],
+    ...ingredientArgs,
   });
   return ingredients;
 };
@@ -67,6 +62,7 @@ export const createIngredient = async (
 
     const newIngredient = await prisma.ingredient.create({
       data: dto,
+      ...ingredientArgs,
     });
     return newIngredient;
   } catch (e) {
@@ -79,6 +75,7 @@ export const getIngredient = async (id: number): Promise<IIngredient> => {
   try {
     const ingredient = await prisma.ingredient.findUnique({
       where: { id },
+      ...ingredientArgs,
     });
     if (!ingredient) throw new Error("Ingredient not found");
 
@@ -97,6 +94,7 @@ export const editIngredient = async (
     const updatedIngredient = await prisma.ingredient.update({
       where: { id },
       data: dto,
+      ...ingredientArgs,
     });
     return updatedIngredient;
   } catch (e) {
