@@ -2,11 +2,8 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import RecipeView from "./view/RecipeView";
-import Link from "next/link";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
-import { frontendUrls } from "@/lib/urls";
-import { buttonVariants } from "@/components/ui/button";
+import RecipeView from "./view/RecipeView";
 
 interface Props {
   id: number;
@@ -27,12 +24,6 @@ const Recipe = ({ id }: Props) => {
   return (
     <>
       <RecipeView recipe={recipe} />
-      <Link
-        className={buttonVariants({ className: "px-8 text-base!" })}
-        href={frontendUrls.recipes.edit(id)}
-      >
-        Edit{" "}
-      </Link>
     </>
   );
 };
