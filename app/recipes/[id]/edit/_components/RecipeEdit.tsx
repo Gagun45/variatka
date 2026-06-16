@@ -2,7 +2,6 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import { useRecipe } from "@/features/recipe/hooks/useRecipe";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { useUpdateRecipeFields } from "@/features/recipe/hooks/useUpdateRecipeFields";
@@ -40,8 +39,7 @@ const RecipeEdit = ({ id }: Props) => {
       },
       {
         onSuccess: () => {
-          router.push(`/ingredients/${id}`);
-          toast.success("Ingredient edited successfully!");
+          toast.success("Recipe edited successfully!");
         },
         onError: (e) => {
           toast.error(e.message);

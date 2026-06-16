@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import DeleteIngredientButton from "../../_components/delete-btn/DeleteIngredientButton";
 import { BREADCRUMB_ITEMS } from "@/lib/constants/bread.constants";
+import { frontendUrls } from "@/lib/urls";
 
 interface Props {
   id: number;
@@ -43,7 +44,7 @@ const IngredientEdit = ({ id }: Props) => {
       },
       {
         onSuccess: () => {
-          router.push(`/ingredients/${id}`);
+          router.push(frontendUrls.ingredients.view(id));
           toast.success("Ingredient edited successfully!");
         },
         onError: (e) => {

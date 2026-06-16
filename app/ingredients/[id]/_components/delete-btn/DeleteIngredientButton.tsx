@@ -13,6 +13,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { useDeleteIngredient } from "@/features/ingredient/hooks/useDeleteIngredient";
+import { frontendUrls } from "@/lib/urls";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -29,7 +30,7 @@ const DeleteIngredientButton = ({ id }: Props) => {
     mutate(id, {
       onSuccess: () => {
         toast.success("Ingredient deleted!");
-        router.push("/ingredients");
+        router.push(frontendUrls.ingredients.index);
       },
       onError: (e: Error) => {
         toast.error(e.message);

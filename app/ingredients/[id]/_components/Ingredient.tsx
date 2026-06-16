@@ -9,6 +9,7 @@ import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import Link from "next/link";
 import IngredientRecipes from "./recipes/IngredientRecipes";
 import IngredientView from "./view/IngredientView";
+import { frontendUrls } from "@/lib/urls";
 
 interface Props {
   id: number;
@@ -37,7 +38,7 @@ const Ingredient = ({ id }: Props) => {
       <IngredientView ingredient={ingredient} />
       <Link
         className={buttonVariants({ className: "px-8 text-base!" })}
-        href={`/ingredients/${id}/edit`}
+        href={frontendUrls.ingredients.edit(id)}
       >
         Edit
       </Link>

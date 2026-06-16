@@ -5,6 +5,7 @@ import StateScreen from "@/components/state-screen/StateScreen";
 import RecipeView from "./view/RecipeView";
 import Link from "next/link";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
+import { frontendUrls } from "@/lib/urls";
 
 interface Props {
   id: number;
@@ -25,7 +26,7 @@ const Recipe = ({ id }: Props) => {
   return (
     <>
       <RecipeView recipe={recipe} />
-      <Link href={`/recipes/${id}/edit`}>Edit </Link>
+      <Link href={frontendUrls.recipes.edit(id)}>Edit </Link>
     </>
   );
 };
