@@ -122,3 +122,14 @@ export const deleteIngredient = async (id: number) => {
     ...ingredientArgs,
   });
 };
+
+export const toggleMyIngredient = async (
+  id: number,
+  isAdded: boolean,
+): Promise<IIngredient> => {
+  return prisma.ingredient.update({
+    where: { id },
+    data: { isAdded },
+    ...ingredientArgs,
+  });
+};

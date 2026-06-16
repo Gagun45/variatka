@@ -54,13 +54,11 @@ const DeleteIngredientButton = ({ id }: Props) => {
     <AlertDialog>
       <AlertDialogTrigger asChild disabled={isUsedInRecipes}>
         <Button
-          className="w-full py-8 text-2xl items-center gap-4"
+          className="w-full py-8 text-lg sm:text-2xl items-center gap-4"
           variant="destructive"
         >
-          <TrashIcon className="size-7" />
-          {isUsedInRecipes
-            ? "Used in recipes — cannot be deleted"
-            : "Delete ingredient"}
+          <TrashIcon className="size-4 md:size-7" />
+          {isUsedInRecipes ? "Cannot be deleted" : "Delete ingredient"}
         </Button>
       </AlertDialogTrigger>
 
