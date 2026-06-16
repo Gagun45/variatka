@@ -12,7 +12,6 @@ const RecipeEditPage = async ({ params }: Props) => {
   return (
     <main>
       <PageBreadcrumb items={BREADCRUMB_ITEMS.recipes.edit(recipeId)} />
-
       <RecipeEdit id={recipeId} />
     </main>
   );

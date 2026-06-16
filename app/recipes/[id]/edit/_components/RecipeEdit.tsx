@@ -5,6 +5,8 @@ import StateScreen from "@/components/state-screen/StateScreen";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { useUpdateRecipeFields } from "@/features/recipe/hooks/useUpdateRecipeFields";
+import RecipeForm from "@/forms/recipe/RecipeForm";
+import { frontendUrls } from "@/lib/urls";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -39,6 +41,7 @@ const RecipeEdit = ({ id }: Props) => {
       },
       {
         onSuccess: () => {
+          router.push(frontendUrls.recipes.view(id));
           toast.success("Recipe edited successfully!");
         },
         onError: (e) => {
@@ -48,7 +51,16 @@ const RecipeEdit = ({ id }: Props) => {
     );
   };
 
-  return <div className="space-y-12">Recipe edit!</div>;
+  return (
+    <div className="space-y-12">
+      <RecipeForm
+        categories={categories}
+        isPending={isPending}
+        onSubmit={onSubmit}
+        recipe={recipe}
+      />
+    </div>
+  );
 };
 
 export default RecipeEdit;

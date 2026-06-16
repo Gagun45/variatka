@@ -6,6 +6,7 @@ import RecipeView from "./view/RecipeView";
 import Link from "next/link";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { frontendUrls } from "@/lib/urls";
+import { buttonVariants } from "@/components/ui/button";
 
 interface Props {
   id: number;
@@ -26,7 +27,12 @@ const Recipe = ({ id }: Props) => {
   return (
     <>
       <RecipeView recipe={recipe} />
-      <Link href={frontendUrls.recipes.edit(id)}>Edit </Link>
+      <Link
+        className={buttonVariants({ className: "px-8 text-base!" })}
+        href={frontendUrls.recipes.edit(id)}
+      >
+        Edit{" "}
+      </Link>
     </>
   );
 };
