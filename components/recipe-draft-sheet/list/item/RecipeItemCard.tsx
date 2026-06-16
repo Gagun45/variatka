@@ -18,34 +18,35 @@ const RecipeItemCard = ({ item }: Props) => {
   const removeItem = useRecipeStore((s) => s.removeItem);
   return (
     <Card>
-      <CardContent className="flex items-center justify-between gap-2 p-2">
-        <div className="min-w-0 flex-1">
+      <CardContent className="flex items-start justify-between gap-2 p-2">
+        <div className="min-w-0 flex-1 flex flex-col gap-2">
           <Label
             htmlFor={id.toString()}
             className="text-sm font-medium break-all"
           >
             {title}
           </Label>
+
+          <Input
+            id={id.toString()}
+            type="text"
+            list="quantity-suggestions"
+            placeholder="e.g. 200 g"
+            value={amount}
+            onChange={(e) => updateAmount(id, e.target.value)}
+            className="w-full"
+          />
+          <datalist id="quantity-suggestions">
+            <option value="0.25" />
+            <option value="0.5" />
+            <option value="0.75" />
+            <option value="1" />
+            <option value="2" />
+            <option value="3" />
+            <option value="5" />
+          </datalist>
         </div>
 
-        <Input
-          id={id.toString()}
-          type="text"
-          list="quantity-suggestions"
-          placeholder="e.g. 200 g"
-          value={amount}
-          onChange={(e) => updateAmount(id, e.target.value)}
-          className="w-28 text-right"
-        />
-        <datalist id="quantity-suggestions">
-          <option value="0.25" />
-          <option value="0.5" />
-          <option value="0.75" />
-          <option value="1" />
-          <option value="2" />
-          <option value="3" />
-          <option value="5" />
-        </datalist>
         <Button
           type="button"
           variant="destructive"

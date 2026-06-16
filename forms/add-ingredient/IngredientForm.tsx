@@ -76,11 +76,10 @@ const IngredientForm = ({
           <TitleField />
           <DescriptionField />
           <IsInStockField />
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-4 flex-wrap">
             <Button
               disabled={!isDirty}
               type="button"
-              className="w-full max-w-48"
               variant={"destructive"}
               onClick={() => reset()}
             >
@@ -89,7 +88,6 @@ const IngredientForm = ({
             <LoadingButton
               disabled={!isDirty}
               isPending={isPending}
-              className="w-full max-w-48"
               type="submit"
             >
               {ingredient ? "Save" : "Add"}
