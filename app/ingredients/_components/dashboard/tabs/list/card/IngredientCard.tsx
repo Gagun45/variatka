@@ -8,10 +8,9 @@ import Link from "next/link";
 
 interface Props {
   ingredient: IIngredient;
-  onPrefetch?: () => void;
 }
 
-const IngredientCard = ({ ingredient, onPrefetch }: Props) => {
+const IngredientCard = ({ ingredient }: Props) => {
   const { title, isInStock, id } = ingredient;
 
   const isAdded = useRecipeStore((state) =>
@@ -21,7 +20,7 @@ const IngredientCard = ({ ingredient, onPrefetch }: Props) => {
   const removeItem = useRecipeStore((state) => state.removeItem);
   const addItem = useRecipeStore((state) => state.addItem);
   return (
-    <Card className="py-2" onPointerEnter={onPrefetch}>
+    <Card className="py-2">
       <CardContent className="flex items-center justify-between px-4 gap-4">
         <div className="flex flex-col gap-1">
           <Link

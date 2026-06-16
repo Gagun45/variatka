@@ -2,15 +2,13 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import { useEditIngredient } from "@/features/ingredient/hooks/useEditIngredient";
+import { Separator } from "@/components/ui/separator";
 import { useIngredient } from "@/features/ingredient/hooks/useIngredient";
 import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
-import IngredientForm from "@/forms/add-ingredient/IngredientForm";
-import { IIngredientFormValues } from "@/zod/ingredient.schema";
-import { toast } from "sonner";
+import Link from "next/link";
 import IngredientRecipes from "./recipes/IngredientRecipes";
-import { Separator } from "@/components/ui/separator";
-import DeleteIngredientButton from "./delete-btn/DeleteIngredientButton";
+import IngredientView from "./view/IngredientView";
+import { buttonVariants } from "@/components/ui/button";
 
 interface Props {
   id: number;
@@ -19,23 +17,6 @@ interface Props {
 const Ingredient = ({ id }: Props) => {
   const { data: categories } = useIngredientCategories();
   const { data: ingredient, isLoading, isError } = useIngredient(id);
-  const { mutate, isPending } = useEditIngredient();
-  const onSubmit = (dto: IIngredientFormValues) => {
-    mutate(
-      {
-        dto,
-        id,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Ingredient edited successfully!");
-        },
-        onError: (e) => {
-          toast.error(e.message);
-        },
-      },
-    );
-  };
 
   if (isLoading) {
     return <Loader />;
@@ -51,15 +32,15 @@ const Ingredient = ({ id }: Props) => {
   }
   return (
     <>
-      <IngredientForm
-        isPending={isPending}
-        onClick={onSubmit}
-        ingredient={ingredient}
-        categories={categories}
-      />
+      <IngredientView ingredient={ingredient} />
+      <Link
+        className={buttonVariants({ className: "px-8 text-base!" })}
+        href={`/ingredients/${id}/edit`}
+      >
+        Edit
+      </Link>
       <Separator />
       <IngredientRecipes id={id} />
-      <DeleteIngredientButton id={id} />
     </>
   );
 };
