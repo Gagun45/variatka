@@ -99,7 +99,7 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
           <Separator />
           {active && (
             <>
-              <div className="flex justify-between flex-wrap">
+              <div className="flex justify-between flex-wrap gap-4">
                 <div className="flex gap-2 justify-center">
                   <Button
                     variant={stockFilter === "all" ? "default" : "outline"}

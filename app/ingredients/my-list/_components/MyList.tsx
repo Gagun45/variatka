@@ -13,7 +13,12 @@ const MyList = () => {
   const myIngredients = ingredients.filter((i) => i.isAdded);
   if (myIngredients.length === 0)
     return <p className="text-center">No ingredients added yet</p>;
-  return <IngredienstList ingredients={myIngredients} />;
+  return (
+    <>
+      <p>{myIngredients.length} ingredients</p>
+      <IngredienstList ingredients={myIngredients} />
+    </>
+  );
 };
 
 export default MyList;
