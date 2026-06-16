@@ -141,7 +141,11 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
                 </div>
               </div>
 
-              <IngredienstList ingredients={filteredIngredients} />
+              {filteredIngredients.length === 0 ? (
+                <p>Found 0 ingredients</p>
+              ) : (
+                <IngredienstList ingredients={filteredIngredients} />
+              )}
             </>
           )}
         </>

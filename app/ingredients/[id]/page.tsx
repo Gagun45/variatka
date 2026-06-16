@@ -1,3 +1,4 @@
+import { Separator } from "@/components/ui/separator";
 import Ingredient from "./_components/Ingredient";
 import IngredientRecipes from "./_components/recipes/IngredientRecipes";
 
@@ -9,8 +10,9 @@ const IngredientPage = async ({ params }: Props) => {
   const { id } = await params;
   const ingredientId = +id;
   return (
-    <main>
+    <main className="space-y-8">
       <Ingredient id={ingredientId} />
+      <Separator />
       <IngredientRecipes id={ingredientId} />
     </main>
   );
