@@ -8,6 +8,9 @@ import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredie
 import IngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { toast } from "sonner";
+import IngredientRecipes from "./recipes/IngredientRecipes";
+import { Separator } from "@/components/ui/separator";
+import DeleteIngredientButton from "./delete-btn/DeleteIngredientButton";
 
 interface Props {
   id: number;
@@ -47,12 +50,17 @@ const Ingredient = ({ id }: Props) => {
     );
   }
   return (
-    <IngredientForm
-      isPending={isPending}
-      onClick={onSubmit}
-      ingredient={ingredient}
-      categories={categories}
-    />
+    <>
+      <IngredientForm
+        isPending={isPending}
+        onClick={onSubmit}
+        ingredient={ingredient}
+        categories={categories}
+      />
+      <Separator />
+      <IngredientRecipes id={id} />
+      <DeleteIngredientButton id={id} />
+    </>
   );
 };
 
