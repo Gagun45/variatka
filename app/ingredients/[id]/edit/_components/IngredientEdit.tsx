@@ -1,15 +1,17 @@
 "use client";
 
+import PageBreadcrumb from "@/components/bread/PageBreadcrumb";
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useEditIngredient } from "@/features/ingredient/hooks/useEditIngredient";
 import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
+import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import IngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import DeleteIngredientButton from "../../_components/delete-btn/DeleteIngredientButton";
-import { useRouter } from "next/navigation";
-import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
+import { BREADCRUMB_ITEMS } from "@/lib/constants/bread.constants";
 
 interface Props {
   id: number;

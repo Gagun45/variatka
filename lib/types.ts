@@ -11,3 +11,8 @@ export type ICreateRecipeDto = IRecipeDto & {
     ingredientId: number;
   }[];
 };
+
+export interface IBreadcrumbItem {
+  label: string;
+  href?: string;
+}
