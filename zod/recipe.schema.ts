@@ -1,7 +1,7 @@
 // src/zod/ingredient.schema.ts
 import z from "zod";
 
-export const createRecipeSchema = z.object({
+export const recipeSchema = z.object({
   title: z.string().min(1, "Recipe title is required"),
   description: z.string(),
   notes: z.string(),
@@ -13,11 +13,11 @@ export const createRecipeCategorySchema = z.object({
 });
 
 export const recipeSchemas = {
-  create: createRecipeSchema,
+  create: recipeSchema,
   createCategory: createRecipeCategorySchema,
 };
 
-export type ICreateRecipeFormValues = z.infer<typeof createRecipeSchema>;
+export type IRecipeDto = z.infer<typeof recipeSchema>;
 export type ICreateRecipeCategoryDto = z.infer<
   typeof createRecipeCategorySchema
 >;

@@ -3,6 +3,7 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useRecipe } from "@/features/recipe/hooks/useRecipe";
+import RecipeUpdate from "./update/RecipeUpdate";
 
 interface Props {
   id: number;
@@ -23,7 +24,7 @@ const Recipe = ({ id }: Props) => {
       />
     );
   }
-  return <div>Recipe = {recipe.id}</div>;
+  return <RecipeUpdate recipe={recipe} />;
 };
 
 export default Recipe;

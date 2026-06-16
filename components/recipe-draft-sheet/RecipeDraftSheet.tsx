@@ -12,12 +12,47 @@ import {
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import Loader from "../loader/Loader";
 import { List } from "lucide-react";
+import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
+import { IRecipeDto } from "@/zod/recipe.schema";
+import RecipeItemsList from "./list/RecipeItemsList";
+import { useState } from "react";
+import { Separator } from "../ui/separator";
+import { toast } from "sonner";
 
 const RecipeDraftSheet = () => {
   const items = useRecipeStore((s) => s.items);
+  const clear = useRecipeStore((s) => s.clear);
   const { data: categories, isLoading, isError } = useRecipeCategories();
+  const [msg, setMsg] = useState("");
+  const { mutate, isPending } = useCreateRecipe();
   if (isLoading) return <Loader />;
   if (isError || !categories) return <p>No recipe categories</p>;
+  const onSubmit = (values: IRecipeDto) => {
+    setMsg("");
+    const noAmount = items.some((i) => !i.amount);
+    if (noAmount) {
+      setMsg("Some items has no amount set!");
+      return;
+    }
+    mutate(
+      {
+        ...values,
+        items: items.map((i) => ({
+          amount: i.amount,
+          ingredientId: i.ingredient.id,
+        })),
+      },
+      {
+        onSuccess: () => {
+          clear();
+          toast.success("Recipe created!");
+        },
+        onError: () => {
+          toast.error("Something went wrong");
+        },
+      },
+    );
+  };
 
   return (
     <Sheet>
@@ -40,7 +75,7 @@ const RecipeDraftSheet = () => {
             selected items before saving.
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-6 px-2 overflow-y-auto">
+        <div className="mt-6 px-4 overflow-y-auto space-y-8">
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No ingredients added yet.
@@ -49,7 +84,15 @@ const RecipeDraftSheet = () => {
             <p>Add recipe category!</p>
           ) : (
             <>
-              <RecipeForm categories={categories} />
+              <p className="text-center text-2xl">New recipe</p>
+              <RecipeItemsList items={items} />
+              <Separator />
+              <RecipeForm
+                isPending={isPending}
+                onSubmit={onSubmit}
+                categories={categories}
+                message={msg}
+              />
             </>
           )}
         </div>

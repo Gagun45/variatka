@@ -7,6 +7,7 @@ export const recipeArgs = {
         ingredient: true,
       },
     },
+    recipeCategory: true,
   },
 } satisfies Omit<Prisma.RecipeFindManyArgs, "where">;
 
