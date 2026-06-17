@@ -1,9 +1,9 @@
-import { Ingredient } from "@prisma/client";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 export interface IRecipeIngredientItem {
-  ingredient: Ingredient;
+  id: number;
+  title: string;
   amount: string;
 }
 
@@ -22,9 +22,7 @@ export const useRecipeStore = create<IRecipeState>()(
 
       addItem: (newItem) =>
         set((state) => {
-          const exists = state.items.some(
-            (item) => item.ingredient.id === newItem.ingredient.id,
-          );
+          const exists = state.items.some((item) => item.id === newItem.id);
 
           if (exists) return state;
 
@@ -33,15 +31,13 @@ export const useRecipeStore = create<IRecipeState>()(
 
       removeItem: (ingredientId) =>
         set((state) => ({
-          items: state.items.filter(
-            (item) => item.ingredient.id !== ingredientId,
-          ),
+          items: state.items.filter((item) => item.id !== ingredientId),
         })),
 
       updateAmount: (ingredientId, amount) =>
         set((state) => ({
           items: state.items.map((item) =>
-            item.ingredient.id === ingredientId ? { ...item, amount } : item,
+            item.id === ingredientId ? { ...item, amount } : item,
           ),
         })),
 

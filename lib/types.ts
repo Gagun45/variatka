@@ -5,11 +5,13 @@ export interface IResponse {
   message: string;
 }
 
+export interface IRecipeIngredient {
+  amount: string;
+  ingredientId: number;
+}
+
 export type ICreateRecipeDto = IRecipeDto & {
-  items: {
-    amount: string;
-    ingredientId: number;
-  }[];
+  items: IRecipeIngredient[];
 };
 
 export interface IBreadcrumbItem {

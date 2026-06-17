@@ -1,12 +1,4 @@
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { TrashIcon } from "lucide-react";
-
-import Loader from "@/components/loader/Loader";
-import StateScreen from "@/components/state-screen/StateScreen";
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,37 +12,31 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
-
-import { useDeleteIngredient } from "@/features/ingredient/hooks/useDeleteIngredient";
-import { useRecipes } from "@/features/recipe/hooks/useRecipes";
+import { useDeleteRecipe } from "@/features/recipe/hooks/useDeleteRecipe";
 import { frontendUrls } from "@/lib/urls";
+import { TrashIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface Props {
-  id: number;
+  recipeId: number;
 }
 
-const DeleteIngredientButton = ({ id }: Props) => {
+const DeleteRecipeButton = ({ recipeId }: Props) => {
+  const { mutate, isPending } = useDeleteRecipe();
   const router = useRouter();
-  const { data: recipes, isLoading, isError } = useRecipes();
-  const { mutate, isPending } = useDeleteIngredient();
 
   const [open, setOpen] = useState(false);
-
-  if (isLoading) return <Loader />;
-  if (!recipes || isError) return <StateScreen title="Something went wrong" />;
-
-  const isUsedInRecipes = recipes.some((r) =>
-    r.ingredients.some((i) => i.ingredientId === id),
-  );
 
   const handleDelete = () => {
     if (isPending) return;
 
-    mutate(id, {
+    mutate(recipeId, {
       onSuccess: () => {
-        toast.success("Ingredient deleted!");
+        toast.success("Recipe deleted!");
         setOpen(false);
-        router.push(frontendUrls.ingredients.index);
+        router.push(frontendUrls.recipes.index);
       },
       onError: (e: Error) => {
         toast.error(e.message);
@@ -58,7 +44,7 @@ const DeleteIngredientButton = ({ id }: Props) => {
     });
   };
 
-  const canInteract = !isPending && !isUsedInRecipes;
+  const canInteract = !isPending;
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -69,16 +55,15 @@ const DeleteIngredientButton = ({ id }: Props) => {
           disabled={!canInteract}
         >
           <TrashIcon className="size-4 md:size-7" />
-          {isUsedInRecipes ? "Cannot be deleted" : "Delete ingredient"}
+          Delete recipe
         </Button>
       </AlertDialogTrigger>
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete ingredient?</AlertDialogTitle>
+          <AlertDialogTitle>Delete recipe?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. If this ingredient is used in recipes,
-            the deletion will be blocked.
+            This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -100,4 +85,4 @@ const DeleteIngredientButton = ({ id }: Props) => {
   );
 };
 
-export default DeleteIngredientButton;
+export default DeleteRecipeButton;

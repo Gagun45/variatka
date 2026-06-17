@@ -10,10 +10,7 @@ interface Props {
 }
 
 const RecipeItemCard = ({ item }: Props) => {
-  const {
-    ingredient: { id, title },
-    amount,
-  } = item;
+  const { id, title, amount } = item;
   const updateAmount = useRecipeStore((state) => state.updateAmount);
   const removeItem = useRecipeStore((s) => s.removeItem);
   return (

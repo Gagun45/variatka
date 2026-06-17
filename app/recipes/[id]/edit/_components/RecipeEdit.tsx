@@ -10,6 +10,9 @@ import { frontendUrls } from "@/lib/urls";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import RecipeIngredientsEdit from "./ing-edit/RecipeIngredientsEdit";
+import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
+import DeleteRecipeButton from "./delete-btn/DeleteRecipeButton";
 
 interface Props {
   id: number;
@@ -27,9 +30,22 @@ const RecipeEdit = ({ id }: Props) => {
     isLoading: isRecipesLoading,
     isError: isRecipesError,
   } = useRecipes();
+  const {
+    data: ingredients,
+    isLoading: isIngredientsLoading,
+    isError: isIngredientsError,
+  } = useIngredients();
   const { mutate, isPending } = useUpdateRecipeFields();
-  if (isCategoriesLoading || isRecipesLoading) return <Loader />;
-  if (isCategoriesError || !categories || isRecipesError || !recipes)
+  if (isCategoriesLoading || isRecipesLoading || isIngredientsLoading)
+    return <Loader />;
+  if (
+    isCategoriesError ||
+    !categories ||
+    isRecipesError ||
+    !recipes ||
+    !ingredients ||
+    isIngredientsError
+  )
     return <StateScreen title="Something went wrong" />;
   const recipe = recipes.find((r) => r.id === id);
   if (!recipe) return <StateScreen title="Recipe not found" />;
@@ -59,6 +75,8 @@ const RecipeEdit = ({ id }: Props) => {
         onSubmit={onSubmit}
         recipe={recipe}
       />
+      <RecipeIngredientsEdit allIngredients={ingredients} recipe={recipe} />
+      <DeleteRecipeButton recipeId={recipe.id} />
     </div>
   );
 };

@@ -8,7 +8,7 @@ const RecipeItemsList = ({ items }: Props) => {
   return (
     <div className="flex flex-col gap-2">
       {items.map((item) => (
-        <RecipeItemCard item={item} key={item.ingredient.id} />
+        <RecipeItemCard item={item} key={item.id} />
       ))}
     </div>
   );
