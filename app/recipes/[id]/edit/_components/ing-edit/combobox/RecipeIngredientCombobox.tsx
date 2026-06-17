@@ -46,7 +46,7 @@ export default function IngredientCombobox({ ingredients, onSelect }: Props) {
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-100 p-0">
+      <PopoverContent className="w-full p-0">
         <Command>
           <CommandInput placeholder="Search ingredient..." />
 

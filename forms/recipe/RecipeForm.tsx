@@ -18,8 +18,8 @@ interface Props {
   categories: IRecipeCategory[];
   onSubmit: (dto: IRecipeDto) => void;
   recipe?: IRecipe;
+  isDisabled?: boolean;
   isPending: boolean;
-  message?: string;
 }
 
 const RecipeForm = ({
@@ -27,7 +27,7 @@ const RecipeForm = ({
   onSubmit,
   recipe,
   isPending,
-  message,
+  isDisabled,
 }: Props) => {
   const schema = zodSchemas.recipe.create;
   const defaultValues: IRecipeDto = {
@@ -64,13 +64,12 @@ const RecipeForm = ({
           >
             Reset
           </Button>
-          {message && <p className="text-sm text-destructive">{message}</p>}
           <LoadingButton
             isPending={isPending}
-            disabled={!isDirty}
+            disabled={!isDirty || isDisabled}
             type="submit"
           >
-            {recipe ? "Save" : "Add"}
+            {recipe ? "Save" : isDisabled ? "Set amounts!" : "Add"}
           </LoadingButton>
         </FieldSet>
       </form>
