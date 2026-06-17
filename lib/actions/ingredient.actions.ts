@@ -11,6 +11,7 @@ import {
   ingredientArgs,
 } from "../prisma.args";
 import { requireAdmin } from "../auth";
+import { uploadHelper } from "../s3/upload.helper";
 
 export const getIngredients = async (): Promise<IIngredient[]> => {
   const ingredients = await prisma.ingredient.findMany({
@@ -123,4 +124,34 @@ export const toggleMyIngredient = async (
     data: { isAdded },
     ...ingredientArgs,
   });
+};
+
+export const uploadIngredientImage = async (
+  ingredientId: number,
+  file: File,
+): Promise<IIngredient> => {
+  const imageKey = await uploadHelper.ingredientImage(ingredientId, file);
+  const updatedIngredient = await prisma.ingredient.update({
+    where: { id: ingredientId },
+    data: {
+      imageKey,
+      imageVersion: { increment: 1 },
+    },
+    ...ingredientArgs,
+  });
+  return updatedIngredient;
+};
+
+export const removeIngredientImage = async (
+  ingredientId: number,
+): Promise<IIngredient> => {
+  const updatedIngredient = await prisma.ingredient.update({
+    where: { id: ingredientId },
+    data: {
+      imageKey: null,
+      imageVersion: { increment: 1 },
+    },
+    ...ingredientArgs,
+  });
+  return updatedIngredient;
 };

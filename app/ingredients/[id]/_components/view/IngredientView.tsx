@@ -1,15 +1,17 @@
-import Image from "next/image";
 import { IIngredient } from "@/lib/prisma.args";
+import Image from "next/image";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { getImageUrl } from "@/lib/image.helper";
 import { frontendUrls } from "@/lib/urls";
-import { useRecipeStore } from "@/zustand/recipe";
 import { useAuthStore } from "@/zustand/auth.store";
+import { useRecipeStore } from "@/zustand/recipe";
+import Link from "next/link";
+import { IngredientImageAdmin } from "./img/IngredientImageAdmin";
 
 interface Props {
   ingredient: IIngredient;
@@ -28,14 +30,15 @@ const IngredientView = ({ ingredient }: Props) => {
   return (
     <Card className="max-w-md mx-auto overflow-hidden">
       {/* Image */}
-      <div className="relative w-full h-96">
+      {isAdmin && <IngredientImageAdmin ingredient={ingredient} />}
+      {/* <div className="relative h-96 w-full">
         <Image
-          src="/default-poster.jpg"
-          alt={title}
+          src={getImageUrl(ingredient.imageKey)}
+          alt={ingredient.title}
           fill
           className="object-contain"
         />
-      </div>
+      </div> */}
 
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <CardTitle className="text-xl">{title}</CardTitle>
