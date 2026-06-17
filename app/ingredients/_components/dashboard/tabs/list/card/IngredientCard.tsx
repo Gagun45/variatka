@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToggleMyIngredient } from "@/features/ingredient/hooks/useToggleMyIngredient";
 import { IIngredient } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
-import { useRecipeStore } from "@/prisma/store/recipe";
+import { useRecipeStore } from "@/zustand/recipe";
 import clsx from "clsx";
 import { CheckIcon, Heart, PlusIcon } from "lucide-react";
 import Link from "next/link";

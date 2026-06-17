@@ -1,6 +1,6 @@
 import { Accordion } from "@/components/ui/accordion";
 import { IRecipe } from "@/lib/prisma.args";
-import { useSearch } from "@/prisma/store/search";
+import { useSearch } from "@/zustand/search";
 import React from "react";
 import RecipeCard from "./recipe/RecipeCard";
 

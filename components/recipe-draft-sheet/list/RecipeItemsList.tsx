@@ -1,4 +1,4 @@
-import { IRecipeIngredientItem } from "@/prisma/store/recipe";
+import { IRecipeIngredientItem } from "@/zustand/recipe";
 import RecipeItemCard from "./item/RecipeItemCard";
 interface Props {
   items: IRecipeIngredientItem[];

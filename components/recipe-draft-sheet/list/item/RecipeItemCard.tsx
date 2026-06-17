@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { IRecipeIngredientItem, useRecipeStore } from "@/prisma/store/recipe";
+import { IRecipeIngredientItem, useRecipeStore } from "@/zustand/recipe";
 import { X } from "lucide-react";
 
 interface Props {
