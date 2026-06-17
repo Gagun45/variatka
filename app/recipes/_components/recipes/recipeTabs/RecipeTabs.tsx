@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
-import { useSearch } from "@/prisma/store/search";
+import { useSearch } from "@/zustand/search";
 import { useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/hooks/useIsAdmin";
+import { useAuthStore } from "@/zustand/auth.store";
 
 interface Props {
   categories: IRecipeCategory[];
@@ -25,7 +25,7 @@ interface Props {
 type SortType = "name-asc" | "name-desc" | "created-desc" | "created-asc";
 
 const RecipeTabs = ({ categories, recipes }: Props) => {
-  const { isAdmin } = useAuth();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const searchQuery = useSearch((s) => s.query);
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 

@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
-import { useSearch } from "@/prisma/store/search";
+import { useSearch } from "@/zustand/search";
 import { useMemo, useState } from "react";
 import { Button, buttonVariants } from "../ui/button";
 import { Card, CardContent } from "../ui/card";

@@ -3,7 +3,7 @@
 import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import RecipeForm from "@/forms/recipe/RecipeForm";
-import { useRecipeStore } from "@/prisma/store/recipe";
+import { useRecipeStore } from "@/zustand/recipe";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { List } from "lucide-react";
 import { toast } from "sonner";

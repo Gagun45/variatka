@@ -8,15 +8,15 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { frontendUrls } from "@/lib/urls";
-import { useRecipeStore } from "@/prisma/store/recipe";
-import { useAuth } from "@/hooks/useIsAdmin";
+import { useRecipeStore } from "@/zustand/recipe";
+import { useAuthStore } from "@/zustand/auth.store";
 
 interface Props {
   ingredient: IIngredient;
 }
 
 const IngredientView = ({ ingredient }: Props) => {
-  const { isAdmin } = useAuth();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const { description, title, category, isInStock, id } = ingredient;
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),

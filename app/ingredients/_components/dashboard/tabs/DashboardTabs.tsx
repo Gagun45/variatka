@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { IIngredient, IIngredientCategory } from "@/lib/prisma.args";
-import { useSearch } from "@/prisma/store/search";
+import { useSearch } from "@/zustand/search";
 import { useState } from "react";
 import FormsDialog from "./forms-dialog/FormsDialog";
 import IngredienstList from "./list/IngredienstList";
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/hooks/useIsAdmin";
+import { useAuthStore } from "@/zustand/auth.store";
 
 interface Props {
   categories: IIngredientCategory[];
@@ -24,7 +24,7 @@ interface Props {
 type SortType = "name-asc" | "name-desc" | "usage-desc" | "usage-asc";
 
 const DashboardTabs = ({ categories, ingredients }: Props) => {
-  const { isAdmin } = useAuth();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const searchQuery = useSearch((s) => s.query);
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 
