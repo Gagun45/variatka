@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "test-recipe-imgs.s3.eu-north-1.amazonaws.com",
       },
+      {
+        protocol: "https",
+        hostname: "variatka-recipe-app.s3.eu-north-1.amazonaws.com",
+      },
     ],
   },
 };
