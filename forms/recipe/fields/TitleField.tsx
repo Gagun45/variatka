@@ -1,3 +1,4 @@
+import RequiredLabelMark from "@/components/required-mark/RequiredLabelMark";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { IRecipeDto } from "@/zod/recipe.schema";
@@ -11,7 +12,10 @@ const TitleField = () => {
       control={control}
       render={({ field, fieldState }) => (
         <Field>
-          <FieldLabel>Title</FieldLabel>
+          <FieldLabel>
+            Title
+            <RequiredLabelMark />
+          </FieldLabel>
           <Input {...field} placeholder="Title" />
           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
         </Field>

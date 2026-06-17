@@ -8,6 +8,7 @@ import { IRecipeIngredient } from "@/lib/types";
 import { toast } from "sonner";
 import IngredientCombobox from "./combobox/RecipeIngredientCombobox";
 import RecipeIngredientRow from "./ing-row/RecipeInredientRow";
+import { Separator } from "@/components/ui/separator";
 
 interface Props {
   recipe: IRecipe;
@@ -45,36 +46,42 @@ const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
   return (
     <Card className={isPending ? "opacity-60 pointer-events-none" : ""}>
       <CardHeader>
-        <CardTitle>Ingredients</CardTitle>
+        <CardTitle className="text-center">Recipe ingredients</CardTitle>
       </CardHeader>
+      <Separator />
 
-      <CardContent className="space-y-2">
-        {items.map((item) => (
-          <RecipeIngredientRow
-            key={item.ingredientId}
-            item={item}
-            onRemove={removeItem}
-            onChangeAmount={updateAmount}
+      <CardContent className="space-y-4">
+        <div className="flex flex-col w-full gap-4">
+          {items.map((item) => (
+            <RecipeIngredientRow
+              key={item.ingredientId}
+              item={item}
+              onRemove={removeItem}
+              onChangeAmount={updateAmount}
+            />
+          ))}
+        </div>
+        <div>
+          <IngredientCombobox
+            ingredients={availableIngredients}
+            onSelect={addItem}
           />
-        ))}
+        </div>
+        <Separator />
+        <div className="flex flex-col w-full gap-2">
+          <Button disabled={isPending} variant="destructive" onClick={reset}>
+            Reset
+          </Button>
 
-        <IngredientCombobox
-          ingredients={availableIngredients}
-          onSelect={addItem}
-        />
+          <LoadingButton
+            disabled={isAmountNotSet}
+            onClick={onSubmit}
+            isPending={isPending}
+          >
+            {isAmountNotSet ? "Set amounts!" : "Save"}
+          </LoadingButton>
+        </div>
       </CardContent>
-
-      <Button variant="destructive" onClick={reset}>
-        Reset
-      </Button>
-
-      <LoadingButton
-        disabled={isAmountNotSet}
-        onClick={onSubmit}
-        isPending={isPending}
-      >
-        {isAmountNotSet ? "Set amounts!" : "Save"}
-      </LoadingButton>
     </Card>
   );
 };

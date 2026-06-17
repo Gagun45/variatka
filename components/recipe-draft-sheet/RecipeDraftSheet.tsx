@@ -1,6 +1,13 @@
+import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
+import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import RecipeForm from "@/forms/recipe/RecipeForm";
 import { useRecipeStore } from "@/prisma/store/recipe";
+import { IRecipeDto } from "@/zod/recipe.schema";
+import { List } from "lucide-react";
+import { toast } from "sonner";
+import Loader from "../loader/Loader";
 import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -9,29 +16,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../ui/sheet";
-import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
-import Loader from "../loader/Loader";
-import { List } from "lucide-react";
-import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
-import { IRecipeDto } from "@/zod/recipe.schema";
 import RecipeItemsList from "./list/RecipeItemsList";
-import { useState } from "react";
-import { Separator } from "../ui/separator";
-import { toast } from "sonner";
 
 const RecipeDraftSheet = () => {
   const items = useRecipeStore((s) => s.items);
   const clear = useRecipeStore((s) => s.clear);
   const { data: categories, isLoading, isError } = useRecipeCategories();
-  const [msg, setMsg] = useState("");
   const { mutate, isPending } = useCreateRecipe();
   if (isLoading) return <Loader />;
   if (isError || !categories) return <p>No recipe categories</p>;
+  const isAmountNotSet = items.some((i) => !i.amount);
   const onSubmit = (values: IRecipeDto) => {
-    setMsg("");
-    const noAmount = items.some((i) => !i.amount);
-    if (noAmount) {
-      setMsg("Some items has no amount set!");
+    if (isAmountNotSet) {
+      toast.error("Set all of the amounts");
       return;
     }
     mutate(
@@ -91,7 +88,7 @@ const RecipeDraftSheet = () => {
                 isPending={isPending}
                 onSubmit={onSubmit}
                 categories={categories}
-                message={msg}
+                isDisabled={isAmountNotSet}
               />
             </>
           )}

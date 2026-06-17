@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import RecipeIngredientsEdit from "./ing-edit/RecipeIngredientsEdit";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import DeleteRecipeButton from "./delete-btn/DeleteRecipeButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface Props {
   id: number;
@@ -69,12 +71,22 @@ const RecipeEdit = ({ id }: Props) => {
 
   return (
     <div className="space-y-12">
-      <RecipeForm
-        categories={categories}
-        isPending={isPending}
-        onSubmit={onSubmit}
-        recipe={recipe}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center">Basic information</CardTitle>
+        </CardHeader>
+        <Separator />
+
+        <CardContent>
+          <RecipeForm
+            categories={categories}
+            isPending={isPending}
+            onSubmit={onSubmit}
+            recipe={recipe}
+          />
+        </CardContent>
+      </Card>
+
       <RecipeIngredientsEdit allIngredients={ingredients} recipe={recipe} />
       <DeleteRecipeButton recipeId={recipe.id} />
     </div>

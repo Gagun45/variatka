@@ -18,6 +18,12 @@ const IngredientRecipes = ({ id }: Props) => {
   const filteredRecipes = recipes.filter((r) =>
     r.ingredients.some((i) => i.ingredientId === id),
   );
+  if (filteredRecipes.length === 0)
+    return (
+      <p className="text-sm text-muted-foreground">
+        This ingredient is not used in any recipes
+      </p>
+    );
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground">
