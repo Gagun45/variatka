@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import RecipeIngredientsEdit from "./ing-edit/RecipeIngredientsEdit";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
+import DeleteRecipeButton from "./delete-btn/DeleteRecipeButton";
 
 interface Props {
   id: number;
@@ -75,6 +76,7 @@ const RecipeEdit = ({ id }: Props) => {
         recipe={recipe}
       />
       <RecipeIngredientsEdit allIngredients={ingredients} recipe={recipe} />
+      <DeleteRecipeButton recipeId={recipe.id} />
     </div>
   );
 };

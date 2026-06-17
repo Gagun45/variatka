@@ -1,6 +1,7 @@
 import {
   createRecipe,
   createRecipeCategory,
+  deleteRecipe,
   getRecipeCategories,
   getRecipes,
   updateRecipeFields,
@@ -22,4 +23,5 @@ export const recipeService = {
     id: number,
     items: IRecipeIngredient[],
   ): Promise<IRecipe> => updateRecipeIngredients(id, items),
+  delete: (id: number): Promise<void> => deleteRecipe(id),
 };

@@ -1,14 +1,12 @@
+import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useUpdateRecipeIngredients } from "@/features/recipe/hooks/useUpdateRecipeIngredients";
+import { useRecipeIngredientsEditor } from "@/hooks/useRecipeIngredientsEditor";
+import { useSaveRecipeIngredients } from "@/hooks/useSaveRecipeIngredients";
 import { IIngredient, IRecipe } from "@/lib/prisma.args";
 import { IRecipeIngredient } from "@/lib/types";
-import { useState } from "react";
-import IngredientCombobox from "./combobox/RecipeIngredientCombobox";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { frontendUrls } from "@/lib/urls";
+import IngredientCombobox from "./combobox/RecipeIngredientCombobox";
 import RecipeIngredientRow from "./ing-row/RecipeInredientRow";
 
 interface Props {
@@ -21,55 +19,31 @@ export type IRecipeItem = IRecipeIngredient & {
 };
 
 const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
-  const { ingredients } = recipe;
-  const router = useRouter();
-  const { mutate } = useUpdateRecipeIngredients();
-  const initialItems: IRecipeItem[] = ingredients.map((ing) => ({
-    amount: ing.amount,
-    ingredientId: ing.ingredientId,
-    title: ing.ingredient.title,
-  }));
-  const [items, setItems] = useState<IRecipeItem[]>(initialItems);
-  const isAmountNotSet = items.some((i) => !i.amount);
+  const { items, updateAmount, removeItem, addItem, reset, isAmountNotSet } =
+    useRecipeIngredientsEditor(recipe);
 
-  const updateAmount = (id: number, value: string) => {
-    setItems((prev) =>
-      prev.map((i) => (i.ingredientId === id ? { ...i, amount: value } : i)),
-    );
-  };
+  const { save, isPending } = useSaveRecipeIngredients(recipe.id);
 
-  const removeItem = (id: number) => {
-    setItems((prev) => prev.filter((i) => i.ingredientId !== id));
-  };
+  const availableIngredients = allIngredients.filter(
+    (ing) => !items.some((t) => t.ingredientId === ing.id),
+  );
 
-  const onCancel = () => setItems(initialItems);
   const onSubmit = () => {
     if (isAmountNotSet) {
       toast.error("Set all of the amounts!");
       return;
     }
-    mutate(
-      {
-        recipeId: recipe.id,
-        items: items.map((i) => ({
-          amount: i.amount,
-          ingredientId: i.ingredientId,
-        })),
-      },
-      {
-        onSuccess: () => {
-          router.push(frontendUrls.recipes.view(recipe.id));
-          toast.success("Recipe edited!");
-        },
-        onError: () => {
-          toast.error("Something went wrong");
-        },
-      },
+
+    save(
+      items.map((i) => ({
+        ingredientId: i.ingredientId,
+        amount: i.amount,
+      })),
     );
   };
 
   return (
-    <Card>
+    <Card className={isPending ? "opacity-60 pointer-events-none" : ""}>
       <CardHeader>
         <CardTitle>Ingredients</CardTitle>
       </CardHeader>
@@ -83,34 +57,24 @@ const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
             onChangeAmount={updateAmount}
           />
         ))}
-        <IngredientCombobox
-          ingredients={allIngredients.filter(
-            (ing) => !items.some((t) => t.ingredientId === ing.id),
-          )}
-          onSelect={(ingredient) => {
-            setItems((prev) => {
-              if (prev.some((i) => i.ingredientId === ingredient.id)) {
-                return prev;
-              }
 
-              return [
-                ...prev,
-                {
-                  ingredientId: ingredient.id,
-                  title: ingredient.title,
-                  amount: "",
-                },
-              ];
-            });
-          }}
+        <IngredientCombobox
+          ingredients={availableIngredients}
+          onSelect={addItem}
         />
       </CardContent>
-      <Button variant={"destructive"} onClick={onCancel}>
-        Cancel
+
+      <Button variant="destructive" onClick={reset}>
+        Reset
       </Button>
-      <Button disabled={isAmountNotSet} onClick={onSubmit}>
-        Save
-      </Button>
+
+      <LoadingButton
+        disabled={isAmountNotSet}
+        onClick={onSubmit}
+        isPending={isPending}
+      >
+        {isAmountNotSet ? "Set amounts!" : "Save"}
+      </LoadingButton>
     </Card>
   );
 };

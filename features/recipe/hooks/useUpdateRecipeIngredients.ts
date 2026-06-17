@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { IRecipeIngredient } from "@/lib/types";
 import { recipeService } from "../recipe.api";
 import { recipeKeys } from "../recipe.keys";
+import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
 
 export const useUpdateRecipeIngredients = () => {
   const qclient = useQueryClient();
@@ -16,6 +17,7 @@ export const useUpdateRecipeIngredients = () => {
       recipeService.updateIngredients(recipeId, items),
     onSuccess: () => {
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
     },
   });
   return mutation;
