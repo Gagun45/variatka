@@ -17,7 +17,7 @@ const IngredientCard = ({ ingredient }: Props) => {
   const { title, isInStock, id, isAdded: isFavorited } = ingredient;
 
   const isAdded = useRecipeStore((state) =>
-    state.items.some((i) => i.ingredient.id === id),
+    state.items.some((i) => i.id === id),
   );
   const { mutate } = useToggleMyIngredient();
   const onToggle = () => {
@@ -40,7 +40,12 @@ const IngredientCard = ({ ingredient }: Props) => {
 
             <Button
               onClick={() =>
-                isAdded ? removeItem(id) : addItem({ ingredient, amount: "" })
+                isAdded
+                  ? removeItem(id)
+                  : addItem({
+                      ...ingredient,
+                      amount: "",
+                    })
               }
               variant={isAdded ? "success" : "outline"}
             >

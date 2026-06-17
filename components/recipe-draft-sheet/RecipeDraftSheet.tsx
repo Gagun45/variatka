@@ -39,7 +39,7 @@ const RecipeDraftSheet = () => {
         ...values,
         items: items.map((i) => ({
           amount: i.amount,
-          ingredientId: i.ingredient.id,
+          ingredientId: i.id,
         })),
       },
       {

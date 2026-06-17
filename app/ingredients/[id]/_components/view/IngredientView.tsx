@@ -17,7 +17,7 @@ interface Props {
 const IngredientView = ({ ingredient }: Props) => {
   const { description, title, category, isInStock, id } = ingredient;
   const isAdded = useRecipeStore((state) =>
-    state.items.some((i) => i.ingredient.id === id),
+    state.items.some((i) => i.id === id),
   );
 
   const removeItem = useRecipeStore((state) => state.removeItem);
@@ -62,7 +62,12 @@ const IngredientView = ({ ingredient }: Props) => {
         </Link>
         <Button
           onClick={() =>
-            isAdded ? removeItem(id) : addItem({ ingredient, amount: "" })
+            isAdded
+              ? removeItem(id)
+              : addItem({
+                  ...ingredient,
+                  amount: "",
+                })
           }
           variant={isAdded ? "destructive" : "success"}
         >
