@@ -1,43 +1,15 @@
-import { jwtVerify } from "jose";
-import { NextRequest, NextResponse } from "next/server";
-import { frontendUrls } from "./lib/urls";
+// middleware.ts
+import { withAuth } from "@kinde-oss/kinde-auth-nextjs/middleware";
+import { NextRequest } from "next/server";
 
-const secret = new TextEncoder().encode(process.env.AUTH_SECRET);
-
-export async function middleware(req: NextRequest) {
-  const pathname = req.nextUrl.pathname;
-
-  const isLoginPage = pathname === frontendUrls.auth;
-
-  const token = req.cookies.get("variauth")?.value;
-
-  if (!token) {
-    if (!isLoginPage) {
-      return NextResponse.redirect(new URL(frontendUrls.auth, req.url));
-    }
-
-    return NextResponse.next();
-  }
-
-  try {
-    await jwtVerify(token, secret);
-
-    if (isLoginPage) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-
-    return NextResponse.next();
-  } catch {
-    const response = isLoginPage
-      ? NextResponse.next()
-      : NextResponse.redirect(new URL(frontendUrls.auth, req.url));
-
-    response.cookies.delete("variauth");
-
-    return response;
-  }
+export default function middleware(req: NextRequest) {
+  return withAuth(req);
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  matcher: [
+    "/ingredients/:id/edit",
+    "/recipes/:id/edit",
+    "/ingredients/my-list",
+  ],
 };

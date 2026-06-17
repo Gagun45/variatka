@@ -7,12 +7,14 @@ import RecipeActions from "./actions/RecipeActions";
 import RecipeHeader from "./header/RecipeHeader";
 import RecipeIngredients from "./ings/RecipeIngredients";
 import RecipeNotes from "./notes/RecipeNotes";
+import { useAuth } from "@/hooks/useIsAdmin";
 
 interface Props {
   recipe: IRecipe;
 }
 
 const RecipeView = ({ recipe }: Props) => {
+  const { isAdmin } = useAuth();
   return (
     <Card className="mx-auto">
       <RecipeHeader recipe={recipe} />
@@ -26,9 +28,12 @@ const RecipeView = ({ recipe }: Props) => {
 
         <RecipeNotes notes={recipe.notes} />
 
-        <Separator />
-
-        <RecipeActions id={recipe.id} />
+        {isAdmin && (
+          <>
+            <Separator />
+            <RecipeActions id={recipe.id} />
+          </>
+        )}
       </CardContent>
     </Card>
   );

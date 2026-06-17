@@ -4,7 +4,7 @@ import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
 import { prisma } from "../prisma";
 import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
 import { ICreateRecipeDto, IRecipeIngredient } from "../types";
-import { IRecipeIngredientItem } from "@/prisma/store/recipe";
+import { requireAdmin } from "../auth";
 
 export const getRecipeCategories = async (): Promise<IRecipeCategory[]> => {
   const categories = await prisma.recipeCategory.findMany();
@@ -16,16 +16,8 @@ export const getRecipes = async (): Promise<IRecipe[]> => {
   return recipes;
 };
 
-export const getRecipe = async (id: number): Promise<IRecipe> => {
-  const recipe = await prisma.recipe.findUnique({
-    where: { id },
-    ...recipeArgs,
-  });
-  if (!recipe) throw new Error("Not found");
-  return recipe;
-};
-
 export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
+  await requireAdmin();
   try {
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { title: dto.title },
@@ -42,6 +34,7 @@ export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
 };
 
 export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
+  await requireAdmin();
   const { title, description, notes, items, recipeCategoryId } = dto;
   try {
     const existingCategory = await prisma.recipeCategory.findUnique({
@@ -78,31 +71,11 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
   }
 };
 
-export const getRecipesByIngredientId = async (
-  ingredientId: number,
-): Promise<IRecipe[]> => {
-  try {
-    const recipes = await prisma.recipe.findMany({
-      where: {
-        ingredients: {
-          some: {
-            ingredientId,
-          },
-        },
-      },
-      ...recipeArgs,
-    });
-    return recipes;
-  } catch (e) {
-    console.error("Database error in getRecipesByIngredientId:", e);
-    throw new Error("Something went wrong");
-  }
-};
-
 export const updateRecipeFields = async (
   id: number,
   dto: IRecipeDto,
 ): Promise<IRecipe> => {
+  await requireAdmin();
   try {
     return prisma.recipe.update({
       where: {
@@ -121,6 +94,7 @@ export const updateRecipeIngredients = async (
   recipeId: number,
   items: IRecipeIngredient[],
 ): Promise<IRecipe> => {
+  await requireAdmin();
   if (!Array.isArray(items)) {
     throw new Error("Invalid items payload");
   }
@@ -163,6 +137,7 @@ export const updateRecipeIngredients = async (
 };
 
 export const deleteRecipe = async (recipeId: number): Promise<void> => {
+  await requireAdmin();
   const recipe = await prisma.recipe.findUnique({
     where: { id: recipeId },
     select: { id: true },

@@ -11,9 +11,10 @@ import Link from "next/link";
 
 interface Props {
   ingredient: IIngredient;
+  isAdmin?: boolean;
 }
 
-const IngredientCard = ({ ingredient }: Props) => {
+const IngredientCard = ({ ingredient, isAdmin }: Props) => {
   const { title, isInStock, id, isAdded: isFavorited } = ingredient;
 
   const isAdded = useRecipeStore((state) =>
@@ -38,37 +39,41 @@ const IngredientCard = ({ ingredient }: Props) => {
               {title}
             </Link>
 
-            <Button
-              onClick={() =>
-                isAdded
-                  ? removeItem(id)
-                  : addItem({
-                      ...ingredient,
-                      amount: "",
-                    })
-              }
-              variant={isAdded ? "success" : "outline"}
-            >
-              {isAdded ? <CheckIcon /> : <PlusIcon />}
-            </Button>
+            {isAdmin && (
+              <Button
+                onClick={() =>
+                  isAdded
+                    ? removeItem(id)
+                    : addItem({
+                        ...ingredient,
+                        amount: "",
+                      })
+                }
+                variant={isAdded ? "success" : "outline"}
+              >
+                {isAdded ? <CheckIcon /> : <PlusIcon />}
+              </Button>
+            )}
           </div>
 
           <div className="mt-2 flex flex-wrap justify-between items-center gap-2">
-            <Button
-              onClick={onToggle}
-              variant="ghost"
-              size="icon"
-              className="group shrink-0 rounded-full hover:bg-red-50"
-            >
-              <Heart
-                className={clsx(
-                  "size-5 transition-all duration-200 group-hover:scale-110",
-                  isFavorited
-                    ? "fill-red-500 text-red-500"
-                    : "text-muted-foreground group-hover:text-red-500",
-                )}
-              />
-            </Button>
+            {isAdmin && (
+              <Button
+                onClick={onToggle}
+                variant="ghost"
+                size="icon"
+                className="group shrink-0 rounded-full hover:bg-red-50"
+              >
+                <Heart
+                  className={clsx(
+                    "size-5 transition-all duration-200 group-hover:scale-110",
+                    isFavorited
+                      ? "fill-red-500 text-red-500"
+                      : "text-muted-foreground group-hover:text-red-500",
+                  )}
+                />
+              </Button>
+            )}
             <Badge variant={isInStock ? "outline" : "destructive"}>
               {isInStock ? "In stock" : "Out of stock"}
             </Badge>

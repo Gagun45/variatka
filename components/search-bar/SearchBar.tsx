@@ -1,3 +1,5 @@
+"use client";
+
 import { Input } from "@/components/ui/input";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";

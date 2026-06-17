@@ -1,3 +1,5 @@
+"use client";
+
 import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import RecipeForm from "@/forms/recipe/RecipeForm";

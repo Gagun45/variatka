@@ -1,6 +1,5 @@
 "use client";
 
-import { LINKS } from "@/lib/links";
 import {
   Sidebar,
   SidebarFooter,
@@ -10,8 +9,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import SidebarLink from "./link/SidebarLink";
+import { LINKS } from "@/lib/links";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
+import SidebarLink from "./link/SidebarLink";
+import Auth from "../auth/Auth";
 
 export function AppSidebar() {
   return (
@@ -42,8 +43,9 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarGroup>
       <SidebarFooter className="mt-auto pb-4">
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-4">
           <ThemeToggle />
+          <Auth />
         </div>
       </SidebarFooter>
     </Sidebar>

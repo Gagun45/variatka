@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/hooks/useIsAdmin";
 
 interface Props {
   categories: IIngredientCategory[];
@@ -23,6 +24,7 @@ interface Props {
 type SortType = "name-asc" | "name-desc" | "usage-desc" | "usage-asc";
 
 const DashboardTabs = ({ categories, ingredients }: Props) => {
+  const { isAdmin } = useAuth();
   const searchQuery = useSearch((s) => s.query);
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 
@@ -94,7 +96,7 @@ const DashboardTabs = ({ categories, ingredients }: Props) => {
                 </Button>
               );
             })}
-            <FormsDialog categories={categories} />
+            {isAdmin && <FormsDialog categories={categories} />}
           </div>
           <Separator />
           {active && (

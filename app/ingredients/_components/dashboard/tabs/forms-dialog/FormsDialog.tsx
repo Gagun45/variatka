@@ -12,7 +12,6 @@ import NewCategoryForm from "@/forms/add-ing-category/NewIngredientCategoryForm"
 import NewIngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { IIngredientCategory } from "@/lib/prisma.args";
 import { PlusCircle } from "lucide-react";
-import React from "react";
 
 interface Props {
   categories: IIngredientCategory[];
@@ -20,6 +19,7 @@ interface Props {
 
 const FormsDialog = ({ categories }: Props) => {
   const { mutate, isPending } = useCreateIngredient();
+
   return (
     <Dialog>
       <DialogTrigger asChild>

@@ -1,6 +1,4 @@
-"use client";
-
-import RecipeDraftSheet from "../recipe-draft-sheet/RecipeDraftSheet";
+import Draft from "../recipe-draft-sheet/Draft";
 import SearchBar from "../search-bar/SearchBar";
 import { SidebarTrigger } from "../ui/sidebar";
 
@@ -22,8 +20,8 @@ const Header = () => {
         </div>
 
         {/* Right */}
-        <div className="flex items-center justify-end">
-          <RecipeDraftSheet />
+        <div className="flex items-center justify-end gap-4">
+          <Draft />
         </div>
       </div>
     </header>
