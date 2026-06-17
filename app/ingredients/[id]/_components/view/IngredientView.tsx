@@ -9,12 +9,14 @@ import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/prisma/store/recipe";
+import { useAuth } from "@/hooks/useIsAdmin";
 
 interface Props {
   ingredient: IIngredient;
 }
 
 const IngredientView = ({ ingredient }: Props) => {
+  const { isAdmin } = useAuth();
   const { description, title, category, isInStock, id } = ingredient;
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
@@ -54,25 +56,29 @@ const IngredientView = ({ ingredient }: Props) => {
         <p className="text-sm leading-relaxed text-muted-foreground">
           {description}
         </p>
-        <Link
-          className={buttonVariants({ className: "px-8 text-base!" })}
-          href={frontendUrls.ingredients.edit(id)}
-        >
-          Edit
-        </Link>
-        <Button
-          onClick={() =>
-            isAdded
-              ? removeItem(id)
-              : addItem({
-                  ...ingredient,
-                  amount: "",
-                })
-          }
-          variant={isAdded ? "destructive" : "success"}
-        >
-          {isAdded ? "Remove from recipe" : "Add to recipe"}
-        </Button>
+        {isAdmin && (
+          <>
+            <Link
+              className={buttonVariants({ className: "px-8 text-base!" })}
+              href={frontendUrls.ingredients.edit(id)}
+            >
+              Edit
+            </Link>
+            <Button
+              onClick={() =>
+                isAdded
+                  ? removeItem(id)
+                  : addItem({
+                      ...ingredient,
+                      amount: "",
+                    })
+              }
+              variant={isAdded ? "destructive" : "success"}
+            >
+              {isAdded ? "Remove from recipe" : "Add to recipe"}
+            </Button>
+          </>
+        )}
       </CardContent>
     </Card>
   );

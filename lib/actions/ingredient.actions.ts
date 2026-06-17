@@ -10,6 +10,7 @@ import {
   IIngredientCategory,
   ingredientArgs,
 } from "../prisma.args";
+import { requireAdmin } from "../auth";
 
 export const getIngredients = async (): Promise<IIngredient[]> => {
   const ingredients = await prisma.ingredient.findMany({
@@ -28,6 +29,7 @@ export const getIngredientCategories = async (): Promise<
 export const createIngredientCategory = async (
   dto: ICreateIngredientCategoryDto,
 ) => {
+  await requireAdmin();
   try {
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { title: dto.title },
@@ -46,6 +48,7 @@ export const createIngredientCategory = async (
 export const createIngredient = async (
   dto: IIngredientFormValues,
 ): Promise<IIngredient> => {
+  await requireAdmin();
   const { categoryId, title } = dto;
   try {
     const existingCategory = await prisma.ingredientCategory.findUnique({
@@ -71,25 +74,11 @@ export const createIngredient = async (
   }
 };
 
-export const getIngredient = async (id: number): Promise<IIngredient> => {
-  try {
-    const ingredient = await prisma.ingredient.findUnique({
-      where: { id },
-      ...ingredientArgs,
-    });
-    if (!ingredient) throw new Error("Ingredient not found");
-
-    return ingredient;
-  } catch (e) {
-    console.error("Database error in getIngredient:", e);
-    throw new Error("Something went wrong");
-  }
-};
-
 export const editIngredient = async (
   id: number,
   dto: IIngredientFormValues,
 ): Promise<IIngredient> => {
+  await requireAdmin();
   try {
     const updatedIngredient = await prisma.ingredient.update({
       where: { id },
@@ -104,6 +93,7 @@ export const editIngredient = async (
 };
 
 export const deleteIngredient = async (id: number) => {
+  await requireAdmin();
   const ingredient = await prisma.ingredient.findUnique({
     where: { id },
     select: {
@@ -127,6 +117,7 @@ export const toggleMyIngredient = async (
   id: number,
   isAdded: boolean,
 ): Promise<IIngredient> => {
+  await requireAdmin();
   return prisma.ingredient.update({
     where: { id },
     data: { isAdded },
