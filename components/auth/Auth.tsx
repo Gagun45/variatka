@@ -2,19 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import { LoginLink, LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { LogIn, LogOut } from "lucide-react";
+import { useAuthStore } from "@/zustand/auth.store";
 
 export default function SidebarAuthIcon() {
-  const { isAuthenticated, isLoading } = useKindeBrowserClient();
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  if (isLoading) {
-    return null;
-  }
+  if (!hydrated) return null;
 
   if (!isAuthenticated) {
     return (
-      <Button asChild variant={"secondary"}>
+      <Button asChild variant="secondary">
         <LoginLink>
           <LogIn />
         </LoginLink>
@@ -23,7 +22,7 @@ export default function SidebarAuthIcon() {
   }
 
   return (
-    <Button asChild variant={"outline"}>
+    <Button asChild variant="outline">
       <LogoutLink>
         <LogOut />
       </LogoutLink>
