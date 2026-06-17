@@ -9,12 +9,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LINKS } from "@/lib/links";
+import { ADMIN_LINKS, PUBLIC_LINKS } from "@/lib/links";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
 import SidebarLink from "./link/SidebarLink";
 import Auth from "../auth/Auth";
+import { useAuthStore } from "@/zustand/auth.store";
 
 export function AppSidebar() {
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   return (
     <Sidebar collapsible="offcanvas">
       <SidebarHeader className="h-24 p-0 flex items-center justify-center">
@@ -32,8 +34,8 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarGroup>
-        <SidebarMenu>
-          {LINKS.map(({ href, label }) => (
+        <SidebarMenu className="space-y-2">
+          {PUBLIC_LINKS.map(({ href, label }) => (
             <SidebarMenuItem key={href}>
               <SidebarMenuButton asChild>
                 <SidebarLink href={href} label={label} />
@@ -42,6 +44,19 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarGroup>
+      {isAdmin && (
+        <SidebarGroup className="mt-8">
+          <SidebarMenu className="space-y-2">
+            {ADMIN_LINKS.map(({ href, label }) => (
+              <SidebarMenuItem key={href}>
+                <SidebarMenuButton asChild>
+                  <SidebarLink href={href} label={label} />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+      )}
       <SidebarFooter className="mt-auto pb-4">
         <div className="flex justify-center gap-4">
           <ThemeToggle />

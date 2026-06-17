@@ -9,12 +9,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { getPermission, isLoading, isAuthenticated } = useKindeBrowserClient();
 
   const setIsAdmin = useAuthStore((s) => s.setIsAdmin);
+  const setIsAuthenticated = useAuthStore((s) => s.setIsAuthenticated);
   const setHydrated = useAuthStore((s) => s.setHydrated);
 
   useEffect(() => {
     if (isLoading) return;
 
+    // mark auth system ready
     setHydrated(true);
+
+    // sync auth state
+    setIsAuthenticated(!!isAuthenticated);
 
     if (!isAuthenticated) {
       setIsAdmin(false);
@@ -24,7 +29,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isAdmin = getPermission(KINDE_ROLES.admin)?.isGranted ?? false;
 
     setIsAdmin(isAdmin);
-  }, [isLoading, isAuthenticated, getPermission, setIsAdmin, setHydrated]);
+  }, [
+    isLoading,
+    isAuthenticated,
+    getPermission,
+    setIsAdmin,
+    setIsAuthenticated,
+    setHydrated,
+  ]);
 
   return children;
 }

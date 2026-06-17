@@ -12,7 +12,11 @@ const SidebarLink = ({
     if (openMobile) setOpenMobile(false);
   };
   return (
-    <Link className={className} onClick={handleClick} href={href}>
+    <Link
+      className={`${className} text-base! tracking-widest`}
+      onClick={handleClick}
+      href={href}
+    >
       {label}
     </Link>
   );

@@ -8,19 +8,19 @@ const Header = () => {
       className="h-24 sticky justify-between top-0 border-b z-20 px-4 w-full bg-sidebar flex items-center gap-4
   "
     >
-      <div className="grid h-full grid-cols-3 items-center w-full">
+      <div className="grid h-full gap-4 grid-cols-[1fr_minmax(0,600px)_1fr] items-center w-full">
         {/* Left */}
-        <div className="flex items-center">
+        <div className="flex items-center ">
           <SidebarTrigger className="dark:text-foreground" />
         </div>
 
         {/* Center */}
-        <div className="flex justify-center">
+        <div className="flex w-full justify-center ">
           <SearchBar />
         </div>
 
         {/* Right */}
-        <div className="flex items-center justify-end gap-4">
+        <div className="flex items-center justify-end ">
           <Draft />
         </div>
       </div>
