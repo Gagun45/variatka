@@ -85,8 +85,14 @@ export function IngredientImageAdmin({ ingredient }: Props) {
       />
 
       {/* IMAGE PREVIEW */}
-      <div className="relative h-96 w-full overflow-hidden rounded-md border">
-        <Image src={imageSrc} alt={title} fill className="object-contain" />
+      <div className="relative h-96 w-full max-w-96 mx-auto overflow-hidden rounded-md border">
+        <Image
+          src={imageSrc}
+          alt={title}
+          fill
+          className="object-contain"
+          sizes="384px"
+        />
 
         <div className="absolute top-2 right-2 flex gap-2">
           {file ? (
