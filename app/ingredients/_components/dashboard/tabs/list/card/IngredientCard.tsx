@@ -74,7 +74,7 @@ const IngredientCard = ({ ingredient, isAdmin }: Props) => {
                 />
               </Button>
             )}
-            <Badge variant={isInStock ? "outline" : "destructive"}>
+            <Badge variant={isInStock ? "default" : "destructive"}>
               {isInStock ? "In stock" : "Out of stock"}
             </Badge>
 

@@ -10,5 +10,10 @@ export const frontendUrls = {
     view: (id: number) => `/recipes/${id}`,
     edit: (id: number) => `/recipes/${id}/edit`,
   },
+  stuff: {
+    index: "/stuff",
+    view: (id: number) => `/stuff/${id}`,
+    edit: (id: number) => `/stuff/${id}/edit`,
+  },
   index: "/",
 };
