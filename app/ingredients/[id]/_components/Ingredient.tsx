@@ -21,12 +21,7 @@ const Ingredient = ({ id }: Props) => {
   }
 
   if (isError || !ingredients || !categories) {
-    return (
-      <StateScreen
-        title="Couldn't load this ingredient"
-        description="Please try again in a moment."
-      />
-    );
+    return <StateScreen />;
   }
   const ingredient = ingredients.find((ing) => ing.id === id);
   if (!ingredient) return <StateScreen title="Ingredient not found" />;

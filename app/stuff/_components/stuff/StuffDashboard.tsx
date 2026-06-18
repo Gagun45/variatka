@@ -25,7 +25,7 @@ const StuffDashboard = () => {
   }
 
   if (isCategoriesError || isStuffError || !categories || !stuff) {
-    return <StateScreen title="Something went wrong" />;
+    return <StateScreen />;
   }
   if (!categories.length) {
     return (

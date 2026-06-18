@@ -8,7 +8,7 @@ import RecipesList from "../../_components/recipes/recipeTabs/accordion/RecipesL
 const SavedRecipes = () => {
   const { data: recipes, isLoading, isError } = useRecipes();
   if (isLoading) return <Loader />;
-  if (isError || !recipes) return <StateScreen title="Something went wrong" />;
+  if (isError || !recipes) return <StateScreen />;
   const savedRecipes = recipes.filter((i) => i.isSaved);
   if (savedRecipes.length === 0)
     return <p className="text-center">No recipes saved yet</p>;

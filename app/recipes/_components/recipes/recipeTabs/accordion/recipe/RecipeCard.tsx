@@ -15,7 +15,7 @@ type Props = {
 const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
   const { id, title, imageKey, ingredients, isSaved } = recipe;
   const href = frontendUrls.recipes.view(id);
-  const isReadyToMake = ingredients.some((i) => !i.ingredient.isInStock);
+  const isReadyToMake = !ingredients.some((i) => !i.ingredient.isInStock);
   const onToggle = () => {
     if (onSavedToggle) {
       onSavedToggle({ recipeId: id, isSaved });

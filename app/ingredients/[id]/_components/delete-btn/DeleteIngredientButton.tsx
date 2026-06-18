@@ -37,7 +37,7 @@ const DeleteIngredientButton = ({ id }: Props) => {
   const [open, setOpen] = useState(false);
 
   if (isLoading) return <Loader />;
-  if (!recipes || isError) return <StateScreen title="Something went wrong" />;
+  if (!recipes || isError) return <StateScreen />;
 
   const isUsedInRecipes = recipes.some((r) =>
     r.ingredients.some((i) => i.ingredientId === id),

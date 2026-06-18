@@ -19,12 +19,7 @@ const Stuff = ({ id }: Props) => {
   }
 
   if (isError || !stuff || !categories) {
-    return (
-      <StateScreen
-        title="Couldn't load this stuff"
-        description="Please try again in a moment."
-      />
-    );
+    return <StateScreen />;
   }
   const singleStuff = stuff.find((s) => s.id === id);
   if (!singleStuff) return <StateScreen title="Stuff not found" />;

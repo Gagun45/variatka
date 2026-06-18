@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ingredientService } from "../ingredient.api";
 import { ingredientKeys } from "../ingredient.keys";
 import { toast } from "sonner";
+import { recipeKeys } from "@/features/recipe/recipe.keys";
 
 type TVariables = {
   isInStock: boolean;
@@ -36,6 +37,7 @@ export const useToggleIngredientStock = () => {
       toast.success(title, {
         description: `Stock changed to: ${isInStock ? "IN" : "OUT"}`,
       });
+      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
     },
     onError: (e, _variables, context) => {
       toast.error(e.message);

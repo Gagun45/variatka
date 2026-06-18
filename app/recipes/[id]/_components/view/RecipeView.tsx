@@ -22,7 +22,7 @@ const RecipeView = ({ recipe }: Props) => {
       <CardContent className="flex flex-col gap-5">
         <Separator />
 
-        <RecipeIngredients recipe={recipe} />
+        <RecipeIngredients isAdmin={isAdmin} recipe={recipe} />
 
         <Separator />
 

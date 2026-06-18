@@ -30,7 +30,7 @@ const IngredientEdit = ({ id }: Props) => {
   const { mutate, isPending } = useEditIngredient();
   if (isCategoriesLoading || isIngredientsLoading) return <Loader />;
   if (isCategoriesError || !categories || isIngredientsError || !ingredients)
-    return <StateScreen title="Something went wrong" />;
+    return <StateScreen />;
   const ingredient = ingredients.find((ing) => ing.id === id);
   if (!ingredient) return <StateScreen title="Ingredient not found" />;
   const onSubmit = (dto: IIngredientFormValues) => {

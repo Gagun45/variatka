@@ -1,18 +1,16 @@
 import StockBadge from "@/components/stock-badge/StockBadge";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   onToggle: () => void;
   isInStock: boolean;
-  className?: string;
 }
 
-const StockToggleButton = ({ onToggle, isInStock, className }: Props) => {
+const StockToggleButton = ({ onToggle, isInStock }: Props) => {
   return (
-    <StockBadge
-      className={className}
-      inInStock={isInStock}
-      onClick={onToggle}
-    />
+    <Button className="h-auto w-24" variant={"ghost"} onClick={onToggle}>
+      <StockBadge inInStock={isInStock} />
+    </Button>
   );
 };
 

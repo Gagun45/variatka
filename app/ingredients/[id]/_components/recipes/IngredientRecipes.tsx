@@ -12,7 +12,7 @@ interface Props {
 const IngredientRecipes = ({ id }: Props) => {
   const { data: recipes, isLoading, isError } = useRecipes();
   if (isLoading) return <Loader />;
-  if (isError || !recipes) return <StateScreen title="Something went wrong" />;
+  if (isError || !recipes) return <StateScreen />;
   if (recipes.length === 0)
     return <p>The ingredient is not being used in any recipe yet</p>;
   const filteredRecipes = recipes.filter((r) =>
