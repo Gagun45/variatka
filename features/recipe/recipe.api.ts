@@ -4,6 +4,7 @@ import {
   deleteRecipe,
   getRecipeCategories,
   getRecipes,
+  toggleSavedRecipe,
   updateRecipeFields,
   updateRecipeIngredients,
 } from "@/lib/actions/recipe.actions";
@@ -17,6 +18,7 @@ export const recipeService = {
   getCategories: (): Promise<IRecipeCategory[]> => getRecipeCategories(),
   createCategory: (dto: ICreateRecipeCategoryDto): Promise<IRecipeCategory> =>
     createRecipeCategory(dto),
+  toggle: (id: number, add: boolean) => toggleSavedRecipe(id, add),
 
   updateFields: (id: number, dto: IRecipeDto) => updateRecipeFields(id, dto),
   updateIngredients: (

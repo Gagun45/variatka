@@ -4,7 +4,7 @@ import { ingredientService } from "../ingredient.api";
 import { ingredientKeys } from "../ingredient.keys";
 
 type TVariables = {
-  isAdded: boolean;
+  isSaved: boolean;
   ingredientId: number;
 };
 
@@ -12,12 +12,12 @@ type TContext = {
   prevIngredients?: IIngredient[];
 };
 
-export const useToggleMyIngredient = () => {
+export const useToggleSavedIngredient = () => {
   const qclient = useQueryClient();
   const mutation = useMutation<IIngredient, Error, TVariables, TContext>({
-    mutationFn: ({ isAdded, ingredientId }) =>
-      ingredientService.toggle(ingredientId, !isAdded),
-    onMutate: async ({ ingredientId, isAdded }) => {
+    mutationFn: ({ isSaved, ingredientId }) =>
+      ingredientService.toggle(ingredientId, !isSaved),
+    onMutate: async ({ ingredientId, isSaved }) => {
       await qclient.cancelQueries({ queryKey: ingredientKeys.ingredients });
       const prevIngredients = qclient.getQueryData<IIngredient[]>(
         ingredientKeys.ingredients,
@@ -26,7 +26,7 @@ export const useToggleMyIngredient = () => {
         ingredientKeys.ingredients,
         (old = []) =>
           old.map((ing) =>
-            ing.id === ingredientId ? { ...ing, isAdded: !isAdded } : ing,
+            ing.id === ingredientId ? { ...ing, isSaved: !isSaved } : ing,
           ),
       );
       return { prevIngredients };

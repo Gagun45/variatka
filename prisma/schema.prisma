@@ -31,7 +31,7 @@ model Ingredient {
   imageKey     String?
   imageVersion Int     @default(0)
 
-  isAdded   Boolean  @default(false)
+  isSaved   Boolean  @default(false)
   isInStock Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -47,6 +47,9 @@ model Recipe {
   title       String @unique
   description String
   notes       String
+
+  inStock Int     @default(0)
+  isSaved Boolean @default(false)
 
   imageKey     String?
   imageVersion Int     @default(0)

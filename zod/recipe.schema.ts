@@ -5,6 +5,7 @@ export const recipeSchema = z.object({
   title: z.string().min(1, "Recipe title is required"),
   description: z.string(),
   notes: z.string(),
+  inStock: z.number().min(0),
   recipeCategoryId: z.number().int("Category ID must be an integer."),
 });
 

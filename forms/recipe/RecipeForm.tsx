@@ -13,6 +13,7 @@ import CategorySelectField from "./fields/CategorySelectField";
 import DescriptionField from "./fields/DescriptionField";
 import NotesField from "./fields/NotesField";
 import TitleField from "./fields/TitleField";
+import InStockField from "./fields/InStockField";
 
 interface Props {
   categories: IRecipeCategory[];
@@ -35,6 +36,7 @@ const RecipeForm = ({
     description: recipe?.description ?? "",
     notes: recipe?.notes ?? "",
     title: recipe?.title ?? "",
+    inStock: recipe?.inStock ?? 0,
   };
   const form = useForm<IRecipeDto>({
     resolver: zodResolver(schema),
@@ -54,6 +56,7 @@ const RecipeForm = ({
           <TitleField />
           <DescriptionField />
           <NotesField />
+          <InStockField />
 
           <Button
             type="reset"

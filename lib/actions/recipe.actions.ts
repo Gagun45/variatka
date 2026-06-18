@@ -34,8 +34,9 @@ export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
 };
 
 export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
+  console.log(dto);
   await requireAdmin();
-  const { title, description, notes, items, recipeCategoryId } = dto;
+  const { title, description, notes, items, recipeCategoryId, inStock } = dto;
   try {
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { id: recipeCategoryId },
@@ -55,6 +56,7 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
         notes,
         title,
         recipeCategoryId,
+        inStock,
         ingredients: {
           create: items.map((item) => ({
             amount: item.amount,
@@ -149,5 +151,17 @@ export const deleteRecipe = async (recipeId: number): Promise<void> => {
 
   await prisma.recipe.delete({
     where: { id: recipeId },
+  });
+};
+
+export const toggleSavedRecipe = async (
+  id: number,
+  isSaved: boolean,
+): Promise<IRecipe> => {
+  await requireAdmin();
+  return prisma.recipe.update({
+    where: { id },
+    data: { isSaved },
+    ...recipeArgs,
   });
 };

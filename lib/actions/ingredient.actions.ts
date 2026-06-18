@@ -114,14 +114,14 @@ export const deleteIngredient = async (id: number) => {
   });
 };
 
-export const toggleMyIngredient = async (
+export const toggleSavedIngredient = async (
   id: number,
-  isAdded: boolean,
+  isSaved: boolean,
 ): Promise<IIngredient> => {
   await requireAdmin();
   return prisma.ingredient.update({
     where: { id },
-    data: { isAdded },
+    data: { isSaved },
     ...ingredientArgs,
   });
 };
@@ -130,6 +130,7 @@ export const uploadIngredientImage = async (
   ingredientId: number,
   file: File,
 ): Promise<IIngredient> => {
+  await requireAdmin();
   const imageKey = await uploadHelper.ingredientImage(ingredientId, file);
   const updatedIngredient = await prisma.ingredient.update({
     where: { id: ingredientId },
@@ -145,6 +146,7 @@ export const uploadIngredientImage = async (
 export const removeIngredientImage = async (
   ingredientId: number,
 ): Promise<IIngredient> => {
+  await requireAdmin();
   const updatedIngredient = await prisma.ingredient.update({
     where: { id: ingredientId },
     data: {

@@ -5,20 +5,20 @@ import StateScreen from "@/components/state-screen/StateScreen";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import IngredienstList from "../../_components/dashboard/tabs/list/IngredienstList";
 
-const MyList = () => {
+const SavedIngredients = () => {
   const { data: ingredients, isLoading, isError } = useIngredients();
   if (isLoading) return <Loader />;
   if (isError || !ingredients)
     return <StateScreen title="Something went wrong" />;
-  const myIngredients = ingredients.filter((i) => i.isAdded);
-  if (myIngredients.length === 0)
+  const savedIngredients = ingredients.filter((i) => i.isSaved);
+  if (savedIngredients.length === 0)
     return <p className="text-center">No ingredients added yet</p>;
   return (
     <>
-      <p>{myIngredients.length} ingredients</p>
-      <IngredienstList ingredients={myIngredients} />
+      <p>{savedIngredients.length} ingredients</p>
+      <IngredienstList ingredients={savedIngredients} />
     </>
   );
 };
 
-export default MyList;
+export default SavedIngredients;

@@ -1,28 +1,30 @@
+import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToggleMyIngredient } from "@/features/ingredient/hooks/useToggleMyIngredient";
 import { IIngredient } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/zustand/recipe";
-import clsx from "clsx";
-import { CheckIcon, Heart, PlusIcon } from "lucide-react";
+import { CheckIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
   ingredient: IIngredient;
+  onSavedToggle?: (value: { ingredientId: number; isSaved: boolean }) => void;
   isAdmin?: boolean;
 }
 
-const IngredientCard = ({ ingredient, isAdmin }: Props) => {
-  const { title, isInStock, id, isAdded: isFavorited } = ingredient;
+const IngredientCard = ({ ingredient, isAdmin, onSavedToggle }: Props) => {
+  const { title, isInStock, id, isSaved } = ingredient;
 
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
   );
-  const { mutate } = useToggleMyIngredient();
+
   const onToggle = () => {
-    mutate({ ingredientId: id, isAdded: isFavorited });
+    if (onSavedToggle) {
+      onSavedToggle({ ingredientId: id, isSaved });
+    } else return;
   };
 
   const removeItem = useRecipeStore((state) => state.removeItem);
@@ -57,22 +59,8 @@ const IngredientCard = ({ ingredient, isAdmin }: Props) => {
           </div>
 
           <div className="mt-2 flex flex-wrap justify-between items-center gap-2">
-            {isAdmin && (
-              <Button
-                onClick={onToggle}
-                variant="ghost"
-                size="icon"
-                className="group shrink-0 rounded-full hover:bg-red-50"
-              >
-                <Heart
-                  className={clsx(
-                    "size-5 transition-all duration-200 group-hover:scale-110",
-                    isFavorited
-                      ? "fill-red-500 text-red-500"
-                      : "text-muted-foreground group-hover:text-red-500",
-                  )}
-                />
-              </Button>
+            {isAdmin && onSavedToggle && (
+              <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
             )}
             <Badge variant={isInStock ? "default" : "destructive"}>
               {isInStock ? "In stock" : "Out of stock"}

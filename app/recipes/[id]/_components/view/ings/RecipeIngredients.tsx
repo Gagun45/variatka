@@ -1,3 +1,4 @@
+import StockBadge from "@/components/stock-badge/StockBadge";
 import { IRecipe } from "@/lib/prisma.args";
 
 interface Props {
@@ -15,11 +16,14 @@ const RecipeIngredients = ({ recipe }: Props) => {
         {recipe.ingredients.map((ing) => (
           <div
             key={ing.ingredientId}
-            className="flex items-center justify-between rounded-md border px-3 py-2"
+            className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-md border px-3 py-2"
           >
-            <span className="font-medium">{ing.ingredient.title}</span>
+            <span className="font-medium truncate">{ing.ingredient.title}</span>
 
-            <span className="text-sm text-muted-foreground">{ing.amount}</span>
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              {ing.amount}
+            </span>
+            <StockBadge className="w-24" inInStock={ing.ingredient.isInStock} />
           </div>
         ))}
       </div>

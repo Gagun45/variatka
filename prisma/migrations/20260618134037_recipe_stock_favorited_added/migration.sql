@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Recipe" ADD COLUMN     "inStock" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "isFavorited" BOOLEAN NOT NULL DEFAULT false;
