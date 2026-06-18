@@ -153,3 +153,15 @@ export const deleteRecipe = async (recipeId: number): Promise<void> => {
     where: { id: recipeId },
   });
 };
+
+export const toggleSavedRecipe = async (
+  id: number,
+  isSaved: boolean,
+): Promise<IRecipe> => {
+  await requireAdmin();
+  return prisma.recipe.update({
+    where: { id },
+    data: { isSaved },
+    ...recipeArgs,
+  });
+};

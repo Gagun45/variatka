@@ -10,7 +10,7 @@ const SavedIngredients = () => {
   if (isLoading) return <Loader />;
   if (isError || !ingredients)
     return <StateScreen title="Something went wrong" />;
-  const savedIngredients = ingredients.filter((i) => i.isAdded);
+  const savedIngredients = ingredients.filter((i) => i.isSaved);
   if (savedIngredients.length === 0)
     return <p className="text-center">No ingredients added yet</p>;
   return (

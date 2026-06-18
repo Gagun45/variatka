@@ -6,7 +6,7 @@ import {
   getIngredientCategories,
   getIngredients,
   removeIngredientImage,
-  toggleMyIngredient,
+  toggleSavedIngredient,
   uploadIngredientImage,
 } from "@/lib/actions/ingredient.actions";
 import { IIngredient, IIngredientCategory } from "@/lib/prisma.args";
@@ -27,7 +27,7 @@ export const ingredientService = {
   edit: (id: number, dto: IIngredientFormValues): Promise<IIngredient> =>
     editIngredient(id, dto),
   delete: (id: number) => deleteIngredient(id),
-  toggle: (id: number, add: boolean) => toggleMyIngredient(id, add),
+  toggle: (id: number, add: boolean) => toggleSavedIngredient(id, add),
   uploadImage: (ingredientId: number, file: File) =>
     uploadIngredientImage(ingredientId, file),
   removeImage: (ingredientId: number) => removeIngredientImage(ingredientId),

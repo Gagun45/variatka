@@ -1,4 +1,6 @@
+import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
@@ -7,15 +9,23 @@ import Link from "next/link";
 
 type Props = {
   recipe: IRecipe;
+  isAdmin?: boolean;
+  onSavedToggle?: (value: { recipeId: number; isSaved: boolean }) => void;
 };
 
-const RecipeCard = ({ recipe }: Props) => {
-  const { id, title, imageKey, ingredients } = recipe;
+const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
+  const { id, title, imageKey, ingredients, isSaved } = recipe;
+  const href = frontendUrls.recipes.view(id);
   const isReadyToMake = ingredients.some((i) => !i.ingredient.isInStock);
+  const onToggle = () => {
+    if (onSavedToggle) {
+      onSavedToggle({ recipeId: id, isSaved });
+    } else return;
+  };
 
   return (
-    <Link href={frontendUrls.recipes.view(id)}>
-      <Card className="overflow-hidden cursor-pointer hover:shadow-md transition">
+    <Card className="overflow-hidden hover:shadow-md transition">
+      <Link href={href} className="flex flex-col gap-2 ">
         <div className="relative h-40 w-full bg-muted">
           {/* status badge */}
 
@@ -34,12 +44,17 @@ const RecipeCard = ({ recipe }: Props) => {
             </div>
           )}
         </div>
+      </Link>
 
-        <div className="p-3">
-          <h3 className="text-sm font-semibold line-clamp-1">{title}</h3>
-        </div>
-      </Card>
-    </Link>
+      <div className="flex justify-between px-2">
+        <Link className="hover:underline" href={href}>
+          {title}
+        </Link>
+        {isAdmin && onSavedToggle && (
+          <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
+        )}
+      </div>
+    </Card>
   );
 };
 
