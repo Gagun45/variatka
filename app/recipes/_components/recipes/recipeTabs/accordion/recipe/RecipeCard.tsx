@@ -1,6 +1,5 @@
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
@@ -46,7 +45,7 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
         </div>
       </Link>
 
-      <div className="flex justify-between px-2">
+      <div className="flex justify-between px-2 items-start">
         <Link className="hover:underline" href={href}>
           {title}
         </Link>

@@ -5,8 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { IIngredient } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/zustand/recipe";
-import clsx from "clsx";
-import { CheckIcon, Heart, PlusIcon } from "lucide-react";
+import { CheckIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
