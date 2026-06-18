@@ -85,7 +85,6 @@ const SearchBar = () => {
                   <div className="flex items-center w-full justify-between gap-2 min-w-0">
                     <p className="truncate text-sm font-medium">{item.title}</p>
                     {item.type === "recipe" && <Badge>R</Badge>}
-                    {item.type === "stuff" && <Badge>S</Badge>}
                   </div>
 
                   {/* RIGHT SIDE */}

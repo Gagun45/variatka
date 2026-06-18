@@ -12,6 +12,7 @@ import { useAuthStore } from "@/zustand/auth.store";
 import { useRecipeStore } from "@/zustand/recipe";
 import Link from "next/link";
 import { IngredientImageAdmin } from "./img/IngredientImageAdmin";
+import StockBadge from "@/components/stock-badge/StockBadge";
 
 interface Props {
   ingredient: IIngredient;
@@ -34,9 +35,7 @@ const IngredientView = ({ ingredient }: Props) => {
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <CardTitle className="text-xl">{title}</CardTitle>
 
-        <Badge variant={isInStock ? "default" : "destructive"}>
-          {isInStock ? "In stock" : "Out of stock"}
-        </Badge>
+        <StockBadge inInStock={isInStock} />
       </CardHeader>
 
       <CardContent className="flex flex-col gap-3">

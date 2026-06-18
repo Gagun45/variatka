@@ -1,23 +1,26 @@
+import StockBadge from "@/components/stock-badge/StockBadge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { IStuff } from "@/lib/prisma.args";
+import { frontendUrls } from "@/lib/urls";
+import Link from "next/link";
 
 interface Props {
   stuff: IStuff;
 }
 
 const StuffCard = ({ stuff }: Props) => {
-  const { title, inStock } = stuff;
+  const { title, inStock, id } = stuff;
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4">
-        <h3 className="font-medium">{title}</h3>
-        <Badge variant={inStock > 0 ? "default" : "destructive"}>
-          {inStock > 0 ? `In Stock (${inStock})` : "Out of Stock"}
-        </Badge>
-      </CardContent>
-    </Card>
+    <Link href={frontendUrls.stuff.view(id)}>
+      <Card>
+        <CardContent className="flex flex-col gap-4">
+          <h3 className="font-medium">{title}</h3>
+          <StockBadge inInStock={!!inStock} quantity={inStock} />
+        </CardContent>
+      </Card>
+    </Link>
   );
 };
 

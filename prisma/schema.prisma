@@ -86,6 +86,6 @@ model Stuff {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stuffCategory   StuffCategory? @relation(fields: [stuffCategoryId], references: [id])
-  stuffCategoryId Int?
+  stuffCategory   StuffCategory @relation(fields: [stuffCategoryId], references: [id])
+  stuffCategoryId Int
 }
