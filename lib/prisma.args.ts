@@ -22,7 +22,17 @@ export const ingredientArgs = {
   },
 } satisfies Omit<Prisma.IngredientFindManyArgs, "where">;
 
+export const stuffArgs = {
+  include: {
+    stuffCategory: true,
+  },
+} satisfies Omit<Prisma.StuffFindManyArgs, "where">;
+
 export type IRecipe = Prisma.RecipeGetPayload<typeof recipeArgs>;
-export type IIngredientCategory = Prisma.IngredientCategoryGetPayload<object>;
 export type IRecipeCategory = Prisma.RecipeCategoryGetPayload<object>;
+
 export type IIngredient = Prisma.IngredientGetPayload<typeof ingredientArgs>;
+export type IIngredientCategory = Prisma.IngredientCategoryGetPayload<object>;
+
+export type IStuffCategory = Prisma.StuffCategoryGetPayload<object>;
+export type IStuff = Prisma.StuffGetPayload<typeof stuffArgs>;

@@ -44,7 +44,7 @@ model Ingredient {
 
 model Recipe {
   id          Int    @id @default(autoincrement())
-  title       String
+  title       String @unique
   description String
   notes       String
 
@@ -69,4 +69,23 @@ model RecipeIngredient {
   ingredient Ingredient @relation(fields: [ingredientId], references: [id])
 
   @@id([recipeId, ingredientId])
+}
+
+model StuffCategory {
+  id    Int     @id @default(autoincrement())
+  title String  @unique
+  stuff Stuff[]
+}
+
+model Stuff {
+  id          Int     @id @default(autoincrement())
+  title       String  @unique
+  description String?
+  inStock     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stuffCategory   StuffCategory @relation(fields: [stuffCategoryId], references: [id])
+  stuffCategoryId Int
 }

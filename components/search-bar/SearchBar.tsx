@@ -3,13 +3,13 @@
 import { Input } from "@/components/ui/input";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
+import { frontendUrls } from "@/lib/urls";
 import { useSearch } from "@/zustand/search";
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Badge } from "../ui/badge";
 import { Button, buttonVariants } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { frontendUrls } from "@/lib/urls";
-import Link from "next/link";
 
 const SearchBar = () => {
   const query = useSearch((s) => s.query);
@@ -36,7 +36,7 @@ const SearchBar = () => {
       ...recipes
         .filter((r) => r.title.toLowerCase().includes(q))
         .sort((a, b) => a.title.localeCompare(b.title))
-        .slice(0, 5)
+        .slice(0, 3)
         .map((r) => ({
           id: r.id,
           title: r.title,

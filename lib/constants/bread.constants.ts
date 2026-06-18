@@ -40,4 +40,23 @@ export const BREADCRUMB_ITEMS = {
       },
     ],
   },
+  stuff: {
+    view: (id: number): IBreadcrumbItem[] => [
+      {
+        label: "Stuff",
+        href: frontendUrls.stuff.index,
+      },
+      {
+        label: `${id}`,
+        href: frontendUrls.stuff.view(id),
+      },
+    ],
+    edit: (id: number): IBreadcrumbItem[] => [
+      ...BREADCRUMB_ITEMS.stuff.view(id),
+      {
+        label: "Edit",
+        href: frontendUrls.stuff.edit(id),
+      },
+    ],
+  },
 };

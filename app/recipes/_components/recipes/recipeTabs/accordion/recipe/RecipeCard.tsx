@@ -1,10 +1,7 @@
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Card } from "@/components/ui/card";
 import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
+import Image from "next/image";
 import Link from "next/link";
 
 type Props = {
@@ -12,42 +9,26 @@ type Props = {
 };
 
 const RecipeCard = ({ recipe }: Props) => {
-  const { id, description, title, notes, ingredients } = recipe;
+  const { id, title, imageKey } = recipe;
+
   return (
-    <AccordionItem
-      value={id.toString()}
-      className="border rounded-md px-4 bg-card py-2"
-    >
-      <AccordionTrigger className="py-3 hover:no-underline">
-        <div className="flex flex-col items-start text-left">
-          <span className="text-sm font-semibold">{title}</span>
-
-          <span className="text-xs text-muted-foreground">{description}</span>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent className="pb-4 space-y-3">
-        <div className="flex flex-col gap-2">
-          {ingredients.map((item) => (
-            <div
-              key={item.ingredient.id}
-              className="flex items-center bg-muted justify-between rounded-md border px-3 py-2"
-            >
-              <span className="text-sm font-medium">
-                {item.ingredient.title}
-              </span>
-
-              <span className="text-sm font-semibold text-muted-foreground">
-                {item.amount}
-              </span>
+    <Link href={frontendUrls.recipes.view(id)}>
+      <Card className="overflow-hidden cursor-pointer hover:shadow-md transition">
+        <div className="relative h-40 w-full bg-muted">
+          {imageKey ? (
+            <Image src={imageKey} alt={title} fill className="object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+              No image
             </div>
-          ))}
+          )}
         </div>
-        {notes && (
-          <p className="text-xs text-muted-foreground italic">{notes}</p>
-        )}
-        <Link href={frontendUrls.recipes.view(id)}>Go to</Link>
-      </AccordionContent>
-    </AccordionItem>
+
+        <div className="p-3">
+          <h3 className="text-sm font-semibold line-clamp-1">{title}</h3>
+        </div>
+      </Card>
+    </Link>
   );
 };
 
