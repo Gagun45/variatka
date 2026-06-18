@@ -32,7 +32,7 @@ const RecipeDashboard = () => {
   }
 
   if (isCategoriesError || isRecipesError || !categories || !recipes) {
-    return <StateScreen title="Something went wrong" />;
+    return <StateScreen />;
   }
   if (!categories.length) {
     return (

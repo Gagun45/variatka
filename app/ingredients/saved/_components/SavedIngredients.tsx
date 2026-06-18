@@ -8,8 +8,7 @@ import IngredienstList from "../../_components/dashboard/tabs/list/IngredienstLi
 const SavedIngredients = () => {
   const { data: ingredients, isLoading, isError } = useIngredients();
   if (isLoading) return <Loader />;
-  if (isError || !ingredients)
-    return <StateScreen title="Something went wrong" />;
+  if (isError || !ingredients) return <StateScreen />;
   const savedIngredients = ingredients.filter((i) => i.isSaved);
   if (savedIngredients.length === 0)
     return <p className="text-center">No ingredients added yet</p>;

@@ -73,7 +73,6 @@ const IngredientCard = ({
 
             {isAdmin && (
               <StockToggleButton
-                className="cursor-pointer"
                 isInStock={isInStock}
                 onToggle={onToggleStock}
               />

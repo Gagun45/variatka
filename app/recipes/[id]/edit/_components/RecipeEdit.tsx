@@ -47,7 +47,7 @@ const RecipeEdit = ({ id }: Props) => {
     !ingredients ||
     isIngredientsError
   )
-    return <StateScreen title="Something went wrong" />;
+    return <StateScreen />;
   const recipe = recipes.find((r) => r.id === id);
   if (!recipe) return <StateScreen title="Recipe not found" />;
   const onSubmit = (dto: IRecipeDto) => {
