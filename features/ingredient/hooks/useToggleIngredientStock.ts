@@ -1,8 +1,8 @@
-import { IIngredient } from "@/lib/prisma.args";
+import { IIngredient, IRecipe } from "@/lib/prisma.args";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ingredientService } from "../ingredient.api";
 import { ingredientKeys } from "../ingredient.keys";
-import { toast } from "sonner";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 
 type TVariables = {
@@ -12,6 +12,7 @@ type TVariables = {
 
 type TContext = {
   prevIngredients?: IIngredient[];
+  prevRecipes?: IRecipe[];
 };
 
 export const useToggleIngredientStock = () => {
@@ -21,9 +22,11 @@ export const useToggleIngredientStock = () => {
       ingredientService.toggleStock(ingredientId, !isInStock),
     onMutate: async ({ ingredientId, isInStock }) => {
       await qclient.cancelQueries({ queryKey: ingredientKeys.ingredients });
+      await qclient.cancelQueries({ queryKey: recipeKeys.recipes });
       const prevIngredients = qclient.getQueryData<IIngredient[]>(
         ingredientKeys.ingredients,
       );
+      const prevRecipes = qclient.getQueryData<IRecipe[]>(recipeKeys.recipes);
       qclient.setQueryData<IIngredient[]>(
         ingredientKeys.ingredients,
         (old = []) =>
@@ -31,13 +34,29 @@ export const useToggleIngredientStock = () => {
             ing.id === ingredientId ? { ...ing, isInStock: !isInStock } : ing,
           ),
       );
-      return { prevIngredients };
+      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
+        old.map((recipe) => ({
+          ...recipe,
+          ingredients: recipe.ingredients.map((ing) =>
+            ing.ingredientId === ingredientId
+              ? {
+                  ...ing,
+                  ingredient: { ...ing.ingredient, isInStock: !isInStock },
+                }
+              : ing,
+          ),
+        })),
+      );
+      return { prevIngredients, prevRecipes };
+    },
+    onSettled: () => {
+      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
     },
     onSuccess: ({ title, isInStock }) => {
       toast.success(title, {
         description: `Stock changed to: ${isInStock ? "IN" : "OUT"}`,
       });
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
     },
     onError: (e, _variables, context) => {
       toast.error(e.message);
@@ -46,6 +65,9 @@ export const useToggleIngredientStock = () => {
           ingredientKeys.ingredients,
           context.prevIngredients,
         );
+      }
+      if (context?.prevRecipes) {
+        qclient.setQueryData(recipeKeys.recipes, context.prevRecipes);
       }
     },
   });
