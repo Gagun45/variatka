@@ -9,6 +9,7 @@ import { useUploadIngredientImage } from "@/features/ingredient/hooks/useUploadI
 import { IIngredient } from "@/lib/prisma.args";
 import { useRemoveIngredientImage } from "@/features/ingredient/hooks/useRemoveIngredientImage";
 import { toast } from "sonner";
+import { Check, Pencil, Trash2, X } from "lucide-react";
 
 type Props = {
   ingredient: IIngredient;
@@ -96,44 +97,48 @@ export function IngredientImageAdmin({ ingredient }: Props) {
       />
 
       {/* IMAGE PREVIEW */}
-      <div className="relative h-96 w-full border">
+      <div className="relative h-96 w-full overflow-hidden rounded-md border">
         <Image src={imageSrc} alt={title} fill className="object-contain" />
-      </div>
 
-      {/* ACTION BUTTONS */}
-      <div className="flex gap-2 justify-center">
-        {/* always available */}
-        <Button variant="outline" onClick={openFilePicker} disabled={isPending}>
-          Change image
-        </Button>
+        <div className="absolute top-2 right-2 flex gap-2">
+          {file ? (
+            <>
+              <Button
+                size="icon"
+                variant="destructive"
+                onClick={handleCancel}
+                disabled={isPending}
+              >
+                <X />
+              </Button>
+              <Button size="icon" onClick={handleSave} disabled={isPending}>
+                <Check />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="icon"
+                variant="secondary"
+                onClick={openFilePicker}
+                disabled={isPending}
+              >
+                <Pencil />
+              </Button>
 
-        {/* remove only when image exists and NOT editing */}
-        {imageKey && !file && (
-          <Button
-            variant="destructive"
-            onClick={handleRemove}
-            disabled={isPending}
-          >
-            Remove image
-          </Button>
-        )}
-
-        {/* editing state */}
-        {file && (
-          <>
-            <Button onClick={handleSave} disabled={isPending}>
-              Save
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-          </>
-        )}
+              {imageKey && (
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  onClick={handleRemove}
+                  disabled={isPending}
+                >
+                  <Trash2 />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import RecipesAccordion from "@/app/recipes/_components/recipes/recipeTabs/accordion/RecipesAccordion";
+import RecipesList from "@/app/recipes/_components/recipes/recipeTabs/accordion/RecipesList";
 import { useSimilarRecipes } from "@/hooks/useSimilarRecipes";
 import { IRecipe } from "@/lib/prisma.args";
 
@@ -13,7 +13,7 @@ const SimilarRecipes = ({ allRecipes, recipe }: Props) => {
   return (
     <div className="flex flex-col gap-3">
       <p>Similar recipes</p>
-      <RecipesAccordion recipes={similarRecipes} />
+      <RecipesList recipes={similarRecipes} />
     </div>
   );
 };

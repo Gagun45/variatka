@@ -29,16 +29,7 @@ const IngredientView = ({ ingredient }: Props) => {
 
   return (
     <Card className="max-w-md mx-auto overflow-hidden">
-      {/* Image */}
       {isAdmin && <IngredientImageAdmin ingredient={ingredient} />}
-      {/* <div className="relative h-96 w-full">
-        <Image
-          src={getImageUrl(ingredient.imageKey)}
-          alt={ingredient.title}
-          fill
-          className="object-contain"
-        />
-      </div> */}
 
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <CardTitle className="text-xl">{title}</CardTitle>
@@ -76,7 +67,7 @@ const IngredientView = ({ ingredient }: Props) => {
                       amount: "",
                     })
               }
-              variant={isAdded ? "destructive" : "success"}
+              variant={isAdded ? "outline" : "secondary"}
             >
               {isAdded ? "Remove from recipe" : "Add to recipe"}
             </Button>

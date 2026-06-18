@@ -5,9 +5,6 @@ import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
 import { useSearch } from "@/zustand/search";
 import { useState } from "react";
 
-import { Separator } from "@/components/ui/separator";
-import RecipesAccordion from "./accordion/RecipesAccordion";
-import NewRecipeDialog from "./new-recipe-form-dialog/NewRecipeDialog";
 import {
   Select,
   SelectContent,
@@ -15,7 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/zustand/auth.store";
+import RecipesList from "./accordion/RecipesList";
+import NewRecipeDialog from "./new-recipe-form-dialog/NewRecipeDialog";
 
 interface Props {
   categories: IRecipeCategory[];
@@ -64,7 +64,7 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
             <span className="italic">{searchQuery}</span> in title
           </p>
           {searchedRecipes.length !== 0 && (
-            <RecipesAccordion recipes={searchedRecipes} />
+            <RecipesList recipes={searchedRecipes} />
           )}
         </>
       ) : (
@@ -110,7 +110,7 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
                   </SelectContent>
                 </Select>
               </div>
-              <RecipesAccordion recipes={filteredRecipes} />
+              <RecipesList recipes={filteredRecipes} />
             </>
           )}
         </>
