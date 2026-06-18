@@ -24,10 +24,6 @@ const NewIngredientCategoryForm = () => {
     mutate(values, {
       onSuccess: () => {
         reset();
-        toast.success("Category created successfully!");
-      },
-      onError: (error) => {
-        toast.error(error.message);
       },
     });
   };

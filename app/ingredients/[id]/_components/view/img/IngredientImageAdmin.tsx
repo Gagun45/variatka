@@ -4,11 +4,10 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "@/lib/image.helper";
-import { useUploadIngredientImage } from "@/features/ingredient/hooks/useUploadIngredientImage";
-import { IIngredient } from "@/lib/prisma.args";
 import { useRemoveIngredientImage } from "@/features/ingredient/hooks/useRemoveIngredientImage";
-import { toast } from "sonner";
+import { useUploadIngredientImage } from "@/features/ingredient/hooks/useUploadIngredientImage";
+import { getImageUrl } from "@/lib/image.helper";
+import { IIngredient } from "@/lib/prisma.args";
 import { Check, Pencil, Trash2, X } from "lucide-react";
 
 type Props = {
@@ -43,14 +42,7 @@ export function IngredientImageAdmin({ ingredient }: Props) {
     inputRef.current?.click();
   };
   const handleRemove = () => {
-    removeMutation.mutate(ingredient.id, {
-      onSuccess: () => {
-        toast.success("Image removed!");
-      },
-      onError: () => {
-        toast.error("Something went wrong");
-      },
-    });
+    removeMutation.mutate(ingredient.id);
   };
 
   const handleCancel = () => {
@@ -67,11 +59,7 @@ export function IngredientImageAdmin({ ingredient }: Props) {
       },
       {
         onSuccess: () => {
-          toast.success("Upload success!");
           setFile(null);
-        },
-        onError: () => {
-          toast.error("Something went wrong");
         },
       },
     );

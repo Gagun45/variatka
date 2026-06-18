@@ -2,6 +2,9 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { useUpdateRecipeFields } from "@/features/recipe/hooks/useUpdateRecipeFields";
@@ -9,12 +12,8 @@ import RecipeForm from "@/forms/recipe/RecipeForm";
 import { frontendUrls } from "@/lib/urls";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import RecipeIngredientsEdit from "./ing-edit/RecipeIngredientsEdit";
-import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import DeleteRecipeButton from "./delete-btn/DeleteRecipeButton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import RecipeIngredientsEdit from "./ing-edit/RecipeIngredientsEdit";
 
 interface Props {
   id: number;
@@ -60,10 +59,6 @@ const RecipeEdit = ({ id }: Props) => {
       {
         onSuccess: () => {
           router.push(frontendUrls.recipes.view(id));
-          toast.success("Recipe edited successfully!");
-        },
-        onError: (e) => {
-          toast.error(e.message);
         },
       },
     );

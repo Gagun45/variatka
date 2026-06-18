@@ -1,7 +1,6 @@
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useUpdateRecipeIngredients } from "@/features/recipe/hooks/useUpdateRecipeIngredients";
 import { frontendUrls } from "@/lib/urls";
+import { useRouter } from "next/navigation";
 
 export const useSaveRecipeIngredients = (recipeId: number) => {
   const router = useRouter();
@@ -13,9 +12,7 @@ export const useSaveRecipeIngredients = (recipeId: number) => {
       {
         onSuccess: () => {
           router.push(frontendUrls.recipes.view(recipeId));
-          toast.success("Recipe edited!");
         },
-        onError: () => toast.error("Something went wrong"),
       },
     );
   };

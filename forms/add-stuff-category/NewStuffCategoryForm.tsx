@@ -3,12 +3,10 @@
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { Field, FieldError, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useCreateIngredientCategory } from "@/features/ingredient/hooks/useCreateIngredientCategory";
 import { useCreateStuffCategory } from "@/features/stuff/hooks/useCreateStuffCategory";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import z from "zod";
 
 const NewStuffCategoryForm = () => {
@@ -25,10 +23,6 @@ const NewStuffCategoryForm = () => {
     mutate(values, {
       onSuccess: () => {
         reset();
-        toast.success("Category created successfully!");
-      },
-      onError: (error) => {
-        toast.error(error.message);
       },
     });
   };

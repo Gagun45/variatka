@@ -48,12 +48,8 @@ const DeleteIngredientButton = ({ id }: Props) => {
 
     mutate(id, {
       onSuccess: () => {
-        toast.success("Ingredient deleted!");
         setOpen(false);
         router.push(frontendUrls.ingredients.index);
-      },
-      onError: (e: Error) => {
-        toast.error(e.message);
       },
     });
   };

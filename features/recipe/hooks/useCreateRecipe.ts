@@ -5,6 +5,7 @@ import { ICreateRecipeDto } from "@/lib/types";
 import { recipeService } from "../recipe.api";
 import { recipeKeys } from "../recipe.keys";
 import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
+import { toast } from "sonner";
 
 export const useCreateRecipe = () => {
   const qclient = useQueryClient();
@@ -13,6 +14,10 @@ export const useCreateRecipe = () => {
     onSuccess: () => {
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
       qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      toast.success("Recipe created!");
+    },
+    onError: (e) => {
+      toast.error(e.message);
     },
   });
   return mutation;

@@ -3,6 +3,7 @@ import { ICreateIngredientCategoryDto } from "@/zod/ingredient.schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ingredientService } from "../ingredient.api";
 import { ingredientKeys } from "../ingredient.keys";
+import { toast } from "sonner";
 
 export const useCreateIngredientCategory = () => {
   const qclient = useQueryClient();
@@ -14,6 +15,10 @@ export const useCreateIngredientCategory = () => {
     mutationFn: ingredientService.createCategory,
     onSuccess: () => {
       qclient.invalidateQueries({ queryKey: ingredientKeys.categories });
+      toast.success("Category created successfully!");
+    },
+    onError: (e) => {
+      toast.error(e.message);
     },
   });
   return mutation;

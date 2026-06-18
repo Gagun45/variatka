@@ -7,7 +7,6 @@ import { useCreateRecipeCategory } from "@/features/recipe/hooks/useCreateRecipe
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import z from "zod";
 
 const NewRecipeCategoryForm = () => {
@@ -24,10 +23,6 @@ const NewRecipeCategoryForm = () => {
     mutate(values, {
       onSuccess: () => {
         reset();
-        toast.success("Category created successfully!");
-      },
-      onError: (error) => {
-        toast.error(error.message);
       },
     });
   };
