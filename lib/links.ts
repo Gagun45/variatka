@@ -11,5 +11,4 @@ export const PUBLIC_LINKS: ILink[] = [
 ];
 export const ADMIN_LINKS: ILink[] = [
   { href: frontendUrls.ingredients.myList, label: "My list" },
-  { href: frontendUrls.stuff.index, label: "Stuff" },
 ];

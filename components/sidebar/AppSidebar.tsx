@@ -14,6 +14,7 @@ import ThemeToggle from "../theme-toggle/ThemeToggle";
 import SidebarLink from "./link/SidebarLink";
 import Auth from "../auth/Auth";
 import { useAuthStore } from "@/zustand/auth.store";
+import { frontendUrls } from "@/lib/urls";
 
 export function AppSidebar() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -42,6 +43,14 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+
+          {isAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <SidebarLink href={frontendUrls.stuff.index} label={"Stuff"} />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarGroup>
       {isAdmin && (
