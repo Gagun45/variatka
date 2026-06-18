@@ -3,7 +3,7 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
-import RecipesList from "../../_components/recipes/recipeTabs/accordion/RecipesList";
+import RecipesList from "../../_components/recipes/recipeTabs/recipes-list/RecipesList";
 
 const SavedRecipes = () => {
   const { data: recipes, isLoading, isError } = useRecipes();

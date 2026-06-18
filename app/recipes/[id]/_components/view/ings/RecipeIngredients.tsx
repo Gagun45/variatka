@@ -10,6 +10,15 @@ interface Props {
 
 const RecipeIngredients = ({ recipe, isAdmin }: Props) => {
   const { mutate } = useToggleIngredientStock();
+  const handleStockToggle = ({
+    ingredientId,
+    isInStock,
+  }: {
+    ingredientId: number;
+    isInStock: boolean;
+  }) => {
+    mutate({ ingredientId, isInStock });
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -18,36 +27,31 @@ const RecipeIngredients = ({ recipe, isAdmin }: Props) => {
       </h3>
 
       <div className="flex flex-col gap-2">
-        {recipe.ingredients.map((ing) => {
-          const onStockToggle = () => {
-            mutate({
-              ingredientId: ing.ingredientId,
-              isInStock: ing.ingredient.isInStock,
-            });
-          };
-          return (
-            <div
-              key={ing.ingredientId}
-              className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-md border px-3 py-2"
-            >
-              <span className="font-medium truncate">
-                {ing.ingredient.title}
-              </span>
+        {recipe.ingredients.map((ing) => (
+          <div
+            key={ing.ingredientId}
+            className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-md border px-3 py-2"
+          >
+            <span className="font-medium truncate">{ing.ingredient.title}</span>
 
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {ing.amount}
-              </span>
-              {isAdmin ? (
-                <StockToggleButton
-                  onToggle={onStockToggle}
-                  isInStock={ing.ingredient.isInStock}
-                />
-              ) : (
-                <StockBadge inInStock={ing.ingredient.isInStock} />
-              )}
-            </div>
-          );
-        })}
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              {ing.amount}
+            </span>
+            {isAdmin ? (
+              <StockToggleButton
+                onToggle={() =>
+                  handleStockToggle({
+                    ingredientId: ing.ingredientId,
+                    isInStock: ing.ingredient.isInStock,
+                  })
+                }
+                isInStock={ing.ingredient.isInStock}
+              />
+            ) : (
+              <StockBadge inInStock={ing.ingredient.isInStock} />
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
