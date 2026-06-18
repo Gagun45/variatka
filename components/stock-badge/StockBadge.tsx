@@ -4,12 +4,14 @@ interface Props {
   inInStock: boolean;
   quantity?: number;
   className?: string;
+  onClick?: () => void;
 }
 
-const StockBadge = ({ inInStock, quantity, className }: Props) => {
+const StockBadge = ({ inInStock, quantity, className, onClick }: Props) => {
   return (
     <Badge
-      className={className}
+      onClick={onClick}
+      className={`${className} w-24`}
       variant={inInStock ? "default" : "destructive"}
     >
       {inInStock

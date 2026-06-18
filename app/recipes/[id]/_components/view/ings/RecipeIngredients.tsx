@@ -23,7 +23,7 @@ const RecipeIngredients = ({ recipe }: Props) => {
             <span className="text-sm text-muted-foreground whitespace-nowrap">
               {ing.amount}
             </span>
-            <StockBadge className="w-24" inInStock={ing.ingredient.isInStock} />
+            <StockBadge inInStock={ing.ingredient.isInStock} />
           </div>
         ))}
       </div>

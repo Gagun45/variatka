@@ -2,6 +2,7 @@ import { IRecipe } from "@/lib/prisma.args";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { recipeService } from "../recipe.api";
 import { recipeKeys } from "../recipe.keys";
+import { toast } from "sonner";
 
 type TVariables = {
   isSaved: boolean;
@@ -27,7 +28,8 @@ export const useToggleSavedRecipe = () => {
       );
       return { prevRecipes };
     },
-    onError: (_error, _variables, context) => {
+    onError: (e, _variables, context) => {
+      toast.error(e.message);
       if (context?.prevRecipes) {
         qclient.setQueryData(recipeKeys.recipes, context.prevRecipes);
       }

@@ -230,3 +230,28 @@ export const removeIngredientImage = async (
     throw new Error("Something went wrong");
   }
 };
+
+export const toggleIngredientInStockValue = async (
+  id: number,
+  isInStock: boolean,
+): Promise<IIngredient> => {
+  try {
+    await requireAdmin();
+    const existingIngredient = await prisma.ingredient.findUnique({
+      where: { id },
+    });
+    if (!existingIngredient) throw new AppError("Ingredient not found");
+    return prisma.ingredient.update({
+      where: { id },
+      data: { isInStock },
+      ...ingredientArgs,
+    });
+  } catch (e) {
+    console.error("Database error in toggleIngredientInStockValue:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
+};
