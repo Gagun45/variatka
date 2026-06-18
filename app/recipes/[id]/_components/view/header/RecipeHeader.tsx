@@ -1,13 +1,14 @@
 import { IRecipe } from "@/lib/prisma.args";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import StockBadge from "@/components/stock-badge/StockBadge";
 
 interface Props {
   recipe: IRecipe;
 }
 
 const RecipeHeader = ({ recipe }: Props) => {
-  const { title, recipeCategory, description } = recipe;
+  const { title, recipeCategory, description, inStock } = recipe;
 
   return (
     <CardHeader className="space-y-3">
@@ -16,6 +17,7 @@ const RecipeHeader = ({ recipe }: Props) => {
 
         <Badge variant="secondary">{recipeCategory.title}</Badge>
       </div>
+      <StockBadge inInStock={!!inStock} quantity={inStock} />
 
       <p className="text-sm text-muted-foreground">{description}</p>
     </CardHeader>

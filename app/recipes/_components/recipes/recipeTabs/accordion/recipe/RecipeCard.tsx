@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
@@ -9,12 +10,22 @@ type Props = {
 };
 
 const RecipeCard = ({ recipe }: Props) => {
-  const { id, title, imageKey } = recipe;
+  const { id, title, imageKey, ingredients } = recipe;
+  const isReadyToMake = ingredients.some((i) => !i.ingredient.isInStock);
 
   return (
     <Link href={frontendUrls.recipes.view(id)}>
       <Card className="overflow-hidden cursor-pointer hover:shadow-md transition">
         <div className="relative h-40 w-full bg-muted">
+          {/* status badge */}
+
+          <Badge
+            variant={isReadyToMake ? "default" : "outline"}
+            className="absolute right-2 top-2 z-10"
+          >
+            {isReadyToMake ? "Ready to cook" : "Missing ingredients"}
+          </Badge>
+
           {imageKey ? (
             <Image src={imageKey} alt={title} fill className="object-cover" />
           ) : (

@@ -34,8 +34,9 @@ export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
 };
 
 export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
+  console.log(dto);
   await requireAdmin();
-  const { title, description, notes, items, recipeCategoryId } = dto;
+  const { title, description, notes, items, recipeCategoryId, inStock } = dto;
   try {
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { id: recipeCategoryId },
@@ -55,6 +56,7 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
         notes,
         title,
         recipeCategoryId,
+        inStock,
         ingredients: {
           create: items.map((item) => ({
             amount: item.amount,

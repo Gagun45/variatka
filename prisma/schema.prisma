@@ -48,6 +48,9 @@ model Recipe {
   description String
   notes       String
 
+  inStock     Int     @default(0)
+  isFavorited Boolean @default(false)
+
   imageKey     String?
   imageVersion Int     @default(0)
 
