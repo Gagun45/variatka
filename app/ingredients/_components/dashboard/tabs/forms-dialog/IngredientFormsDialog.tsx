@@ -30,7 +30,7 @@ const IngredientFormsDialog = ({ categories }: Props) => {
     useCreateIngredientCategory();
 
   const [isOpen, setIsOpen] = useState(false);
-  const onCreateCategory = (dto: ICreateIngredientCategoryDto) => {
+  const onCategoryCreate = (dto: ICreateIngredientCategoryDto) => {
     catMutate(dto, {
       onSuccess: () => {
         setIsOpen(false);
@@ -68,7 +68,7 @@ const IngredientFormsDialog = ({ categories }: Props) => {
           {/* Category form */}
           <TabsContent value="category" className="mt-4">
             <NewCategoryForm
-              onCreate={onCreateCategory}
+              onCreate={onCategoryCreate}
               isPending={catIsPending}
             />
           </TabsContent>

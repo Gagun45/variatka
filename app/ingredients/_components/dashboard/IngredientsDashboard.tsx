@@ -23,7 +23,7 @@ const IngredientsDashboard = () => {
   } = useIngredients();
 
   const { mutate, isPending } = useCreateIngredientCategory();
-  const onCreateCategory = (dto: ICreateIngredientCategoryDto) => {
+  const onCategoryCreate = (dto: ICreateIngredientCategoryDto) => {
     mutate(dto);
   };
 
@@ -39,7 +39,7 @@ const IngredientsDashboard = () => {
       <div className="space-y-6 text-center mx-auto">
         <h1>No categories yet</h1>
         <p>Create your first category to get started.</p>
-        <NewCategoryForm isPending={isPending} onCreate={onCreateCategory} />
+        <NewCategoryForm isPending={isPending} onCreate={onCategoryCreate} />
       </div>
     );
   }

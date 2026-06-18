@@ -2,6 +2,16 @@ import PageBreadcrumb from "@/components/bread/PageBreadcrumb";
 
 import { BREADCRUMB_ITEMS } from "@/lib/constants/bread.constants";
 import Stuff from "./_components/Stuff";
+import { Metadata } from "next";
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const stuffId = (await params).id;
+
+  return {
+    title: `Stuff ${stuffId}`,
+    description: `Details for stuff item ${stuffId}`,
+  };
+}
 
 interface Props {
   params: Promise<{ id: string }>;

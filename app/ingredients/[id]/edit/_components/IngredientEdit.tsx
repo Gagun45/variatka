@@ -54,7 +54,7 @@ const IngredientEdit = ({ id }: Props) => {
         <IngredientForm
           isPending={isPending}
           categories={categories}
-          onClick={onSubmit}
+          onCreate={onSubmit}
           ingredient={ingredient}
         />
       </div>

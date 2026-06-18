@@ -15,7 +15,7 @@ import { useState } from "react";
 const RecipeFormsDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { mutate, isPending } = useCreateRecipeCategory();
-  const onCreateCategory = (dto: ICreateRecipeCategoryDto) => {
+  const onCategoryCreate = (dto: ICreateRecipeCategoryDto) => {
     mutate(dto, {
       onSuccess: () => {
         setIsOpen(false);
@@ -37,7 +37,7 @@ const RecipeFormsDialog = () => {
           </DialogTitle>
         </DialogHeader>
         <NewRecipeCategoryForm
-          onCreate={onCreateCategory}
+          onCreate={onCategoryCreate}
           isPending={isPending}
         />
       </DialogContent>
