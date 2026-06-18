@@ -15,7 +15,11 @@ import { ICreateStuffDto } from "@/zod/stuff.schema";
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
 
-const StuffFormsDialog = () => {
+interface Props {
+  activeCategoryId?: number;
+}
+
+const StuffFormsDialog = ({ activeCategoryId }: Props) => {
   const { data: categories = [] } = useStuffCategories();
   const { mutate, isPending } = useCreateStuff();
   const [isOpen, setIsOpen] = useState(false);
@@ -55,6 +59,7 @@ const StuffFormsDialog = () => {
           {/* Ingredient form */}
           <TabsContent value="stuff" className="mt-4">
             <NewStuffForm
+              initialCategoryId={activeCategoryId}
               categories={categories}
               isPending={isPending}
               onClick={onNewStuffCreate}

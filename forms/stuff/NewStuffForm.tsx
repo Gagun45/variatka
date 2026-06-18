@@ -20,10 +20,17 @@ interface Props {
   onClick: (dto: ICreateStuffDto) => void;
   stuff?: IStuff;
   isPending: boolean;
+  initialCategoryId?: number;
 }
 
-const NewStuffForm = ({ categories, onClick, stuff, isPending }: Props) => {
-  const { id } = categories[0];
+const NewStuffForm = ({
+  categories,
+  onClick,
+  stuff,
+  isPending,
+  initialCategoryId,
+}: Props) => {
+  const id = initialCategoryId ?? categories[0].id;
 
   const schema = zodSchemas.stuff.create;
   const defaultValues: ICreateStuffDto = {

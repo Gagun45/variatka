@@ -21,9 +21,10 @@ import { useState } from "react";
 
 interface Props {
   categories: IIngredientCategory[];
+  activeCategoryId?: number;
 }
 
-const IngredientFormsDialog = ({ categories }: Props) => {
+const IngredientFormsDialog = ({ categories, activeCategoryId }: Props) => {
   const { mutate, isPending } = useCreateIngredient();
 
   const { mutate: catMutate, isPending: catIsPending } =
@@ -76,6 +77,7 @@ const IngredientFormsDialog = ({ categories }: Props) => {
           {/* Ingredient form */}
           <TabsContent value="ingredient" className="mt-4">
             <NewIngredientForm
+              initialCategoryId={activeCategoryId}
               isPending={isPending}
               onCreate={onCreateIngredient}
               categories={categories}
