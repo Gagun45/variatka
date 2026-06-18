@@ -6,6 +6,8 @@ import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import NewRecipeCategoryForm from "@/forms/add-recipe-category/NewRecipeCategoryForm";
 import RecipeTabs from "./recipeTabs/RecipeTabs";
+import { useCreateRecipeCategory } from "@/features/recipe/hooks/useCreateRecipeCategory";
+import { ICreateRecipeCategoryDto } from "@/zod/recipe.schema";
 
 const RecipeDashboard = () => {
   const {
@@ -20,6 +22,11 @@ const RecipeDashboard = () => {
     isError: isRecipesError,
   } = useRecipes();
 
+  const { mutate, isPending } = useCreateRecipeCategory();
+  const onCategoryCreate = (dto: ICreateRecipeCategoryDto) => {
+    mutate(dto);
+  };
+
   if (isCategoriesLoading || isRecipesLoading) {
     return <Loader />;
   }
@@ -31,7 +38,10 @@ const RecipeDashboard = () => {
     return (
       <div className="space-y-6 text-center mx-auto">
         <h1>No recipes categories yet</h1>
-        <NewRecipeCategoryForm />
+        <NewRecipeCategoryForm
+          isPending={isPending}
+          onCreate={onCategoryCreate}
+        />
       </div>
     );
   }

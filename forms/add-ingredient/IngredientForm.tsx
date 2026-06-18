@@ -16,14 +16,14 @@ import { useEffect } from "react";
 
 interface Props {
   categories: IIngredientCategory[];
-  onClick: (dto: IIngredientFormValues) => void;
+  onCreate: (dto: IIngredientFormValues) => void;
   ingredient?: IIngredient;
   isPending: boolean;
 }
 
 const IngredientForm = ({
   categories,
-  onClick,
+  onCreate,
   ingredient,
   isPending,
 }: Props) => {
@@ -57,15 +57,7 @@ const IngredientForm = ({
   } = form;
 
   const onSubmit = (dto: IIngredientFormValues) => {
-    onClick(dto);
-    if (!ingredient) {
-      reset({
-        description: "",
-        categoryId: dto.categoryId,
-        isInStock: dto.isInStock,
-        title: "",
-      });
-    }
+    onCreate(dto);
   };
 
   return (

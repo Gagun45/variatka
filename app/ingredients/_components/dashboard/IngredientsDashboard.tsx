@@ -1,13 +1,15 @@
 "use client";
 
 import NewCategoryForm from "@/forms/add-ing-category/NewIngredientCategoryForm";
-import DashboardTabs from "./tabs/DashboardTabs";
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
+import IngredientsTabs from "./tabs/IngredientsTabs";
+import { useCreateIngredientCategory } from "@/features/ingredient/hooks/useCreateIngredientCategory";
+import { ICreateIngredientCategoryDto } from "@/zod/ingredient.schema";
 
-const Dashboard = () => {
+const IngredientsDashboard = () => {
   const {
     data: categories,
     isLoading: isCategoriesLoading,
@@ -19,6 +21,11 @@ const Dashboard = () => {
     isLoading: isIngredientsLoading,
     isError: isIngredientsError,
   } = useIngredients();
+
+  const { mutate, isPending } = useCreateIngredientCategory();
+  const onCategoryCreate = (dto: ICreateIngredientCategoryDto) => {
+    mutate(dto);
+  };
 
   if (isCategoriesLoading || isIngredientsLoading) {
     return <Loader />;
@@ -32,11 +39,11 @@ const Dashboard = () => {
       <div className="space-y-6 text-center mx-auto">
         <h1>No categories yet</h1>
         <p>Create your first category to get started.</p>
-        <NewCategoryForm />
+        <NewCategoryForm isPending={isPending} onCreate={onCategoryCreate} />
       </div>
     );
   }
-  return <DashboardTabs categories={categories} ingredients={ingredients} />;
+  return <IngredientsTabs categories={categories} ingredients={ingredients} />;
 };
 
-export default Dashboard;
+export default IngredientsDashboard;

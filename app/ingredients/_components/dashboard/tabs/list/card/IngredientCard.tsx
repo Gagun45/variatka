@@ -1,5 +1,4 @@
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IIngredient } from "@/lib/prisma.args";
@@ -7,24 +6,33 @@ import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/zustand/recipe";
 import { CheckIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
+import StockToggleButton from "./toggle-stock-btn/StockToggleButton";
 
 interface Props {
   ingredient: IIngredient;
-  onSavedToggle?: (value: { ingredientId: number; isSaved: boolean }) => void;
+  onSavedToggle: (value: { ingredientId: number; isSaved: boolean }) => void;
+  onStockToggle: (value: { ingredientId: number; isInStock: boolean }) => void;
   isAdmin?: boolean;
 }
 
-const IngredientCard = ({ ingredient, isAdmin, onSavedToggle }: Props) => {
+const IngredientCard = ({
+  ingredient,
+  isAdmin,
+  onSavedToggle,
+  onStockToggle,
+}: Props) => {
   const { title, isInStock, id, isSaved } = ingredient;
 
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
   );
 
-  const onToggle = () => {
-    if (onSavedToggle) {
-      onSavedToggle({ ingredientId: id, isSaved });
-    } else return;
+  const onToggleStock = () => {
+    onStockToggle({ ingredientId: id, isInStock });
+  };
+
+  const onToggleSaved = () => {
+    onSavedToggle({ ingredientId: id, isSaved });
   };
 
   const removeItem = useRecipeStore((state) => state.removeItem);
@@ -59,13 +67,17 @@ const IngredientCard = ({ ingredient, isAdmin, onSavedToggle }: Props) => {
           </div>
 
           <div className="mt-2 flex flex-wrap justify-between items-center gap-2">
-            {isAdmin && onSavedToggle && (
-              <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
+            {isAdmin && (
+              <SaveToggleButton isSaved={isSaved} onToggle={onToggleSaved} />
             )}
-            <Badge variant={isInStock ? "default" : "destructive"}>
-              {isInStock ? "In stock" : "Out of stock"}
-            </Badge>
 
+            {isAdmin && (
+              <StockToggleButton
+                className="cursor-pointer"
+                isInStock={isInStock}
+                onToggle={onToggleStock}
+              />
+            )}
             <span className="text-xs text-muted-foreground">
               Used in {ingredient._count.recipeIngredients} recipes
             </span>

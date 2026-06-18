@@ -14,7 +14,6 @@ import NewStuffForm from "@/forms/stuff/NewStuffForm";
 import { ICreateStuffDto } from "@/zod/stuff.schema";
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 const StuffFormsDialog = () => {
   const { data: categories = [] } = useStuffCategories();
@@ -24,10 +23,6 @@ const StuffFormsDialog = () => {
     mutate(dto, {
       onSuccess: () => {
         setIsOpen(false);
-        toast.success("Stuff created!");
-      },
-      onError: (e) => {
-        toast.error(e.message);
       },
     });
   };

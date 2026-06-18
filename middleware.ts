@@ -10,6 +10,8 @@ export const config = {
   matcher: [
     "/ingredients/:id/edit",
     "/recipes/:id/edit",
-    "/ingredients/my-list",
+    "/ingredients/saved",
+    "/recipes/saved",
+    "/stuff/:path*",
   ],
 };

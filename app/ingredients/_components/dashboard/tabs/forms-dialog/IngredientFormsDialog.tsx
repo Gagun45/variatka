@@ -8,20 +8,45 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCreateIngredient } from "@/features/ingredient/hooks/useCreateIngredient";
+import { useCreateIngredientCategory } from "@/features/ingredient/hooks/useCreateIngredientCategory";
 import NewCategoryForm from "@/forms/add-ing-category/NewIngredientCategoryForm";
 import NewIngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { IIngredientCategory } from "@/lib/prisma.args";
+import {
+  ICreateIngredientCategoryDto,
+  IIngredientFormValues,
+} from "@/zod/ingredient.schema";
 import { PlusCircle } from "lucide-react";
+import { useState } from "react";
 
 interface Props {
   categories: IIngredientCategory[];
 }
 
-const FormsDialog = ({ categories }: Props) => {
+const IngredientFormsDialog = ({ categories }: Props) => {
   const { mutate, isPending } = useCreateIngredient();
 
+  const { mutate: catMutate, isPending: catIsPending } =
+    useCreateIngredientCategory();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const onCategoryCreate = (dto: ICreateIngredientCategoryDto) => {
+    catMutate(dto, {
+      onSuccess: () => {
+        setIsOpen(false);
+      },
+    });
+  };
+  const onCreateIngredient = (dto: IIngredientFormValues) => {
+    mutate(dto, {
+      onSuccess: () => {
+        setIsOpen(false);
+      },
+    });
+  };
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="text-xl size-12" variant={"ghost"}>
           <PlusCircle className="size-8" />
@@ -42,14 +67,17 @@ const FormsDialog = ({ categories }: Props) => {
 
           {/* Category form */}
           <TabsContent value="category" className="mt-4">
-            <NewCategoryForm />
+            <NewCategoryForm
+              onCreate={onCategoryCreate}
+              isPending={catIsPending}
+            />
           </TabsContent>
 
           {/* Ingredient form */}
           <TabsContent value="ingredient" className="mt-4">
             <NewIngredientForm
               isPending={isPending}
-              onClick={mutate}
+              onCreate={onCreateIngredient}
               categories={categories}
             />
           </TabsContent>
@@ -59,4 +87,4 @@ const FormsDialog = ({ categories }: Props) => {
   );
 };
 
-export default FormsDialog;
+export default IngredientFormsDialog;

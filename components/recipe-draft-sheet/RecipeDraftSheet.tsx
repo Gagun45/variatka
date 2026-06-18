@@ -44,10 +44,6 @@ const RecipeDraftSheet = () => {
       {
         onSuccess: () => {
           clear();
-          toast.success("Recipe created!");
-        },
-        onError: () => {
-          toast.error("Something went wrong");
         },
       },
     );

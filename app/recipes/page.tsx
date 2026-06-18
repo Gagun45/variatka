@@ -3,6 +3,10 @@ import RecipeDashboard from "./_components/recipes/RecipeDashboard";
 import { buttonVariants } from "@/components/ui/button";
 import { frontendUrls } from "@/lib/urls";
 
+export const metadata = {
+  title: "Recipes",
+};
+
 const RecipesPage = () => {
   return (
     <main>

@@ -6,6 +6,7 @@ import {
   getIngredientCategories,
   getIngredients,
   removeIngredientImage,
+  toggleIngredientInStockValue,
   toggleSavedIngredient,
   uploadIngredientImage,
 } from "@/lib/actions/ingredient.actions";
@@ -27,7 +28,9 @@ export const ingredientService = {
   edit: (id: number, dto: IIngredientFormValues): Promise<IIngredient> =>
     editIngredient(id, dto),
   delete: (id: number) => deleteIngredient(id),
-  toggle: (id: number, add: boolean) => toggleSavedIngredient(id, add),
+  toggleSaved: (id: number, add: boolean) => toggleSavedIngredient(id, add),
+  toggleStock: (id: number, isInStock: boolean) =>
+    toggleIngredientInStockValue(id, isInStock),
   uploadImage: (ingredientId: number, file: File) =>
     uploadIngredientImage(ingredientId, file),
   removeImage: (ingredientId: number) => removeIngredientImage(ingredientId),

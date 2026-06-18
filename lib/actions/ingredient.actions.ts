@@ -12,36 +12,56 @@ import {
 } from "../prisma.args";
 import { requireAdmin } from "../auth";
 import { uploadHelper } from "../s3/upload.helper";
+import { AppError } from "../error";
 
 export const getIngredients = async (): Promise<IIngredient[]> => {
-  const ingredients = await prisma.ingredient.findMany({
-    ...ingredientArgs,
-  });
-  return ingredients;
+  try {
+    return prisma.ingredient.findMany(ingredientArgs);
+  } catch (e) {
+    console.error("Database error in getIngredients:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const getIngredientCategories = async (): Promise<
   IIngredientCategory[]
 > => {
-  const categories = await prisma.ingredientCategory.findMany();
-  return categories;
+  try {
+    const categories = await prisma.ingredientCategory.findMany();
+    return categories;
+  } catch (e) {
+    console.error("Database error in getIngredientCategories:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const createIngredientCategory = async (
   dto: ICreateIngredientCategoryDto,
 ) => {
-  await requireAdmin();
   try {
+    await requireAdmin();
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { title: dto.title },
     });
     if (existingCategory)
-      throw new Error("A category with this title already exists.");
+      throw new AppError("A category with this title already exists.");
     const newCategory = await prisma.ingredientCategory.create({ data: dto });
 
     return newCategory;
   } catch (e) {
     console.error("Database error in createIngredientCategory:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -49,20 +69,20 @@ export const createIngredientCategory = async (
 export const createIngredient = async (
   dto: IIngredientFormValues,
 ): Promise<IIngredient> => {
-  await requireAdmin();
-  const { categoryId, title } = dto;
   try {
+    const { categoryId, title } = dto;
+    await requireAdmin();
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { id: categoryId },
     });
     if (!existingCategory)
-      throw new Error(`A category #${categoryId} not found`);
+      throw new AppError(`A category #${categoryId} not found`);
 
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { title },
     });
     if (existingIngredient)
-      throw new Error("An ingredient with this title already exists.");
+      throw new AppError("An ingredient with this title already exists.");
 
     const newIngredient = await prisma.ingredient.create({
       data: dto,
@@ -70,7 +90,12 @@ export const createIngredient = async (
     });
     return newIngredient;
   } catch (e) {
-    console.error("Database error in createIngredient:", e);
+    console.error("Database error in updateRecipeFields:", e);
+
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -79,81 +104,154 @@ export const editIngredient = async (
   id: number,
   dto: IIngredientFormValues,
 ): Promise<IIngredient> => {
-  await requireAdmin();
   try {
-    const updatedIngredient = await prisma.ingredient.update({
+    await requireAdmin();
+    const existingIngredient = await prisma.ingredient.findUnique({
+      where: { title: dto.title },
+    });
+    if (existingIngredient)
+      throw new AppError("An ingredient with this title already exists.");
+    return prisma.ingredient.update({
       where: { id },
       data: dto,
       ...ingredientArgs,
     });
-    return updatedIngredient;
   } catch (e) {
     console.error("Database error in updateIngredient:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
 
 export const deleteIngredient = async (id: number) => {
-  await requireAdmin();
-  const ingredient = await prisma.ingredient.findUnique({
-    where: { id },
-    select: {
-      _count: {
-        select: {
-          recipeIngredients: true,
+  try {
+    await requireAdmin();
+    const ingredient = await prisma.ingredient.findUnique({
+      where: { id },
+      select: {
+        _count: {
+          select: {
+            recipeIngredients: true,
+          },
         },
       },
-    },
-  });
-  if (!ingredient) throw new Error("Ingredient not found");
-  if (ingredient._count.recipeIngredients > 0)
-    throw new Error("Cannot delete ingredients used in recipes");
-  return prisma.ingredient.delete({
-    where: { id },
-    ...ingredientArgs,
-  });
+    });
+    if (!ingredient) throw new AppError("Ingredient not found");
+    if (ingredient._count.recipeIngredients > 0)
+      throw new AppError("Cannot delete ingredients used in recipes");
+    return prisma.ingredient.delete({
+      where: { id },
+      ...ingredientArgs,
+    });
+  } catch (e) {
+    console.error("Database error in deleteIngredient:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const toggleSavedIngredient = async (
   id: number,
   isSaved: boolean,
 ): Promise<IIngredient> => {
-  await requireAdmin();
-  return prisma.ingredient.update({
-    where: { id },
-    data: { isSaved },
-    ...ingredientArgs,
-  });
+  try {
+    await requireAdmin();
+    const existingIngredient = await prisma.ingredient.findUnique({
+      where: { id },
+    });
+    if (!existingIngredient) throw new AppError("Ingredient not found");
+    return prisma.ingredient.update({
+      where: { id },
+      data: { isSaved },
+      ...ingredientArgs,
+    });
+  } catch (e) {
+    console.error("Database error in toggleSavedIngredient:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const uploadIngredientImage = async (
   ingredientId: number,
   file: File,
 ): Promise<IIngredient> => {
-  await requireAdmin();
-  const imageKey = await uploadHelper.ingredientImage(ingredientId, file);
-  const updatedIngredient = await prisma.ingredient.update({
-    where: { id: ingredientId },
-    data: {
-      imageKey,
-      imageVersion: { increment: 1 },
-    },
-    ...ingredientArgs,
-  });
-  return updatedIngredient;
+  try {
+    await requireAdmin();
+    const imageKey = await uploadHelper.ingredientImage(ingredientId, file);
+    const updatedIngredient = await prisma.ingredient.update({
+      where: { id: ingredientId },
+      data: {
+        imageKey,
+        imageVersion: { increment: 1 },
+      },
+      ...ingredientArgs,
+    });
+    return updatedIngredient;
+  } catch (e) {
+    console.error("Database error in uploadIngredientImage:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const removeIngredientImage = async (
   ingredientId: number,
 ): Promise<IIngredient> => {
-  await requireAdmin();
-  const updatedIngredient = await prisma.ingredient.update({
-    where: { id: ingredientId },
-    data: {
-      imageKey: null,
-      imageVersion: { increment: 1 },
-    },
-    ...ingredientArgs,
-  });
-  return updatedIngredient;
+  try {
+    await requireAdmin();
+    const updatedIngredient = await prisma.ingredient.update({
+      where: { id: ingredientId },
+      data: {
+        imageKey: null,
+        imageVersion: { increment: 1 },
+      },
+      ...ingredientArgs,
+    });
+    return updatedIngredient;
+  } catch (e) {
+    console.error("Database error in removeIngredientImage:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
+};
+
+export const toggleIngredientInStockValue = async (
+  id: number,
+  isInStock: boolean,
+): Promise<IIngredient> => {
+  try {
+    await requireAdmin();
+    const existingIngredient = await prisma.ingredient.findUnique({
+      where: { id },
+    });
+    if (!existingIngredient) throw new AppError("Ingredient not found");
+    return prisma.ingredient.update({
+      where: { id },
+      data: { isInStock },
+      ...ingredientArgs,
+    });
+  } catch (e) {
+    console.error("Database error in toggleIngredientInStockValue:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };

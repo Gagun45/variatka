@@ -4,49 +4,70 @@ import { ICreateStuffCategoryDto, ICreateStuffDto } from "@/zod/stuff.schema";
 import { requireAdmin } from "../auth";
 import { prisma } from "../prisma";
 import { IStuff, IStuffCategory, stuffArgs } from "../prisma.args";
+import { AppError } from "../error";
 
 export const createStuffCategory = async (dto: ICreateStuffCategoryDto) => {
-  await requireAdmin();
   try {
+    await requireAdmin();
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { title: dto.title },
     });
     if (existingCategory)
-      throw new Error("A category with this title already exists.");
+      throw new AppError("A category with this title already exists.");
     const newCategory = await prisma.stuffCategory.create({ data: dto });
 
     return newCategory;
   } catch (e) {
     console.error("Database error in createStuffCategory:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
 
 export const getStuffCategories = async (): Promise<IStuffCategory[]> => {
-  const categories = await prisma.stuffCategory.findMany();
-  return categories;
+  try {
+    return prisma.stuffCategory.findMany();
+  } catch (e) {
+    console.error("Database error in getStuffCategories:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const getStuff = async (): Promise<IStuff[]> => {
-  const stuff = await prisma.stuff.findMany(stuffArgs);
-  return stuff;
+  try {
+    return prisma.stuff.findMany(stuffArgs);
+  } catch (e) {
+    console.error("Database error in getStuff:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const createStuff = async (dto: ICreateStuffDto): Promise<IStuff> => {
-  await requireAdmin();
-  const { stuffCategoryId, title } = dto;
   try {
+    await requireAdmin();
+    const { stuffCategoryId, title } = dto;
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { id: stuffCategoryId },
     });
     if (!existingCategory)
-      throw new Error(`A category #${stuffCategoryId} not found`);
+      throw new AppError(`A category #${stuffCategoryId} not found`);
 
     const existingStuff = await prisma.stuff.findUnique({
       where: { title },
     });
     if (existingStuff)
-      throw new Error("A stuff with this title already exists.");
+      throw new AppError("A stuff with this title already exists.");
 
     const newStuff = await prisma.stuff.create({
       data: dto,
@@ -55,6 +76,10 @@ export const createStuff = async (dto: ICreateStuffDto): Promise<IStuff> => {
     return newStuff;
   } catch (e) {
     console.error("Database error in createStuff:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };

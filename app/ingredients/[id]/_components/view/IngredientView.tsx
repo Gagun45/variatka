@@ -11,8 +11,9 @@ import { frontendUrls } from "@/lib/urls";
 import { useAuthStore } from "@/zustand/auth.store";
 import { useRecipeStore } from "@/zustand/recipe";
 import Link from "next/link";
-import { IngredientImageAdmin } from "./img/IngredientImageAdmin";
+import { IngredientImageAdmin } from "./img-admin/IngredientImageAdmin";
 import StockBadge from "@/components/stock-badge/StockBadge";
+import IngredientImagePublic from "./img-public/IngredientImagePublic";
 
 interface Props {
   ingredient: IIngredient;
@@ -20,7 +21,15 @@ interface Props {
 
 const IngredientView = ({ ingredient }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const { description, title, category, isInStock, id } = ingredient;
+  const {
+    description,
+    title,
+    category,
+    isInStock,
+    id,
+    imageKey,
+    imageVersion,
+  } = ingredient;
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
   );
@@ -30,7 +39,15 @@ const IngredientView = ({ ingredient }: Props) => {
 
   return (
     <Card className="max-w-md mx-auto overflow-hidden">
-      {isAdmin && <IngredientImageAdmin ingredient={ingredient} />}
+      {isAdmin ? (
+        <IngredientImageAdmin ingredient={ingredient} />
+      ) : (
+        <IngredientImagePublic
+          imageVersion={imageVersion}
+          imageKey={imageKey}
+          title={title}
+        />
+      )}
 
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <CardTitle className="text-xl">{title}</CardTitle>

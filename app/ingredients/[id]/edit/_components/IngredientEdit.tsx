@@ -1,18 +1,15 @@
 "use client";
 
-import PageBreadcrumb from "@/components/bread/PageBreadcrumb";
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useEditIngredient } from "@/features/ingredient/hooks/useEditIngredient";
 import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import IngredientForm from "@/forms/add-ingredient/IngredientForm";
+import { frontendUrls } from "@/lib/urls";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import DeleteIngredientButton from "../../_components/delete-btn/DeleteIngredientButton";
-import { BREADCRUMB_ITEMS } from "@/lib/constants/bread.constants";
-import { frontendUrls } from "@/lib/urls";
 
 interface Props {
   id: number;
@@ -45,10 +42,6 @@ const IngredientEdit = ({ id }: Props) => {
       {
         onSuccess: () => {
           router.push(frontendUrls.ingredients.view(id));
-          toast.success("Ingredient edited successfully!");
-        },
-        onError: (e) => {
-          toast.error(e.message);
         },
       },
     );
@@ -61,7 +54,7 @@ const IngredientEdit = ({ id }: Props) => {
         <IngredientForm
           isPending={isPending}
           categories={categories}
-          onClick={onSubmit}
+          onCreate={onSubmit}
           ingredient={ingredient}
         />
       </div>

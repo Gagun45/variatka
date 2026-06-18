@@ -6,12 +6,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useCreateRecipeCategory } from "@/features/recipe/hooks/useCreateRecipeCategory";
 import NewRecipeCategoryForm from "@/forms/add-recipe-category/NewRecipeCategoryForm";
+import { ICreateRecipeCategoryDto } from "@/zod/recipe.schema";
 import { PlusCircle } from "lucide-react";
+import { useState } from "react";
 
-const NewRecipeDialog = () => {
+const RecipeFormsDialog = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { mutate, isPending } = useCreateRecipeCategory();
+  const onCategoryCreate = (dto: ICreateRecipeCategoryDto) => {
+    mutate(dto, {
+      onSuccess: () => {
+        setIsOpen(false);
+      },
+    });
+  };
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="text-xl size-12" variant={"ghost"}>
           <PlusCircle className="size-8" />
@@ -24,10 +36,13 @@ const NewRecipeDialog = () => {
             New recipe category
           </DialogTitle>
         </DialogHeader>
-        <NewRecipeCategoryForm />
+        <NewRecipeCategoryForm
+          onCreate={onCategoryCreate}
+          isPending={isPending}
+        />
       </DialogContent>
     </Dialog>
   );
 };
 
-export default NewRecipeDialog;
+export default RecipeFormsDialog;

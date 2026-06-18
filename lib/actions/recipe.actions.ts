@@ -5,50 +5,72 @@ import { prisma } from "../prisma";
 import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
 import { ICreateRecipeDto, IRecipeIngredient } from "../types";
 import { requireAdmin } from "../auth";
+import { AppError } from "../error";
 
 export const getRecipeCategories = async (): Promise<IRecipeCategory[]> => {
-  const categories = await prisma.recipeCategory.findMany();
-  return categories;
+  try {
+    const categories = await prisma.recipeCategory.findMany();
+    return categories;
+  } catch (e) {
+    console.error("Database error in getRecipeCategories:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const getRecipes = async (): Promise<IRecipe[]> => {
-  const recipes = await prisma.recipe.findMany(recipeArgs);
-  return recipes;
+  try {
+    const recipes = await prisma.recipe.findMany(recipeArgs);
+    return recipes;
+  } catch (e) {
+    console.error("Database error in getRecipes:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };
 
 export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
-  await requireAdmin();
   try {
+    await requireAdmin();
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { title: dto.title },
     });
     if (existingCategory)
-      throw new Error("A category with this title already exists.");
+      throw new AppError("A category with this title already exists.");
     const newCategory = await prisma.recipeCategory.create({ data: dto });
 
     return newCategory;
   } catch (e) {
     console.error("Database error in createRecipeCategory:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
 
 export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
-  console.log(dto);
-  await requireAdmin();
-  const { title, description, notes, items, recipeCategoryId, inStock } = dto;
   try {
+    await requireAdmin();
+    const { title, description, notes, items, recipeCategoryId, inStock } = dto;
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { id: recipeCategoryId },
     });
     if (!existingCategory)
-      throw new Error(`A category #${recipeCategoryId} not found`);
+      throw new AppError(`A category #${recipeCategoryId} not found`);
 
     const existingRecipe = await prisma.recipe.findFirst({
       where: { title },
     });
     if (existingRecipe)
-      throw new Error("A recipe with this title already exists.");
+      throw new AppError("A recipe with this title already exists.");
 
     const newRecipe = await prisma.recipe.create({
       data: {
@@ -69,6 +91,10 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
     return newRecipe;
   } catch (e) {
     console.error("Database error in createRecipe:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -77,8 +103,14 @@ export const updateRecipeFields = async (
   id: number,
   dto: IRecipeDto,
 ): Promise<IRecipe> => {
-  await requireAdmin();
   try {
+    await requireAdmin();
+    const existingRecipe = await prisma.recipe.findUnique({
+      where: { title: dto.title },
+    });
+    if (existingRecipe)
+      throw new AppError("A recipe with this title already exists.");
+
     return prisma.recipe.update({
       where: {
         id,
@@ -88,6 +120,10 @@ export const updateRecipeFields = async (
     });
   } catch (e) {
     console.error("Database error in updateRecipeFields:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -96,72 +132,99 @@ export const updateRecipeIngredients = async (
   recipeId: number,
   items: IRecipeIngredient[],
 ): Promise<IRecipe> => {
-  await requireAdmin();
-  if (!Array.isArray(items)) {
-    throw new Error("Invalid items payload");
-  }
+  try {
+    await requireAdmin();
+    if (!Array.isArray(items)) {
+      throw new AppError("Invalid items payload");
+    }
 
-  return prisma.$transaction(async (tx) => {
-    const recipe = await tx.recipe.findUnique({
+    return prisma.$transaction(async (tx) => {
+      const recipe = await tx.recipe.findUnique({
+        where: { id: recipeId },
+        select: { id: true },
+      });
+
+      if (!recipe) throw new AppError("Recipe not found");
+
+      if (items.some((i) => !i.ingredientId || !i.amount)) {
+        throw new AppError("Invalid ingredient data");
+      }
+
+      await tx.recipeIngredient.deleteMany({
+        where: { recipeId },
+      });
+
+      if (items.length > 0) {
+        await tx.recipeIngredient.createMany({
+          data: items.map((i) => ({
+            recipeId,
+            ingredientId: i.ingredientId,
+            amount: i.amount,
+          })),
+        });
+      }
+
+      const updated = await tx.recipe.findUnique({
+        where: { id: recipeId },
+        ...recipeArgs,
+      });
+
+      if (!updated) throw new AppError("Recipe not found after update");
+
+      return updated;
+    });
+  } catch (e) {
+    console.error("Database error in updateRecipeIngredients:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
+};
+
+export const deleteRecipe = async (recipeId: number): Promise<void> => {
+  try {
+    await requireAdmin();
+    const recipe = await prisma.recipe.findUnique({
       where: { id: recipeId },
       select: { id: true },
     });
 
-    if (!recipe) throw new Error("Recipe not found");
-
-    if (items.some((i) => !i.ingredientId || !i.amount)) {
-      throw new Error("Invalid ingredient data");
+    if (!recipe) {
+      throw new AppError("Recipe not found");
     }
 
-    await tx.recipeIngredient.deleteMany({
-      where: { recipeId },
-    });
-
-    if (items.length > 0) {
-      await tx.recipeIngredient.createMany({
-        data: items.map((i) => ({
-          recipeId,
-          ingredientId: i.ingredientId,
-          amount: i.amount,
-        })),
-      });
-    }
-
-    const updated = await tx.recipe.findUnique({
+    await prisma.recipe.delete({
       where: { id: recipeId },
-      ...recipeArgs,
     });
+  } catch (e) {
+    console.error("Database error in deleteRecipe:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
 
-    if (!updated) throw new Error("Recipe not found after update");
-
-    return updated;
-  });
-};
-
-export const deleteRecipe = async (recipeId: number): Promise<void> => {
-  await requireAdmin();
-  const recipe = await prisma.recipe.findUnique({
-    where: { id: recipeId },
-    select: { id: true },
-  });
-
-  if (!recipe) {
-    throw new Error("Recipe not found");
+    throw new Error("Something went wrong");
   }
-
-  await prisma.recipe.delete({
-    where: { id: recipeId },
-  });
 };
 
 export const toggleSavedRecipe = async (
   id: number,
   isSaved: boolean,
 ): Promise<IRecipe> => {
-  await requireAdmin();
-  return prisma.recipe.update({
-    where: { id },
-    data: { isSaved },
-    ...recipeArgs,
-  });
+  try {
+    await requireAdmin();
+    return prisma.recipe.update({
+      where: { id },
+      data: { isSaved },
+      ...recipeArgs,
+    });
+  } catch (e) {
+    console.error("Database error in toggleSavedRecipe:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
+    throw new Error("Something went wrong");
+  }
 };

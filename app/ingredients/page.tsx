@@ -1,7 +1,11 @@
 import Link from "next/link";
-import Dashboard from "./_components/dashboard/Dashboard";
+import Dashboard from "./_components/dashboard/IngredientsDashboard";
 import { buttonVariants } from "@/components/ui/button";
 import { frontendUrls } from "@/lib/urls";
+
+export const metadata = {
+  title: "Ingredients",
+};
 
 const IngredientsPage = () => {
   return (

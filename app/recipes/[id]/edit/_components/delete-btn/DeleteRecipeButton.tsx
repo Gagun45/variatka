@@ -16,7 +16,6 @@ import { useDeleteRecipe } from "@/features/recipe/hooks/useDeleteRecipe";
 import { frontendUrls } from "@/lib/urls";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useState } from "react";
 
 interface Props {
@@ -34,12 +33,8 @@ const DeleteRecipeButton = ({ recipeId }: Props) => {
 
     mutate(recipeId, {
       onSuccess: () => {
-        toast.success("Recipe deleted!");
         setOpen(false);
         router.push(frontendUrls.recipes.index);
-      },
-      onError: (e: Error) => {
-        toast.error(e.message);
       },
     });
   };
