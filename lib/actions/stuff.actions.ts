@@ -6,8 +6,8 @@ import { prisma } from "../prisma";
 import { IStuff, IStuffCategory, stuffArgs } from "../prisma.args";
 
 export const createStuffCategory = async (dto: ICreateStuffCategoryDto) => {
-  await requireAdmin();
   try {
+    await requireAdmin();
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { title: dto.title },
     });
@@ -23,19 +23,27 @@ export const createStuffCategory = async (dto: ICreateStuffCategoryDto) => {
 };
 
 export const getStuffCategories = async (): Promise<IStuffCategory[]> => {
-  const categories = await prisma.stuffCategory.findMany();
-  return categories;
+  try {
+    return prisma.stuffCategory.findMany();
+  } catch (e) {
+    console.error("Database error in getStuffCategories:", e);
+    throw new Error("Something went wrong");
+  }
 };
 
 export const getStuff = async (): Promise<IStuff[]> => {
-  const stuff = await prisma.stuff.findMany(stuffArgs);
-  return stuff;
+  try {
+    return prisma.stuff.findMany(stuffArgs);
+  } catch (e) {
+    console.error("Database error in getStuff:", e);
+    throw new Error("Something went wrong");
+  }
 };
 
 export const createStuff = async (dto: ICreateStuffDto): Promise<IStuff> => {
-  await requireAdmin();
-  const { stuffCategoryId, title } = dto;
   try {
+    await requireAdmin();
+    const { stuffCategoryId, title } = dto;
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { id: stuffCategoryId },
     });
