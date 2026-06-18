@@ -28,12 +28,14 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
         <div className="relative h-40 w-full bg-muted">
           {/* status badge */}
 
-          <Badge
-            variant={isReadyToMake ? "default" : "outline"}
-            className="absolute right-2 top-2 z-10"
-          >
-            {isReadyToMake ? "Ready to cook" : "Missing ingredients"}
-          </Badge>
+          {isAdmin && (
+            <Badge
+              variant={isReadyToMake ? "default" : "outline"}
+              className="absolute right-2 top-2 z-10"
+            >
+              {isReadyToMake ? "Ready to cook" : "Missing ingredients"}
+            </Badge>
+          )}
 
           {imageKey ? (
             <Image src={imageKey} alt={title} fill className="object-cover" />

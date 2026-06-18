@@ -13,7 +13,7 @@ export default function SidebarAuthIcon() {
 
   if (!isAuthenticated) {
     return (
-      <Button asChild variant="secondary">
+      <Button asChild>
         <LoginLink>
           <LogIn />
         </LoginLink>
@@ -22,7 +22,7 @@ export default function SidebarAuthIcon() {
   }
 
   return (
-    <Button asChild variant="outline">
+    <Button asChild variant="destructive">
       <LogoutLink>
         <LogOut />
       </LogoutLink>
