@@ -5,6 +5,7 @@ import { prisma } from "../prisma";
 import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
 import { ICreateRecipeDto, IRecipeIngredient } from "../types";
 import { requireAdmin } from "../auth";
+import { AppError } from "../error";
 
 export const getRecipeCategories = async (): Promise<IRecipeCategory[]> => {
   try {
@@ -12,6 +13,10 @@ export const getRecipeCategories = async (): Promise<IRecipeCategory[]> => {
     return categories;
   } catch (e) {
     console.error("Database error in getRecipeCategories:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -22,6 +27,10 @@ export const getRecipes = async (): Promise<IRecipe[]> => {
     return recipes;
   } catch (e) {
     console.error("Database error in getRecipes:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -33,12 +42,16 @@ export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
       where: { title: dto.title },
     });
     if (existingCategory)
-      throw new Error("A category with this title already exists.");
+      throw new AppError("A category with this title already exists.");
     const newCategory = await prisma.recipeCategory.create({ data: dto });
 
     return newCategory;
   } catch (e) {
     console.error("Database error in createRecipeCategory:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -51,13 +64,13 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
       where: { id: recipeCategoryId },
     });
     if (!existingCategory)
-      throw new Error(`A category #${recipeCategoryId} not found`);
+      throw new AppError(`A category #${recipeCategoryId} not found`);
 
     const existingRecipe = await prisma.recipe.findFirst({
       where: { title },
     });
     if (existingRecipe)
-      throw new Error("A recipe with this title already exists.");
+      throw new AppError("A recipe with this title already exists.");
 
     const newRecipe = await prisma.recipe.create({
       data: {
@@ -78,6 +91,10 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
     return newRecipe;
   } catch (e) {
     console.error("Database error in createRecipe:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -92,7 +109,7 @@ export const updateRecipeFields = async (
       where: { title: dto.title },
     });
     if (existingRecipe)
-      throw new Error("A recipe with this title already exists.");
+      throw new AppError("A recipe with this title already exists.");
 
     return prisma.recipe.update({
       where: {
@@ -103,6 +120,10 @@ export const updateRecipeFields = async (
     });
   } catch (e) {
     console.error("Database error in updateRecipeFields:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -114,7 +135,7 @@ export const updateRecipeIngredients = async (
   try {
     await requireAdmin();
     if (!Array.isArray(items)) {
-      throw new Error("Invalid items payload");
+      throw new AppError("Invalid items payload");
     }
 
     return prisma.$transaction(async (tx) => {
@@ -123,10 +144,10 @@ export const updateRecipeIngredients = async (
         select: { id: true },
       });
 
-      if (!recipe) throw new Error("Recipe not found");
+      if (!recipe) throw new AppError("Recipe not found");
 
       if (items.some((i) => !i.ingredientId || !i.amount)) {
-        throw new Error("Invalid ingredient data");
+        throw new AppError("Invalid ingredient data");
       }
 
       await tx.recipeIngredient.deleteMany({
@@ -148,12 +169,16 @@ export const updateRecipeIngredients = async (
         ...recipeArgs,
       });
 
-      if (!updated) throw new Error("Recipe not found after update");
+      if (!updated) throw new AppError("Recipe not found after update");
 
       return updated;
     });
   } catch (e) {
     console.error("Database error in updateRecipeIngredients:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -167,7 +192,7 @@ export const deleteRecipe = async (recipeId: number): Promise<void> => {
     });
 
     if (!recipe) {
-      throw new Error("Recipe not found");
+      throw new AppError("Recipe not found");
     }
 
     await prisma.recipe.delete({
@@ -175,6 +200,10 @@ export const deleteRecipe = async (recipeId: number): Promise<void> => {
     });
   } catch (e) {
     console.error("Database error in deleteRecipe:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };
@@ -192,6 +221,10 @@ export const toggleSavedRecipe = async (
     });
   } catch (e) {
     console.error("Database error in toggleSavedRecipe:", e);
+    if (e instanceof AppError) {
+      throw e;
+    }
+
     throw new Error("Something went wrong");
   }
 };

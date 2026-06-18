@@ -3,28 +3,26 @@
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { Field, FieldError, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useCreateRecipeCategory } from "@/features/recipe/hooks/useCreateRecipeCategory";
+import { ICreateRecipeCategoryDto } from "@/zod/recipe.schema";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import z from "zod";
 
-const NewRecipeCategoryForm = () => {
+interface Props {
+  isPending: boolean;
+  onCreate: (dto: ICreateRecipeCategoryDto) => void;
+}
+
+const NewRecipeCategoryForm = ({ isPending, onCreate }: Props) => {
   const schema = zodSchemas.recipe.createCategory;
-  const { mutate, isPending } = useCreateRecipeCategory();
-  type formType = z.infer<typeof schema>;
-  const { control, reset, handleSubmit } = useForm<formType>({
+  const { control, handleSubmit } = useForm<ICreateRecipeCategoryDto>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: "",
     },
   });
-  const onSubmit = (values: formType) => {
-    mutate(values, {
-      onSuccess: () => {
-        reset();
-      },
-    });
+  const onSubmit = (values: ICreateRecipeCategoryDto) => {
+    onCreate(values);
   };
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

@@ -15,7 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/zustand/auth.store";
 import RecipesList from "./accordion/RecipesList";
-import NewRecipeDialog from "./new-recipe-form-dialog/NewRecipeDialog";
+import RecipeFormsDialog from "./forms-dialog/RecipeFormsDialog";
 
 interface Props {
   categories: IRecipeCategory[];
@@ -88,7 +88,7 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
                 </Button>
               );
             })}
-            {isAdmin && <NewRecipeDialog />}
+            {isAdmin && <RecipeFormsDialog />}
           </div>
           <Separator />
           {active && (
