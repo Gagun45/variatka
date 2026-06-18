@@ -1,14 +1,16 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { IStuff, IStuffCategory } from "@/lib/prisma.args";
-import { useSearch } from "@/zustand/search";
 import { useState } from "react";
+import { useSearch } from "@/zustand/search";
+import { useAuthStore } from "@/zustand/auth.store";
 
 import { Separator } from "@/components/ui/separator";
-import { useAuthStore } from "@/zustand/auth.store";
+import CategoryButton from "@/components/cat-button/CategoryButton";
+
 import StuffList from "../list/StuffList";
 import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
+
+import { IStuff, IStuffCategory } from "@/lib/prisma.args";
 
 interface Props {
   categories: IStuffCategory[];
@@ -18,57 +20,65 @@ interface Props {
 const StuffTabs = ({ categories, stuff }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const searchQuery = useSearch((s) => s.query);
+
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 
   const active = categories.find((c) => c.title === activeCategory);
-  const filteredStuff = stuff.filter((i) => i.stuffCategoryId === active?.id);
 
-  const searchedStuff = stuff.filter((s) =>
-    s.title.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-  const isSearching = searchQuery.trim() !== "";
+  const isSearching = searchQuery.trim().length > 0;
+  const query = searchQuery.toLowerCase().trim();
+
+  // 1. CATEGORY FILTER (always applied)
+  const categoryStuff = stuff.filter((s) => s.stuffCategoryId === active?.id);
+
+  // 2. SEARCH (category-aware)
+  const filteredStuff = isSearching
+    ? categoryStuff.filter((s) => s.title.toLowerCase().includes(query))
+    : categoryStuff;
+
   return (
     <div className="flex flex-col gap-4 w-full mx-auto">
-      {isSearching ? (
-        <>
-          <p>
-            {searchedStuff.length} items include{" "}
-            <span className="italic">{searchQuery}</span> in title
-          </p>
-          {searchedStuff.length !== 0 && <StuffList stuff={searchedStuff} />}
-        </>
-      ) : (
-        <>
-          <div className="flex flex-wrap gap-4 justify-center">
-            {categories.map((cat) => {
-              const isActive = cat.title === activeCategory;
-              const items = stuff.filter((i) => i.stuffCategoryId === cat.id);
-              const totalItems = items.length;
+      {/* CATEGORY BAR */}
+      <div className="flex flex-wrap gap-4 justify-center">
+        {categories.map((cat) => {
+          const isActive = cat.title === activeCategory;
 
-              return (
-                <Button
-                  key={cat.id}
-                  variant={isActive ? "default" : "outline"}
-                  onClick={() => setActiveCategory(cat.title)}
-                  className="min-w-36 text-xl h-12"
-                >
-                  {cat.title} ({totalItems})
-                </Button>
-              );
-            })}
-            {isAdmin && <StuffFormsDialog />}
-          </div>
-          <Separator />
-          {active && (
-            <>
-              {filteredStuff.length === 0 ? (
-                <p>Found 0 items</p>
-              ) : (
-                <StuffList stuff={filteredStuff} />
-              )}
-            </>
-          )}
-        </>
+          const totalItems = stuff.filter(
+            (s) => s.stuffCategoryId === cat.id,
+          ).length;
+
+          return (
+            <CategoryButton
+              key={cat.id}
+              title={`${cat.title} (${totalItems})`}
+              isActive={isActive}
+              onClick={() => setActiveCategory(cat.title)}
+            />
+          );
+        })}
+
+        {isAdmin && <StuffFormsDialog activeCategoryId={active?.id} />}
+      </div>
+
+      <Separator />
+
+      {/* SEARCH INFO */}
+      {isSearching && (
+        <p className="text-sm text-muted-foreground">
+          {filteredStuff.length} items include{" "}
+          <span className="italic">&quot;{searchQuery}&quot;</span> in title
+        </p>
+      )}
+
+      {/* EMPTY STATE + LIST */}
+      {filteredStuff.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {isSearching
+            ? `No items found for "${searchQuery}"`
+            : "Found 0 items"}
+        </p>
+      ) : (
+        <StuffList stuff={filteredStuff} />
       )}
     </div>
   );

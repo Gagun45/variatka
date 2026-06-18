@@ -19,6 +19,7 @@ interface Props {
   onCreate: (dto: IIngredientFormValues) => void;
   ingredient?: IIngredient;
   isPending: boolean;
+  initialCategoryId?: number;
 }
 
 const IngredientForm = ({
@@ -26,8 +27,9 @@ const IngredientForm = ({
   onCreate,
   ingredient,
   isPending,
+  initialCategoryId,
 }: Props) => {
-  const { id } = categories[0];
+  const id = initialCategoryId ?? categories[0].id;
 
   const schema = zodSchemas.ingredient.create;
   const defaultValues: IIngredientFormValues = {
@@ -45,10 +47,10 @@ const IngredientForm = ({
     form.reset({
       title: ingredient?.title ?? "",
       description: ingredient?.description ?? "",
-      categoryId: ingredient?.categoryId ?? categories[0]?.id ?? "",
+      categoryId: ingredient?.categoryId ?? id,
       isInStock: ingredient?.isInStock ?? false,
     });
-  }, [ingredient, categories, form]);
+  }, [ingredient, categories, form, id]);
 
   const {
     handleSubmit,
