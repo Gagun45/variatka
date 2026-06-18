@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/zustand/auth.store";
-import RecipesList from "./accordion/RecipesList";
+import RecipesList from "./recipes-list/RecipesList";
 import RecipeFormsDialog from "./forms-dialog/RecipeFormsDialog";
 
 interface Props {

@@ -1,6 +1,6 @@
 "use client";
 
-import RecipesList from "@/app/recipes/_components/recipes/recipeTabs/accordion/RecipesList";
+import RecipesList from "@/app/recipes/_components/recipes/recipeTabs/recipes-list/RecipesList";
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";

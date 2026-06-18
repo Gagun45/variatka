@@ -1,4 +1,4 @@
-import RecipesList from "@/app/recipes/_components/recipes/recipeTabs/accordion/RecipesList";
+import RecipesList from "@/app/recipes/_components/recipes/recipeTabs/recipes-list/RecipesList";
 import { useSimilarRecipes } from "@/hooks/useSimilarRecipes";
 import { IRecipe } from "@/lib/prisma.args";
 
