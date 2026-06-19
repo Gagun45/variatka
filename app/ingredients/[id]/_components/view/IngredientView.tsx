@@ -1,19 +1,16 @@
 import { IIngredient } from "@/lib/prisma.args";
-import Image from "next/image";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { Badge } from "@/components/ui/badge";
+import ImageViewPublic from "@/components/img-upload/ImageViewPublic";
+import StockBadge from "@/components/stock-badge/StockBadge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { getImageUrl } from "@/lib/image.helper";
 import { frontendUrls } from "@/lib/urls";
 import { useAuthStore } from "@/zustand/auth.store";
 import { useRecipeStore } from "@/zustand/recipe.store";
 import Link from "next/link";
-import { IngredientImageAdmin } from "./img-admin/IngredientImageAdmin";
-import StockBadge from "@/components/stock-badge/StockBadge";
-import IngredientImagePublic from "./img-public/IngredientImagePublic";
+import IngredientImageViewAdmin from "./img-admin/IngredientImageViewAdmin";
 
 interface Props {
   ingredient: IIngredient;
@@ -40,9 +37,9 @@ const IngredientView = ({ ingredient }: Props) => {
   return (
     <Card className="max-w-md mx-auto overflow-hidden">
       {isAdmin ? (
-        <IngredientImageAdmin ingredient={ingredient} />
+        <IngredientImageViewAdmin ingredient={ingredient} />
       ) : (
-        <IngredientImagePublic
+        <ImageViewPublic
           imageVersion={imageVersion}
           imageKey={imageKey}
           title={title}

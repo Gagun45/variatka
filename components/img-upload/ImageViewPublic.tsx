@@ -7,7 +7,7 @@ interface Props {
   title: string;
 }
 
-const IngredientImagePublic = ({ imageKey, imageVersion, title }: Props) => {
+const ImageViewPublic = ({ imageKey, imageVersion, title }: Props) => {
   const imageSrc = getImageUrl(imageKey, imageVersion);
   return (
     <div className="relative h-96 w-full max-w-96 mx-auto overflow-hidden rounded-md border">
@@ -22,4 +22,4 @@ const IngredientImagePublic = ({ imageKey, imageVersion, title }: Props) => {
   );
 };
 
-export default IngredientImagePublic;
+export default ImageViewPublic;
