@@ -243,11 +243,11 @@ export const deleteRecipe = async (
         message: "Recipe not found",
       };
 
-    const deletedRecipe = await prisma.recipe.delete({
+    await prisma.recipe.delete({
       where: { id: recipeId },
     });
     return {
-      data: deletedRecipe.id,
+      data: recipeId,
       ok: true,
     };
   } catch (e) {

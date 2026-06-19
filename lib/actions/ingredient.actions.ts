@@ -13,99 +13,114 @@ import {
 import { requireAdmin } from "../auth";
 import { uploadHelper } from "../s3/upload.helper";
 import { AppError } from "../error";
+import { IActionResponse } from "../types";
+import {
+  DEFAULT_ACTION_ERROR,
+  UNAUTHORIZED_ACTION_ERROR,
+} from "./action.unwrapper";
 
-export const getIngredients = async (): Promise<IIngredient[]> => {
+export const getIngredients = async (): Promise<
+  IActionResponse<IIngredient[]>
+> => {
   try {
-    return prisma.ingredient.findMany(ingredientArgs);
+    const ingredients = await prisma.ingredient.findMany(ingredientArgs);
+    return {
+      ok: true,
+      data: ingredients,
+    };
   } catch (e) {
-    console.error("Database error in getIngredients:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in getIngredients:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const getIngredientCategories = async (): Promise<
-  IIngredientCategory[]
+  IActionResponse<IIngredientCategory[]>
 > => {
   try {
     const categories = await prisma.ingredientCategory.findMany();
-    return categories;
+    return {
+      ok: true,
+      data: categories,
+    };
   } catch (e) {
-    console.error("Database error in getIngredientCategories:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in getIngredientCategories:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const createIngredientCategory = async (
   dto: ICreateIngredientCategoryDto,
-) => {
+): Promise<IActionResponse<IIngredientCategory>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { title: dto.title },
     });
     if (existingCategory)
-      throw new AppError("A category with this title already exists.");
+      return {
+        ok: false,
+        message: "A category with this title already exists.",
+      };
     const newCategory = await prisma.ingredientCategory.create({ data: dto });
 
-    return newCategory;
+    return {
+      ok: true,
+      data: newCategory,
+    };
   } catch (e) {
-    console.error("Database error in createIngredientCategory:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in createIngredientCategory:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const createIngredient = async (
   dto: IIngredientFormValues,
-): Promise<IIngredient> => {
+): Promise<IActionResponse<IIngredient>> => {
   try {
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const { categoryId, title } = dto;
-    await requireAdmin();
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { id: categoryId },
     });
     if (!existingCategory)
-      throw new AppError(`A category #${categoryId} not found`);
+      return {
+        ok: false,
+        message: `A category #${categoryId} not found`,
+      };
 
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { title },
     });
     if (existingIngredient)
-      throw new AppError("An ingredient with this title already exists.");
+      return {
+        ok: false,
+        message: "An ingredient with this title already exists.",
+      };
 
     const newIngredient = await prisma.ingredient.create({
       data: dto,
       ...ingredientArgs,
     });
-    return newIngredient;
+    return {
+      ok: true,
+      data: newIngredient,
+    };
   } catch (e) {
-    console.error("Database error in updateRecipeFields:", e);
-
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in updateRecipeFields:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const editIngredient = async (
   id: number,
   dto: IIngredientFormValues,
-): Promise<IIngredient> => {
+): Promise<IActionResponse<IIngredient>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const existingIngredient = await prisma.ingredient.findFirst({
       where: {
         title: dto.title,
@@ -115,25 +130,31 @@ export const editIngredient = async (
       },
     });
     if (existingIngredient)
-      throw new AppError("An ingredient with this title already exists.");
-    return prisma.ingredient.update({
+      return {
+        ok: false,
+        message: "An ingredient with this title already exists.",
+      };
+    const updatedIngredient = await prisma.ingredient.update({
       where: { id },
       data: dto,
       ...ingredientArgs,
     });
+    return {
+      ok: true,
+      data: updatedIngredient,
+    };
   } catch (e) {
-    console.error("Database error in updateIngredient:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in updateIngredient:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
-export const deleteIngredient = async (id: number) => {
+export const deleteIngredient = async (
+  id: number,
+): Promise<IActionResponse<number>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const ingredient = await prisma.ingredient.findUnique({
       where: { id },
       select: {
@@ -144,54 +165,68 @@ export const deleteIngredient = async (id: number) => {
         },
       },
     });
-    if (!ingredient) throw new AppError("Ingredient not found");
-    if (ingredient._count.recipeIngredients > 0)
-      throw new AppError("Cannot delete ingredients used in recipes");
-    return prisma.ingredient.delete({
-      where: { id },
-      ...ingredientArgs,
-    });
-  } catch (e) {
-    console.error("Database error in deleteIngredient:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
+    if (!ingredient)
+      return {
+        ok: false,
+        message: "Ingredient not found",
+      };
 
-    throw new Error("Something went wrong");
+    if (ingredient._count.recipeIngredients > 0)
+      return {
+        ok: false,
+        message: "Cannot delete ingredients used in recipes",
+      };
+    await prisma.ingredient.delete({
+      where: { id },
+    });
+    return {
+      data: id,
+      ok: true,
+    };
+  } catch (e) {
+    console.error("Error in deleteIngredient:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const toggleSavedIngredient = async (
   id: number,
   isSaved: boolean,
-): Promise<IIngredient> => {
+): Promise<IActionResponse<IIngredient>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
     });
-    if (!existingIngredient) throw new AppError("Ingredient not found");
-    return prisma.ingredient.update({
+    if (!existingIngredient)
+      return {
+        ok: false,
+        message: "Ingredient not found",
+      };
+
+    const updatedIngredient = await prisma.ingredient.update({
       where: { id },
       data: { isSaved },
       ...ingredientArgs,
     });
+    return {
+      ok: true,
+      data: updatedIngredient,
+    };
   } catch (e) {
-    console.error("Database error in toggleSavedIngredient:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in toggleSavedIngredient:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const uploadIngredientImage = async (
   ingredientId: number,
   file: File,
-): Promise<IIngredient> => {
+): Promise<IActionResponse<IIngredient>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const imageKey = await uploadHelper.ingredientImage(ingredientId, file);
     const updatedIngredient = await prisma.ingredient.update({
       where: { id: ingredientId },
@@ -201,22 +236,22 @@ export const uploadIngredientImage = async (
       },
       ...ingredientArgs,
     });
-    return updatedIngredient;
+    return {
+      ok: true,
+      data: updatedIngredient,
+    };
   } catch (e) {
-    console.error("Database error in uploadIngredientImage:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in uploadIngredientImage:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const removeIngredientImage = async (
   ingredientId: number,
-): Promise<IIngredient> => {
+): Promise<IActionResponse<IIngredient>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const updatedIngredient = await prisma.ingredient.update({
       where: { id: ingredientId },
       data: {
@@ -225,38 +260,42 @@ export const removeIngredientImage = async (
       },
       ...ingredientArgs,
     });
-    return updatedIngredient;
+    return {
+      ok: true,
+      data: updatedIngredient,
+    };
   } catch (e) {
-    console.error("Database error in removeIngredientImage:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in removeIngredientImage:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const toggleIngredientInStockValue = async (
   id: number,
   isInStock: boolean,
-): Promise<IIngredient> => {
+): Promise<IActionResponse<IIngredient>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
     });
-    if (!existingIngredient) throw new AppError("Ingredient not found");
-    return prisma.ingredient.update({
+    if (!existingIngredient)
+      return {
+        ok: false,
+        message: "Ingredient not found",
+      };
+    const updatedIngredient = await prisma.ingredient.update({
       where: { id },
       data: { isInStock },
       ...ingredientArgs,
     });
+    return {
+      ok: true,
+      data: updatedIngredient,
+    };
   } catch (e) {
-    console.error("Database error in toggleIngredientInStockValue:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in toggleIngredientInStockValue:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };

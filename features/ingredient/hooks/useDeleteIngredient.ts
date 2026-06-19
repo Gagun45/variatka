@@ -1,12 +1,11 @@
-import { IIngredient } from "@/lib/prisma.args";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ingredientService } from "../ingredient.api";
 import { ingredientKeys } from "../ingredient.keys";
-import { toast } from "sonner";
 
 export const useDeleteIngredient = () => {
   const qclient = useQueryClient();
-  const mutation = useMutation<IIngredient, Error, number>({
+  const mutation = useMutation<number, Error, number>({
     mutationFn: ingredientService.delete,
 
     onSuccess: () => {
