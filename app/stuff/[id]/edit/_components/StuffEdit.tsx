@@ -11,6 +11,7 @@ import StuffForm from "@/forms/stuff/StuffForm";
 import { frontendUrls } from "@/lib/urls";
 import { ICreateStuffDto } from "@/zod/stuff.schema";
 import { useRouter } from "next/navigation";
+import DeleteStuff from "../../_components/delete/DeleteStuff";
 
 interface Props {
   id: number;
@@ -66,7 +67,7 @@ const StuffEdit = ({ id }: Props) => {
         </CardContent>
       </Card>
 
-      {/* <DeleteRecipeButton recipeId={recipe.id} /> */}
+      <DeleteStuff id={id} />
     </div>
   );
 };

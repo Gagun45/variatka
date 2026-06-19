@@ -4,6 +4,7 @@ import { ingredientService } from "../ingredient.api";
 import { ingredientKeys } from "../ingredient.keys";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { toast } from "sonner";
+import { recipeKeys } from "@/features/recipe/recipe.keys";
 
 export const useEditIngredient = () => {
   const qclient = useQueryClient();
@@ -15,6 +16,7 @@ export const useEditIngredient = () => {
     mutationFn: ({ dto, id }) => ingredientService.edit(id, dto),
     onSuccess: () => {
       qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
       toast.success("Ingredient edited successfully!");
     },
     onError: (e) => {

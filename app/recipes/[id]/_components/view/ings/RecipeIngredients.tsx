@@ -2,6 +2,8 @@ import StockToggleButton from "@/app/ingredients/_components/dashboard/tabs/list
 import StockBadge from "@/components/stock-badge/StockBadge";
 import { useToggleIngredientStock } from "@/features/ingredient/hooks/useToggleIngredientStock";
 import { IRecipe } from "@/lib/prisma.args";
+import { frontendUrls } from "@/lib/urls";
+import Link from "next/link";
 
 interface Props {
   recipe: IRecipe;
@@ -32,7 +34,12 @@ const RecipeIngredients = ({ recipe, isAdmin }: Props) => {
             key={ing.ingredientId}
             className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-md border px-3 py-2"
           >
-            <span className="font-medium truncate">{ing.ingredient.title}</span>
+            <Link
+              href={frontendUrls.ingredients.view(ing.ingredientId)}
+              className="font-medium truncate hover:underline"
+            >
+              {ing.ingredient.title}
+            </Link>
 
             <span className="text-sm text-muted-foreground whitespace-nowrap">
               {ing.amount}

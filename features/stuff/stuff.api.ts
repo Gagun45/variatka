@@ -2,6 +2,7 @@ import { unwrapAction } from "@/lib/actions/action.unwrapper";
 import {
   createStuff,
   createStuffCategory,
+  deleteStuff,
   editStuff,
   getStuff,
   getStuffCategories,
@@ -19,4 +20,5 @@ export const stuffService = {
     unwrapAction(() => createStuff(dto)),
   edit: (id: number, dto: ICreateStuffDto): Promise<IStuff> =>
     unwrapAction(() => editStuff(id, dto)),
+  delete: (id: number): Promise<number> => unwrapAction(() => deleteStuff(id)),
 };

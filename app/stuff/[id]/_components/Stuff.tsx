@@ -4,8 +4,8 @@ import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useStuffCategories } from "@/features/stuff/hooks/useGetCategories";
 import { useStuff } from "@/features/stuff/hooks/useStuff";
-import StuffView from "./view/StuffView";
 import { useAuthStore } from "@/zustand/auth.store";
+import StuffView from "./view/StuffView";
 
 interface Props {
   id: number;

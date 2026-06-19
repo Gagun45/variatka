@@ -9,7 +9,7 @@ import IngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { frontendUrls } from "@/lib/urls";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { useRouter } from "next/navigation";
-import DeleteIngredientButton from "../../_components/delete-btn/DeleteIngredientButton";
+import DeleteIngredient from "./delete-ing/DeleteIngredient";
 
 interface Props {
   id: number;
@@ -58,7 +58,7 @@ const IngredientEdit = ({ id }: Props) => {
           ingredient={ingredient}
         />
       </div>
-      <DeleteIngredientButton id={id} />
+      <DeleteIngredient id={id} />
     </div>
   );
 };

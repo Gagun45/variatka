@@ -12,54 +12,44 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
-import { useDeleteRecipe } from "@/features/recipe/hooks/useDeleteRecipe";
-import { frontendUrls } from "@/lib/urls";
 import { TrashIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface Props {
-  recipeId: number;
+  isDisabled: boolean;
+  isPending: boolean;
+  label: string;
+  alertTitle: string;
+  alertDescription: string;
+  onDelete: () => void;
 }
 
-const DeleteRecipeButton = ({ recipeId }: Props) => {
-  const { mutate, isPending } = useDeleteRecipe();
-  const router = useRouter();
-
-  const [open, setOpen] = useState(false);
-
-  const handleDelete = () => {
-    if (isPending) return;
-
-    mutate(recipeId, {
-      onSuccess: () => {
-        setOpen(false);
-        router.push(frontendUrls.recipes.index);
-      },
-    });
-  };
-
-  const canInteract = !isPending;
-
+const DeleteDialog = ({
+  isDisabled,
+  label,
+  isPending,
+  alertDescription,
+  alertTitle,
+  onDelete,
+}: Props) => {
+  const [isOpen, setIsOpen] = useState(false);
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
         <Button
           className="w-full py-8 text-lg sm:text-2xl items-center gap-4"
           variant="destructive"
-          disabled={!canInteract}
+          disabled={isDisabled}
         >
           <TrashIcon className="size-4 md:size-7" />
-          Delete recipe
+          {label}
         </Button>
       </AlertDialogTrigger>
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete recipe?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{alertTitle}</AlertDialogTitle>
+          <AlertDialogDescription>{alertDescription}</AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter className="justify-between!">
@@ -68,7 +58,7 @@ const DeleteRecipeButton = ({ recipeId }: Props) => {
           <AlertDialogAction asChild>
             <LoadingButton
               isPending={isPending}
-              onClick={handleDelete}
+              onClick={onDelete}
               disabled={isPending}
             >
               Delete
@@ -80,4 +70,4 @@ const DeleteRecipeButton = ({ recipeId }: Props) => {
   );
 };
 
-export default DeleteRecipeButton;
+export default DeleteDialog;
