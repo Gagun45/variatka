@@ -12,7 +12,7 @@ import { useState } from "react";
 
 import CategoryButton from "@/components/cat-button/CategoryButton";
 import { SortSelect } from "@/components/sort-select/SortSelect";
-import { StockFilter } from "@/components/stock-filter/StockFilter";
+import { FilterButtons } from "@/components/stock-filter/StockFilter";
 import { useIngredientsFilter } from "@/hooks/useIngredientsFilter";
 import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
 import IngredientFormsDialog from "./forms-dialog/IngredientFormsDialog";
@@ -72,7 +72,7 @@ const IngredientsTabs = ({ categories, ingredients }: Props) => {
       <Separator />
       <div className="flex justify-between flex-wrap gap-4">
         <div className="flex flex-wrap gap-2">
-          <StockFilter
+          <FilterButtons
             value={stockFilter}
             onChange={setStockFilter}
             options={STOCK_OPTIONS}

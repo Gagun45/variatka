@@ -14,6 +14,11 @@ export const INGREDIENT_SORTERS = {
   "usage-asc": (a: IIngredient, b: IIngredient) =>
     (a._count?.recipeIngredients ?? 0) - (b._count?.recipeIngredients ?? 0) ||
     a.title.localeCompare(b.title),
+  newest: (a: IIngredient, b: IIngredient) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+
+  oldest: (a: IIngredient, b: IIngredient) =>
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
 } as const;
 
 export const INGREDIENT_SORT_LABELS = {
@@ -21,6 +26,8 @@ export const INGREDIENT_SORT_LABELS = {
   "name-desc": "Z-A",
   "usage-desc": "Most used",
   "usage-asc": "Least used",
+  newest: "Newest",
+  oldest: "Oldest",
 } as const;
 
 export type IIngredientSortType = keyof typeof INGREDIENT_SORTERS;
