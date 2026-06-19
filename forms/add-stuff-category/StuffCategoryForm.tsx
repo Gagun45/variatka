@@ -3,31 +3,31 @@
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { Field, FieldError, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useCreateStuffCategory } from "@/features/stuff/hooks/useCreateStuffCategory";
+import { ICreateStuffCategoryDto } from "@/zod/stuff.schema";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import z from "zod";
 
-const NewStuffCategoryForm = () => {
+interface Props {
+  onSubmit: (values: ICreateStuffCategoryDto) => void;
+  isPending: boolean;
+}
+
+const StuffCategoryForm = ({ onSubmit, isPending }: Props) => {
   const schema = zodSchemas.stuff.createCategory;
-  const { mutate, isPending } = useCreateStuffCategory();
-  type formType = z.infer<typeof schema>;
-  const { control, reset, handleSubmit } = useForm<formType>({
+  const { control, handleSubmit } = useForm<ICreateStuffCategoryDto>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: "",
     },
   });
-  const onSubmit = (values: formType) => {
-    mutate(values, {
-      onSuccess: () => {
-        reset();
-      },
-    });
+
+  const onSubmitHandler = (values: ICreateStuffCategoryDto) => {
+    onSubmit(values);
   };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmitHandler)}>
       <FieldSet disabled={isPending}>
         <Controller
           name="title"
@@ -48,4 +48,4 @@ const NewStuffCategoryForm = () => {
   );
 };
 
-export default NewStuffCategoryForm;
+export default StuffCategoryForm;

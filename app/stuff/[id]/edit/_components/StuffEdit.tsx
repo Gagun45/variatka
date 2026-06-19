@@ -1,9 +1,74 @@
+"use client";
+
+import Loader from "@/components/loader/Loader";
+import StateScreen from "@/components/state-screen/StateScreen";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useEditStuff } from "@/features/stuff/hooks/useEditStuff";
+import { useStuffCategories } from "@/features/stuff/hooks/useGetCategories";
+import { useStuff } from "@/features/stuff/hooks/useStuff";
+import StuffForm from "@/forms/stuff/StuffForm";
+import { frontendUrls } from "@/lib/urls";
+import { ICreateStuffDto } from "@/zod/stuff.schema";
+import { useRouter } from "next/navigation";
+
 interface Props {
   id: number;
 }
 
 const StuffEdit = ({ id }: Props) => {
-  return <div>StuffEdit - {id}</div>;
+  const router = useRouter();
+  const {
+    data: categories,
+    isLoading: isCategoriesLoading,
+    isError: isCategoriesError,
+  } = useStuffCategories();
+  const {
+    data: stuff,
+    isLoading: isStuffLoading,
+    isError: isStuffError,
+  } = useStuff();
+  const { mutate, isPending } = useEditStuff();
+  if (isCategoriesLoading || isStuffLoading) return <Loader />;
+  if (isCategoriesError || !categories || isStuffError || !stuff)
+    return <StateScreen />;
+  const singleStuff = stuff.find((s) => s.id === id);
+  if (!singleStuff) return <StateScreen title="Stuff not found" />;
+  const onSubmit = (dto: ICreateStuffDto) => {
+    mutate(
+      {
+        dto,
+        id,
+      },
+      {
+        onSuccess: () => {
+          router.push(frontendUrls.stuff.view(id));
+        },
+      },
+    );
+  };
+
+  return (
+    <div className="space-y-12">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center">Basic information</CardTitle>
+        </CardHeader>
+        <Separator />
+
+        <CardContent>
+          <StuffForm
+            categories={categories}
+            isPending={isPending}
+            onClick={onSubmit}
+            stuff={singleStuff}
+          />
+        </CardContent>
+      </Card>
+
+      {/* <DeleteRecipeButton recipeId={recipe.id} /> */}
+    </div>
+  );
 };
 
 export default StuffEdit;

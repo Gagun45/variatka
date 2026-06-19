@@ -4,7 +4,6 @@ import { ICreateStuffCategoryDto, ICreateStuffDto } from "@/zod/stuff.schema";
 import { requireAdmin } from "../auth";
 import { prisma } from "../prisma";
 import { IStuff, IStuffCategory, stuffArgs } from "../prisma.args";
-import { AppError } from "../error";
 import { IActionResponse } from "../types";
 import {
   DEFAULT_ACTION_ERROR,
@@ -101,6 +100,68 @@ export const createStuff = async (
     };
   } catch (e) {
     console.error("Error in createStuff:", e);
+    return DEFAULT_ACTION_ERROR;
+  }
+};
+
+export const editStuff = async (
+  id: number,
+  dto: ICreateStuffDto,
+): Promise<IActionResponse<IStuff>> => {
+  try {
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    const existingStuff = await prisma.stuff.findFirst({
+      where: {
+        title: dto.title,
+        NOT: {
+          id,
+        },
+      },
+    });
+    if (existingStuff)
+      return {
+        ok: false,
+        message: "A stuff with this title already exists.",
+      };
+    const updatedStuff = await prisma.stuff.update({
+      where: { id },
+      data: dto,
+      ...stuffArgs,
+    });
+    return {
+      ok: true,
+      data: updatedStuff,
+    };
+  } catch (e) {
+    console.error("Error in editStuff:", e);
+    return DEFAULT_ACTION_ERROR;
+  }
+};
+
+export const deleteStuff = async (
+  id: number,
+): Promise<IActionResponse<number>> => {
+  try {
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    const existingStuff = await prisma.stuff.findUnique({
+      where: { id },
+    });
+    if (!existingStuff)
+      return {
+        ok: false,
+        message: "Stuff not found",
+      };
+    await prisma.stuff.delete({
+      where: { id },
+    });
+    return {
+      ok: true,
+      data: id,
+    };
+  } catch (e) {
+    console.error("Error in deleteStuff:", e);
     return DEFAULT_ACTION_ERROR;
   }
 };

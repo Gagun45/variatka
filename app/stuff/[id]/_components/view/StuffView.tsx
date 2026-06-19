@@ -8,7 +8,7 @@ import Link from "next/link";
 
 interface Props {
   stuff: IStuff;
-  isAdmin?: boolean;
+  isAdmin: boolean;
 }
 
 const StuffView = ({ stuff, isAdmin }: Props) => {

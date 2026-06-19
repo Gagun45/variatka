@@ -4,8 +4,10 @@ import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useStuffCategories } from "@/features/stuff/hooks/useGetCategories";
 import { useStuff } from "@/features/stuff/hooks/useStuff";
+import StuffCategoryForm from "@/forms/add-stuff-category/StuffCategoryForm";
 import StuffTabs from "./tabs/StuffTabs";
-import NewStuffCategoryForm from "@/forms/add-stuff-category/NewStuffCategoryForm";
+import { useCreateStuffCategory } from "@/features/stuff/hooks/useCreateStuffCategory";
+import { ICreateStuffCategoryDto } from "@/zod/stuff.schema";
 
 const StuffDashboard = () => {
   const {
@@ -20,6 +22,12 @@ const StuffDashboard = () => {
     isError: isStuffError,
   } = useStuff();
 
+  const { mutate, isPending } = useCreateStuffCategory();
+
+  const onCategoryCreate = (dto: ICreateStuffCategoryDto) => {
+    mutate(dto);
+  };
+
   if (isCategoriesLoading || isStuffLoading) {
     return <Loader />;
   }
@@ -31,7 +39,7 @@ const StuffDashboard = () => {
     return (
       <div className="space-y-6 text-center mx-auto">
         <h1>No stuff categories yet</h1>
-        <NewStuffCategoryForm />
+        <StuffCategoryForm isPending={isPending} onSubmit={onCategoryCreate} />
       </div>
     );
   }

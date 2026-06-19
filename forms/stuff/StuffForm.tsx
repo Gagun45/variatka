@@ -12,8 +12,8 @@ import { ICreateStuffDto } from "@/zod/stuff.schema";
 import { useEffect } from "react";
 import CategorySelectField from "./fields/CategoryField";
 import DescriptionField from "./fields/DescriptionField";
-import TitleField from "./fields/TitleField";
 import InStockField from "./fields/InStockField";
+import TitleField from "./fields/TitleField";
 
 interface Props {
   categories: IStuffCategory[];
@@ -21,14 +21,16 @@ interface Props {
   stuff?: IStuff;
   isPending: boolean;
   initialCategoryId?: number;
+  onReset?: () => void;
 }
 
-const NewStuffForm = ({
+const StuffForm = ({
   categories,
   onClick,
   stuff,
   isPending,
   initialCategoryId,
+  onReset,
 }: Props) => {
   const id = initialCategoryId ?? categories[0].id;
 
@@ -59,6 +61,11 @@ const NewStuffForm = ({
     formState: { isDirty },
   } = form;
 
+  const handleReset = () => {
+    reset();
+    if (onReset) onReset();
+  };
+
   const onSubmit = (dto: ICreateStuffDto) => {
     onClick(dto);
     if (!stuff) {
@@ -84,7 +91,7 @@ const NewStuffForm = ({
               disabled={!isDirty}
               type="button"
               variant={"destructive"}
-              onClick={() => reset()}
+              onClick={handleReset}
             >
               Reset
             </Button>
@@ -102,4 +109,4 @@ const NewStuffForm = ({
   );
 };
 
-export default NewStuffForm;
+export default StuffForm;
