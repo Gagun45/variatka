@@ -1,19 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-
-type Option<T extends string> = {
-  value: T;
-  label: string;
-};
+import { IOption } from "@/lib/types";
 
 interface Props<T extends string> {
   value: T;
   onChange: (value: T) => void;
-  options: Option<T>[];
+  options: IOption<T>[];
 }
 
-export function StockFilter<T extends string>({
+export function FilterButtons<T extends string>({
   value,
   onChange,
   options,

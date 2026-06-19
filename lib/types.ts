@@ -18,3 +18,8 @@ export interface IBreadcrumbItem {
   label: string;
   href?: string;
 }
+
+export type IOption<T extends string> = {
+  value: T;
+  label: string;
+};
