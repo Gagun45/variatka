@@ -23,25 +23,19 @@ export function useRecipesFilter({
     const query = searchQuery.trim().toLowerCase();
     const isSearching = query.length > 0;
 
-    // 1. CATEGORY FILTER
-    const categoryFiltered = categoryId
-      ? recipes.filter((r) => r.recipeCategoryId === categoryId)
-      : recipes;
+    const base = isSearching
+      ? recipes.filter((r) => r.title.toLowerCase().includes(query))
+      : categoryId
+        ? recipes.filter((r) => r.recipeCategoryId === categoryId)
+        : recipes;
 
-    // 2. SEARCH (category-aware)
-    const searched = isSearching
-      ? categoryFiltered.filter((r) => r.title.toLowerCase().includes(query))
-      : categoryFiltered;
-
-    // 3. STOCK FILTER
     const stockFiltered =
       stock === "in"
-        ? searched.filter((r) => r.inStock)
+        ? base.filter((r) => r.inStock)
         : stock === "out"
-          ? searched.filter((r) => !r.inStock)
-          : searched;
+          ? base.filter((r) => !r.inStock)
+          : base;
 
-    // 4. READY TO MAKE FILTER
     const readyFiltered = stockFiltered.filter((recipe) => {
       if (readyToMake === "all") return true;
 
@@ -52,7 +46,6 @@ export function useRecipesFilter({
       return readyToMake === "ready" ? isReadyToMake : !isReadyToMake;
     });
 
-    // 5. SORT
     return [...readyFiltered].sort(RECIPE_SORTERS[sort]);
   }, [recipes, searchQuery, categoryId, stock, readyToMake, sort]);
 }

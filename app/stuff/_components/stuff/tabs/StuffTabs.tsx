@@ -28,13 +28,13 @@ const StuffTabs = ({ categories, stuff }: Props) => {
   const isSearching = searchQuery.trim().length > 0;
   const query = searchQuery.toLowerCase().trim();
 
-  // 1. CATEGORY FILTER (always applied)
-  const categoryStuff = stuff.filter((s) => s.stuffCategoryId === active?.id);
+  // 1. BASE: search overrides category
+  const baseStuff = isSearching
+    ? stuff.filter((s) => s.title.toLowerCase().includes(query))
+    : stuff.filter((s) => s.stuffCategoryId === active?.id);
 
-  // 2. SEARCH (category-aware)
-  const filteredStuff = isSearching
-    ? categoryStuff.filter((s) => s.title.toLowerCase().includes(query))
-    : categoryStuff;
+  // 2. RESULT
+  const filteredStuff = baseStuff;
 
   return (
     <div className="flex flex-col gap-4 w-full mx-auto">
@@ -62,15 +62,6 @@ const StuffTabs = ({ categories, stuff }: Props) => {
 
       <Separator />
 
-      {/* SEARCH INFO */}
-      {isSearching && (
-        <p className="text-sm text-muted-foreground">
-          {filteredStuff.length} items include{" "}
-          <span className="italic">&quot;{searchQuery}&quot;</span> in title
-        </p>
-      )}
-
-      {/* EMPTY STATE + LIST */}
       {filteredStuff.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {isSearching
@@ -78,7 +69,16 @@ const StuffTabs = ({ categories, stuff }: Props) => {
             : "Found 0 items"}
         </p>
       ) : (
-        <StuffList stuff={filteredStuff} />
+        <>
+          {isSearching && (
+            <p className="text-sm text-muted-foreground">
+              {filteredStuff.length} items found for{" "}
+              <span className="italic">&quot;{searchQuery}&quot;</span>
+            </p>
+          )}
+
+          <StuffList stuff={filteredStuff} />
+        </>
       )}
     </div>
   );
