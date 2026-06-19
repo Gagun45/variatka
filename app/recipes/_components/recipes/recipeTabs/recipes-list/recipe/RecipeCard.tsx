@@ -20,7 +20,6 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
   const inStockIngredients = ingredients.filter(
     (i) => i.ingredient.isInStock,
   ).length;
-  const missingIngredients = totalIngredients - inStockIngredients;
 
   const isReadyToMake = inStockIngredients === totalIngredients;
   const onToggle = () => {
@@ -37,9 +36,7 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
         {isAdmin && (
           <div className="flex justify-end">
             <Badge variant={isReadyToMake ? "default" : "outline"}>
-              {isReadyToMake
-                ? "Ready to cook"
-                : `${missingIngredients} missing (${inStockIngredients}/${totalIngredients})`}
+              {inStockIngredients}/{totalIngredients}
             </Badge>
           </div>
         )}
