@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { getImageUrl } from "@/lib/image.helper";
 import { frontendUrls } from "@/lib/urls";
 import { useAuthStore } from "@/zustand/auth.store";
-import { useRecipeStore } from "@/zustand/recipe";
+import { useRecipeStore } from "@/zustand/recipe.store";
 import Link from "next/link";
 import { IngredientImageAdmin } from "./img-admin/IngredientImageAdmin";
 import StockBadge from "@/components/stock-badge/StockBadge";

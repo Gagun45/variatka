@@ -77,7 +77,7 @@ const RecipeEdit = ({ id }: Props) => {
             categories={categories}
             isPending={isPending}
             onSubmit={onSubmit}
-            recipe={recipe}
+            initialValues={recipe}
           />
         </CardContent>
       </Card>

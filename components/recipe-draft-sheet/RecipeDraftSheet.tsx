@@ -3,7 +3,7 @@
 import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import RecipeForm from "@/forms/recipe/RecipeForm";
-import { useRecipeStore } from "@/zustand/recipe";
+import { useRecipeStore } from "@/zustand/recipe.store";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { List } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +23,8 @@ import RecipeItemsList from "./list/RecipeItemsList";
 const RecipeDraftSheet = () => {
   const items = useRecipeStore((s) => s.items);
   const clear = useRecipeStore((s) => s.clear);
+  const draft = useRecipeStore((s) => s.draft);
+  const setDraft = useRecipeStore((s) => s.setDraft);
   const { data: categories, isLoading, isError } = useRecipeCategories();
   const { mutate, isPending } = useCreateRecipe();
   if (isLoading) return <Loader />;
@@ -62,7 +64,7 @@ const RecipeDraftSheet = () => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="pb-4">
         <SheetHeader>
           <SheetTitle>Recipe Ingredients</SheetTitle>
           <SheetDescription>
@@ -87,6 +89,8 @@ const RecipeDraftSheet = () => {
                 onSubmit={onSubmit}
                 categories={categories}
                 isDisabled={isAmountNotSet}
+                initialValues={draft}
+                onDraftChange={setDraft}
               />
             </>
           )}

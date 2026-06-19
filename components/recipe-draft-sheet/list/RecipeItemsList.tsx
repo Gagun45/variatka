@@ -1,4 +1,4 @@
-import { IRecipeIngredientItem } from "@/zustand/recipe";
+import { IRecipeIngredientItem } from "@/zustand/recipe.store";
 import RecipeItemCard from "./item/RecipeItemCard";
 interface Props {
   items: IRecipeIngredientItem[];

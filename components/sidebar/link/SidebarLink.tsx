@@ -13,7 +13,7 @@ const SidebarLink = ({
   };
   return (
     <Link
-      className={`${className} text-base! tracking-widest`}
+      className={`${className} tracking-widest`}
       onClick={handleClick}
       href={href}
     >
