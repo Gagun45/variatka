@@ -17,7 +17,7 @@ const SavedLinks = () => {
   const savedRecipesLength = recipes.filter((r) => r.isSaved).length;
 
   return (
-    <SidebarGroup className="mt-8">
+    <SidebarGroup className="border-b">
       <SidebarMenu className="space-y-2">
         <SidebarMenuItem>
           <SidebarMenuButton asChild>

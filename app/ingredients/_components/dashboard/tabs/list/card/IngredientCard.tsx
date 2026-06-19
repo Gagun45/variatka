@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IIngredient } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
-import { useRecipeStore } from "@/zustand/recipe";
+import { useRecipeStore } from "@/zustand/recipe.store";
 import { CheckIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import StockToggleButton from "./toggle-stock-btn/StockToggleButton";

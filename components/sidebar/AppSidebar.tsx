@@ -2,6 +2,7 @@
 
 import {
   Sidebar,
+  SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarHeader,
@@ -22,13 +23,13 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas">
-      <SidebarHeader className="h-24 p-0 flex items-center justify-center">
+      <SidebarHeader className="h-24 p-0 flex items-center border-b justify-center">
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem className="flex justify-center">
               <SidebarLink
                 href={"/"}
-                label="Ahrrrr"
+                label="Nomly"
                 className="text-4xl! tracking-widest"
               />
             </SidebarMenuItem>
@@ -36,28 +37,33 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarHeader>
 
-      <SidebarGroup>
-        <SidebarMenu className="space-y-2">
-          {PUBLIC_LINKS.map(({ href, label }) => (
-            <SidebarMenuItem key={href}>
-              <SidebarMenuButton asChild>
-                <SidebarLink href={href} label={label} />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+      <SidebarContent>
+        <SidebarGroup className="border-b">
+          <SidebarMenu className="space-y-2">
+            {PUBLIC_LINKS.map(({ href, label }) => (
+              <SidebarMenuItem key={href}>
+                <SidebarMenuButton asChild>
+                  <SidebarLink href={href} label={label} />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
 
-          {isAdmin && (
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <SidebarLink href={frontendUrls.stuff.index} label={"Stuff"} />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
-        </SidebarMenu>
-      </SidebarGroup>
-      {isAdmin && <SavedLinks />}
-      <SidebarFooter className="mt-auto pb-4">
-        <div className="flex justify-center gap-4">
+            {isAdmin && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <SidebarLink
+                    href={frontendUrls.stuff.index}
+                    label={"Stuff"}
+                  />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+          </SidebarMenu>
+        </SidebarGroup>
+        {isAdmin && <SavedLinks />}
+      </SidebarContent>
+      <SidebarFooter className="mt-auto py-4 border-t">
+        <div className="flex justify-evenly gap-4">
           <ThemeToggle />
           <Auth />
         </div>
