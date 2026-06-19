@@ -25,6 +25,7 @@ interface Props {
   isDisabled?: boolean;
   isPending: boolean;
   onDraftChange?: (data: Partial<IRecipeDto>) => void;
+  onReset?: () => void;
 }
 
 const RecipeForm = ({
@@ -34,10 +35,15 @@ const RecipeForm = ({
   isPending,
   isDisabled,
   onDraftChange,
+  onReset,
 }: Props) => {
   const schema = zodSchemas.recipe.create;
+  const initialRecipeCategoryId =
+    initialValues?.recipeCategoryId && initialValues.recipeCategoryId !== 0
+      ? initialValues.recipeCategoryId
+      : categories[0].id;
   const defaultValues: IRecipeDto = {
-    recipeCategoryId: initialValues?.recipeCategoryId ?? categories[0].id,
+    recipeCategoryId: initialRecipeCategoryId,
     description: initialValues?.description ?? "",
     notes: initialValues?.notes ?? "",
     title: initialValues?.title ?? "",
@@ -47,6 +53,7 @@ const RecipeForm = ({
     resolver: zodResolver(schema),
     defaultValues,
   });
+
   const setDraftDebounced = useDebouncedCallback(
     (values: Partial<IRecipeDto>) => {
       if (!onDraftChange) return;
@@ -72,7 +79,12 @@ const RecipeForm = ({
     reset,
     formState: { isDirty },
   } = form;
-
+  const handleReset = () => {
+    reset();
+    if (onReset) {
+      onReset();
+    }
+  };
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -85,9 +97,8 @@ const RecipeForm = ({
           <Button
             type="reset"
             className="w-full"
-            disabled={!isDirty}
             variant={"destructive"}
-            onClick={() => reset()}
+            onClick={handleReset}
           >
             Reset
           </Button>

@@ -106,8 +106,13 @@ export const editIngredient = async (
 ): Promise<IIngredient> => {
   try {
     await requireAdmin();
-    const existingIngredient = await prisma.ingredient.findUnique({
-      where: { title: dto.title },
+    const existingIngredient = await prisma.ingredient.findFirst({
+      where: {
+        title: dto.title,
+        NOT: {
+          id,
+        },
+      },
     });
     if (existingIngredient)
       throw new AppError("An ingredient with this title already exists.");
