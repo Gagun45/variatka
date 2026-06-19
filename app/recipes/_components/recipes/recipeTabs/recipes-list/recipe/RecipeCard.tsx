@@ -32,17 +32,21 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition">
-      <Link href={href} className="flex flex-col gap-2 px-2">
+      <div className="flex flex-col gap-2 px-2">
         {isAdmin && (
-          <div className="flex justify-end">
+          <div className="flex justify-between gap-2 items-center">
+            {onSavedToggle && (
+              <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
+            )}
             <Badge variant={isReadyToMake ? "default" : "outline"}>
               {inStockIngredients}/{totalIngredients}
             </Badge>
           </div>
         )}
-        <div className="relative h-48 w-full rounded-md overflow-hidden">
-          {/* status badge */}
-
+        <Link
+          href={href}
+          className="relative hover:scale-[1.05] transition h-48 w-full rounded-md overflow-hidden"
+        >
           <Image
             src={imageSrc}
             alt={title}
@@ -50,16 +54,12 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
             sizes="384px"
             className="object-contain"
           />
-        </div>
-      </Link>
-
-      <div className="flex justify-between px-2 items-start">
-        <Link className="hover:underline" href={href}>
+        </Link>
+      </div>
+      <div className="flex justify-center mx-2">
+        <Link className="hover:underline break-all" href={href}>
           {title}
         </Link>
-        {isAdmin && onSavedToggle && (
-          <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
-        )}
       </div>
     </Card>
   );

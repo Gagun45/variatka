@@ -2,15 +2,14 @@
 
 import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
 import { requireAdmin } from "../auth";
-import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
+import { uploadHelper } from "../s3/upload.helper";
 import { IActionResponse, ICreateRecipeDto, IRecipeIngredient } from "../types";
 import {
   DEFAULT_ACTION_ERROR,
   UNAUTHORIZED_ACTION_ERROR,
 } from "./action.unwrapper";
-import { uploadHelper } from "../s3/upload.helper";
 
 export const getRecipeCategories = async (): Promise<
   IActionResponse<IRecipeCategory[]>
@@ -263,7 +262,7 @@ export const toggleSavedRecipe = async (
 ): Promise<IActionResponse<IRecipe>> => {
   try {
     const isAdmin = await requireAdmin();
-    if (isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const updatedRecipe = await prisma.recipe.update({
       where: { id },
       data: { isSaved },
