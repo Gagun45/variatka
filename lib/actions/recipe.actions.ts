@@ -10,6 +10,7 @@ import {
   DEFAULT_ACTION_ERROR,
   UNAUTHORIZED_ACTION_ERROR,
 } from "./action.unwrapper";
+import { uploadHelper } from "../s3/upload.helper";
 
 export const getRecipeCategories = async (): Promise<
   IActionResponse<IRecipeCategory[]>
@@ -274,6 +275,60 @@ export const toggleSavedRecipe = async (
     };
   } catch (e) {
     console.error("Error in toggleSavedRecipe:", e);
+    return DEFAULT_ACTION_ERROR;
+  }
+};
+
+export const uploadRecipeImage = async (
+  recipeId: number,
+  file: File,
+): Promise<IActionResponse<IRecipe>> => {
+  try {
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    const imageKey = await uploadHelper.image({
+      entity: "recipes",
+      file,
+      id: recipeId,
+    });
+    const updatedRecipe = await prisma.recipe.update({
+      where: { id: recipeId },
+      data: {
+        imageKey,
+        imageVersion: { increment: 1 },
+      },
+      ...recipeArgs,
+    });
+    return {
+      ok: true,
+      data: updatedRecipe,
+    };
+  } catch (e) {
+    console.error("Error in uploadRecipeImage:", e);
+    return DEFAULT_ACTION_ERROR;
+  }
+};
+
+export const removeRecipeImage = async (
+  recipeId: number,
+): Promise<IActionResponse<IRecipe>> => {
+  try {
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    const updatedRecipe = await prisma.recipe.update({
+      where: { id: recipeId },
+      data: {
+        imageKey: null,
+        imageVersion: { increment: 1 },
+      },
+      ...recipeArgs,
+    });
+    return {
+      ok: true,
+      data: updatedRecipe,
+    };
+  } catch (e) {
+    console.error("Error in removeRecipeImage:", e);
     return DEFAULT_ACTION_ERROR;
   }
 };

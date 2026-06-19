@@ -4,24 +4,39 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useRemoveIngredientImage } from "@/features/ingredient/hooks/useRemoveIngredientImage";
-import { useUploadIngredientImage } from "@/features/ingredient/hooks/useUploadIngredientImage";
 import { getImageUrl } from "@/lib/image.helper";
-import { IIngredient } from "@/lib/prisma.args";
 import { Check, Pencil, Trash2, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Props = {
-  ingredient: IIngredient;
+  imageKey: string | null;
+  title: string;
+  imageVersion: number;
+  onUpload: (file: File) => Promise<void>;
+  onRemove: () => void;
+  isPending: boolean;
 };
 
-export function IngredientImageAdmin({ ingredient }: Props) {
-  const { imageKey, title, id, imageVersion } = ingredient;
-
+export function ImageViewAdmin({
+  imageKey,
+  imageVersion,
+  title,
+  isPending,
+  onRemove,
+  onUpload,
+}: Props) {
   const [file, setFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const { mutate: uploadMutate, isPending } = useUploadIngredientImage();
-  const removeMutation = useRemoveIngredientImage();
 
   const previewUrl = useMemo(() => {
     if (!file) return null;
@@ -42,27 +57,19 @@ export function IngredientImageAdmin({ ingredient }: Props) {
     inputRef.current?.click();
   };
   const handleRemove = () => {
-    removeMutation.mutate(ingredient.id);
+    onRemove();
   };
 
   const handleCancel = () => {
     setFile(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!file) return;
 
-    uploadMutate(
-      {
-        ingredientId: id,
-        file,
-      },
-      {
-        onSuccess: () => {
-          setFile(null);
-        },
-      },
-    );
+    await onUpload(file);
+
+    setFile(null);
   };
 
   return (
@@ -105,7 +112,12 @@ export function IngredientImageAdmin({ ingredient }: Props) {
               >
                 <X />
               </Button>
-              <Button size="icon" onClick={handleSave} disabled={isPending}>
+              <Button
+                size="icon"
+                onClick={handleSave}
+                variant={"success"}
+                disabled={isPending}
+              >
                 <Check />
               </Button>
             </>
@@ -121,14 +133,35 @@ export function IngredientImageAdmin({ ingredient }: Props) {
               </Button>
 
               {imageKey && (
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  onClick={handleRemove}
-                  disabled={isPending}
-                >
-                  <Trash2 />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      disabled={isPending}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </AlertDialogTrigger>
+
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete image?</AlertDialogTitle>
+
+                      <AlertDialogDescription>
+                        This will permanently remove the image from storage.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+
+                      <AlertDialogAction onClick={handleRemove}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </>
           )}

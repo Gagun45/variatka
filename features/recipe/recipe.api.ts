@@ -5,9 +5,11 @@ import {
   deleteRecipe,
   getRecipeCategories,
   getRecipes,
+  removeRecipeImage,
   toggleSavedRecipe,
   updateRecipeFields,
   updateRecipeIngredients,
+  uploadRecipeImage,
 } from "@/lib/actions/recipe.actions";
 import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
 import { ICreateRecipeDto, IRecipeIngredient } from "@/lib/types";
@@ -23,6 +25,10 @@ export const recipeService = {
     unwrapAction(() => createRecipeCategory(dto)),
   toggle: (id: number, add: boolean): Promise<IRecipe> =>
     unwrapAction(() => toggleSavedRecipe(id, add)),
+  uploadImage: (ingredientId: number, file: File): Promise<IRecipe> =>
+    unwrapAction(() => uploadRecipeImage(ingredientId, file)),
+  removeImage: (ingredientId: number): Promise<IRecipe> =>
+    unwrapAction(() => removeRecipeImage(ingredientId)),
 
   updateFields: (id: number, dto: IRecipeDto): Promise<IRecipe> =>
     unwrapAction(() => updateRecipeFields(id, dto)),

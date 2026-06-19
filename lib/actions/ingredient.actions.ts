@@ -227,7 +227,11 @@ export const uploadIngredientImage = async (
   try {
     const isAdmin = await requireAdmin();
     if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
-    const imageKey = await uploadHelper.ingredientImage(ingredientId, file);
+    const imageKey = await uploadHelper.image({
+      entity: "ingredients",
+      file,
+      id: ingredientId,
+    });
     const updatedIngredient = await prisma.ingredient.update({
       where: { id: ingredientId },
       data: {

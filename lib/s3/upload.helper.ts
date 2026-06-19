@@ -2,9 +2,19 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "./s3";
 
 export const uploadHelper = {
-  ingredientImage: async (ingredientId: number, file: File) => {
+  image: async ({
+    entity,
+    id,
+    file,
+  }: {
+    entity: "ingredients" | "recipes";
+    id: number;
+    file: File;
+  }) => {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const key = `ingredients/${ingredientId}/image.webp`;
+
+    const key = `${entity}/${id}/image.webp`;
+
     await s3.send(
       new PutObjectCommand({
         Bucket: process.env.AWS_BUCKET_NAME!,
@@ -13,6 +23,7 @@ export const uploadHelper = {
         ContentType: file.type,
       }),
     );
+
     return key;
   },
 };

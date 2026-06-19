@@ -8,6 +8,8 @@ import RecipeHeader from "./header/RecipeHeader";
 import RecipeIngredients from "./ings/RecipeIngredients";
 import RecipeNotes from "./notes/RecipeNotes";
 import { useAuthStore } from "@/zustand/auth.store";
+import RecipeImageViewAdmin from "./img/RecipeImageViewAdmin";
+import ImageViewPublic from "@/components/img-upload/ImageViewPublic";
 
 interface Props {
   recipe: IRecipe;
@@ -15,12 +17,23 @@ interface Props {
 
 const RecipeView = ({ recipe }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const { imageKey, imageVersion, title } = recipe;
   return (
     <Card className="mx-auto">
       <RecipeHeader recipe={recipe} />
 
       <CardContent className="flex flex-col gap-5">
         <Separator />
+
+        {isAdmin ? (
+          <RecipeImageViewAdmin recipe={recipe} />
+        ) : (
+          <ImageViewPublic
+            imageKey={imageKey}
+            imageVersion={imageVersion}
+            title={title}
+          />
+        )}
 
         <RecipeIngredients isAdmin={isAdmin} recipe={recipe} />
 

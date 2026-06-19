@@ -1,6 +1,7 @@
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { getImageUrl } from "@/lib/image.helper";
 import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import Image from "next/image";
@@ -13,7 +14,7 @@ type Props = {
 };
 
 const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
-  const { id, title, imageKey, ingredients, isSaved } = recipe;
+  const { id, title, imageKey, ingredients, isSaved, imageVersion } = recipe;
   const href = frontendUrls.recipes.view(id);
   const totalIngredients = ingredients.length;
   const inStockIngredients = ingredients.filter(
@@ -28,30 +29,30 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
     } else return;
   };
 
+  const imageSrc = getImageUrl(imageKey, imageVersion);
+
   return (
     <Card className="overflow-hidden hover:shadow-md transition">
-      <Link href={href} className="flex flex-col gap-2 ">
-        <div className="relative h-40 w-full bg-muted">
-          {/* status badge */}
-
-          {isAdmin && (
-            <Badge
-              variant={isReadyToMake ? "default" : "outline"}
-              className="absolute right-2 top-2 z-10"
-            >
+      <Link href={href} className="flex flex-col gap-2 px-2">
+        {isAdmin && (
+          <div className="flex justify-end">
+            <Badge variant={isReadyToMake ? "default" : "outline"}>
               {isReadyToMake
                 ? "Ready to cook"
                 : `${missingIngredients} missing (${inStockIngredients}/${totalIngredients})`}
             </Badge>
-          )}
+          </div>
+        )}
+        <div className="relative h-48 w-full rounded-md overflow-hidden">
+          {/* status badge */}
 
-          {imageKey ? (
-            <Image src={imageKey} alt={title} fill className="object-cover" />
-          ) : (
-            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-              No image
-            </div>
-          )}
+          <Image
+            src={imageSrc}
+            alt={title}
+            fill
+            sizes="384px"
+            className="object-contain"
+          />
         </div>
       </Link>
 
