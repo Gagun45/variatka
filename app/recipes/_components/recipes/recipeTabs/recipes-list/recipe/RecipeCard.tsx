@@ -15,7 +15,13 @@ type Props = {
 const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
   const { id, title, imageKey, ingredients, isSaved } = recipe;
   const href = frontendUrls.recipes.view(id);
-  const isReadyToMake = !ingredients.some((i) => !i.ingredient.isInStock);
+  const totalIngredients = ingredients.length;
+  const inStockIngredients = ingredients.filter(
+    (i) => i.ingredient.isInStock,
+  ).length;
+  const missingIngredients = totalIngredients - inStockIngredients;
+
+  const isReadyToMake = inStockIngredients === totalIngredients;
   const onToggle = () => {
     if (onSavedToggle) {
       onSavedToggle({ recipeId: id, isSaved });
@@ -33,7 +39,9 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
               variant={isReadyToMake ? "default" : "outline"}
               className="absolute right-2 top-2 z-10"
             >
-              {isReadyToMake ? "Ready to cook" : "Missing ingredients"}
+              {isReadyToMake
+                ? "Ready to cook"
+                : `${missingIngredients} missing (${inStockIngredients}/${totalIngredients})`}
             </Badge>
           )}
 
