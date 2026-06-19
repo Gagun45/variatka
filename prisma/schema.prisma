@@ -38,7 +38,7 @@ model Ingredient {
 
   // Foreign key and Relation definitions
   categoryId        Int
-  category          IngredientCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category          IngredientCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   recipeIngredients RecipeIngredient[]
 }
 
@@ -58,7 +58,7 @@ model Recipe {
   updatedAt DateTime @updatedAt
 
   ingredients      RecipeIngredient[]
-  recipeCategory   RecipeCategory     @relation(fields: [recipeCategoryId], references: [id])
+  recipeCategory   RecipeCategory     @relation(fields: [recipeCategoryId], references: [id], onDelete: Restrict)
   recipeCategoryId Int
 }
 
@@ -89,6 +89,6 @@ model Stuff {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stuffCategory   StuffCategory @relation(fields: [stuffCategoryId], references: [id])
+  stuffCategory   StuffCategory @relation(fields: [stuffCategoryId], references: [id], onDelete: Restrict)
   stuffCategoryId Int
 }
