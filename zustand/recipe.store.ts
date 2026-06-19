@@ -25,7 +25,7 @@ const initialDraft: IRecipeDto = {
   description: "",
   notes: "",
   inStock: 0,
-  recipeCategoryId: 1,
+  recipeCategoryId: 0,
 };
 
 export const useRecipeStore = create<IRecipeState>()(

@@ -51,6 +51,10 @@ const RecipeDraftSheet = () => {
     );
   };
 
+  const onReset = () => {
+    clear();
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -91,6 +95,7 @@ const RecipeDraftSheet = () => {
                 isDisabled={isAmountNotSet}
                 initialValues={draft}
                 onDraftChange={setDraft}
+                onReset={onReset}
               />
             </>
           )}

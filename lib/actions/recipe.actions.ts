@@ -105,8 +105,13 @@ export const updateRecipeFields = async (
 ): Promise<IRecipe> => {
   try {
     await requireAdmin();
-    const existingRecipe = await prisma.recipe.findUnique({
-      where: { title: dto.title },
+    const existingRecipe = await prisma.recipe.findFirst({
+      where: {
+        title: dto.title,
+        NOT: {
+          id,
+        },
+      },
     });
     if (existingRecipe)
       throw new AppError("A recipe with this title already exists.");
