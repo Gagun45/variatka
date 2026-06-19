@@ -23,3 +23,14 @@ export type IOption<T extends string> = {
   value: T;
   label: string;
 };
+
+export type IActionResponse<T> = IActionSuccess<T> | IActionError;
+
+export type IActionSuccess<T> = {
+  ok: true;
+  data: T;
+};
+export type IActionError = {
+  ok: false;
+  message: string;
+};

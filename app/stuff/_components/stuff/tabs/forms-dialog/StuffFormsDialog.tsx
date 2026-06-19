@@ -8,10 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCreateStuff } from "@/features/stuff/hooks/useCreateStuff";
+import { useCreateStuffCategory } from "@/features/stuff/hooks/useCreateStuffCategory";
 import { useStuffCategories } from "@/features/stuff/hooks/useGetCategories";
-import NewStuffCategoryForm from "@/forms/add-stuff-category/NewStuffCategoryForm";
-import NewStuffForm from "@/forms/stuff/NewStuffForm";
-import { ICreateStuffDto } from "@/zod/stuff.schema";
+import StuffCategoryForm from "@/forms/add-stuff-category/StuffCategoryForm";
+import StuffForm from "@/forms/stuff/StuffForm";
+import { ICreateStuffCategoryDto, ICreateStuffDto } from "@/zod/stuff.schema";
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
 
@@ -22,8 +23,17 @@ interface Props {
 const StuffFormsDialog = ({ activeCategoryId }: Props) => {
   const { data: categories = [] } = useStuffCategories();
   const { mutate, isPending } = useCreateStuff();
+  const { mutate: catMutate, isPending: catIsPending } =
+    useCreateStuffCategory();
   const [isOpen, setIsOpen] = useState(false);
-  const onNewStuffCreate = (dto: ICreateStuffDto) => {
+  const onCategoryCreate = (dto: ICreateStuffCategoryDto) => {
+    catMutate(dto, {
+      onSuccess: () => {
+        setIsOpen(false);
+      },
+    });
+  };
+  const onStuffCreate = (dto: ICreateStuffDto) => {
     mutate(dto, {
       onSuccess: () => {
         setIsOpen(false);
@@ -53,16 +63,19 @@ const StuffFormsDialog = ({ activeCategoryId }: Props) => {
 
           {/* Category form */}
           <TabsContent value="category" className="mt-4">
-            <NewStuffCategoryForm />
+            <StuffCategoryForm
+              onSubmit={onCategoryCreate}
+              isPending={catIsPending}
+            />
           </TabsContent>
 
           {/* Ingredient form */}
           <TabsContent value="stuff" className="mt-4">
-            <NewStuffForm
+            <StuffForm
               initialCategoryId={activeCategoryId}
               categories={categories}
               isPending={isPending}
-              onClick={onNewStuffCreate}
+              onClick={onStuffCreate}
             />
           </TabsContent>
         </Tabs>

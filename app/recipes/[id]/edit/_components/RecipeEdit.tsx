@@ -12,7 +12,7 @@ import RecipeForm from "@/forms/recipe/RecipeForm";
 import { frontendUrls } from "@/lib/urls";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useRouter } from "next/navigation";
-import DeleteRecipeButton from "./delete-btn/DeleteRecipeButton";
+import DeleteRecipe from "./delete-recipe/DeleteRecipe";
 import RecipeIngredientsEdit from "./ing-edit/RecipeIngredientsEdit";
 
 interface Props {
@@ -83,7 +83,7 @@ const RecipeEdit = ({ id }: Props) => {
       </Card>
 
       <RecipeIngredientsEdit allIngredients={ingredients} recipe={recipe} />
-      <DeleteRecipeButton recipeId={recipe.id} />
+      <DeleteRecipe id={id} />
     </div>
   );
 };

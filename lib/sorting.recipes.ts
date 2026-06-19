@@ -1,5 +1,8 @@
 import { IRecipe } from "./prisma.args";
 
+export const getMissingIngredientsCount = (recipe: IRecipe) =>
+  recipe.ingredients.filter((i) => !i.ingredient.isInStock).length;
+
 export const RECIPE_SORTERS = {
   "name-asc": (a: IRecipe, b: IRecipe) => a.title.localeCompare(b.title),
 
@@ -10,6 +13,11 @@ export const RECIPE_SORTERS = {
 
   oldest: (a: IRecipe, b: IRecipe) =>
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  "missing-asc": (a: IRecipe, b: IRecipe) =>
+    getMissingIngredientsCount(a) - getMissingIngredientsCount(b),
+
+  "missing-desc": (a: IRecipe, b: IRecipe) =>
+    getMissingIngredientsCount(b) - getMissingIngredientsCount(a),
 } as const;
 
 export const RECIPE_SORT_LABELS = {
@@ -17,6 +25,8 @@ export const RECIPE_SORT_LABELS = {
   "name-desc": "Z-A",
   newest: "Newest",
   oldest: "Oldest",
+  "missing-asc": "Fewest missing",
+  "missing-desc": "Most missing",
 } as const;
 
 export type IRecipeSortType = keyof typeof RECIPE_SORTERS;

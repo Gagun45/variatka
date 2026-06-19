@@ -4,6 +4,7 @@ import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useStuffCategories } from "@/features/stuff/hooks/useGetCategories";
 import { useStuff } from "@/features/stuff/hooks/useStuff";
+import { useAuthStore } from "@/zustand/auth.store";
 import StuffView from "./view/StuffView";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 const Stuff = ({ id }: Props) => {
   const { data: categories } = useStuffCategories();
   const { data: stuff, isLoading, isError } = useStuff();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
 
   if (isLoading) {
     return <Loader />;
@@ -25,7 +27,7 @@ const Stuff = ({ id }: Props) => {
   if (!singleStuff) return <StateScreen title="Stuff not found" />;
   return (
     <>
-      <StuffView stuff={singleStuff} />
+      <StuffView stuff={singleStuff} isAdmin={isAdmin} />
     </>
   );
 };

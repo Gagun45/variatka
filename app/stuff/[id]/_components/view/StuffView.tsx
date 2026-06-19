@@ -5,16 +5,17 @@ import { Separator } from "@/components/ui/separator";
 import { IStuff } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import Link from "next/link";
+import DeleteStuff from "../delete/DeleteStuff";
 
 interface Props {
   stuff: IStuff;
-  isAdmin?: boolean;
+  isAdmin: boolean;
 }
 
 const StuffView = ({ stuff, isAdmin }: Props) => {
   const { description, inStock, stuffCategory, title, id } = stuff;
   return (
-    <Card className="max-w-md mx-auto overflow-hidden">
+    <Card className="mx-auto">
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <CardTitle className="text-xl">{title}</CardTitle>
 
@@ -35,14 +36,14 @@ const StuffView = ({ stuff, isAdmin }: Props) => {
           {description}
         </p>
         {isAdmin && (
-          <>
+          <div className="flex justify-end">
             <Link
               className={buttonVariants({ className: "px-8 text-base!" })}
               href={frontendUrls.stuff.edit(id)}
             >
               Edit
             </Link>
-          </>
+          </div>
         )}
       </CardContent>
     </Card>
