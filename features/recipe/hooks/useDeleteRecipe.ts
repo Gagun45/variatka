@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export const useDeleteRecipe = () => {
   const qclient = useQueryClient();
-  const mutation = useMutation<void, Error, number>({
+  const mutation = useMutation<number, Error, number>({
     mutationFn: recipeService.delete,
 
     onSuccess: () => {

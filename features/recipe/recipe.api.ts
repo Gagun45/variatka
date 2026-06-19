@@ -1,3 +1,4 @@
+import { unwrapAction } from "@/lib/actions/action.unwrapper";
 import {
   createRecipe,
   createRecipeCategory,
@@ -13,17 +14,21 @@ import { ICreateRecipeDto, IRecipeIngredient } from "@/lib/types";
 import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
 
 export const recipeService = {
-  get: (): Promise<IRecipe[]> => getRecipes(),
-  create: (dto: ICreateRecipeDto): Promise<IRecipe> => createRecipe(dto),
-  getCategories: (): Promise<IRecipeCategory[]> => getRecipeCategories(),
+  get: (): Promise<IRecipe[]> => unwrapAction(() => getRecipes()),
+  create: (dto: ICreateRecipeDto): Promise<IRecipe> =>
+    unwrapAction(() => createRecipe(dto)),
+  getCategories: (): Promise<IRecipeCategory[]> =>
+    unwrapAction(() => getRecipeCategories()),
   createCategory: (dto: ICreateRecipeCategoryDto): Promise<IRecipeCategory> =>
-    createRecipeCategory(dto),
-  toggle: (id: number, add: boolean) => toggleSavedRecipe(id, add),
+    unwrapAction(() => createRecipeCategory(dto)),
+  toggle: (id: number, add: boolean): Promise<IRecipe> =>
+    unwrapAction(() => toggleSavedRecipe(id, add)),
 
-  updateFields: (id: number, dto: IRecipeDto) => updateRecipeFields(id, dto),
+  updateFields: (id: number, dto: IRecipeDto): Promise<IRecipe> =>
+    unwrapAction(() => updateRecipeFields(id, dto)),
   updateIngredients: (
     id: number,
     items: IRecipeIngredient[],
-  ): Promise<IRecipe> => updateRecipeIngredients(id, items),
-  delete: (id: number): Promise<void> => deleteRecipe(id),
+  ): Promise<IRecipe> => unwrapAction(() => updateRecipeIngredients(id, items)),
+  delete: (id: number): Promise<number> => unwrapAction(() => deleteRecipe(id)),
 };

@@ -1,76 +1,96 @@
 "use server";
 
 import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
-import { prisma } from "../prisma";
-import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
-import { ICreateRecipeDto, IRecipeIngredient } from "../types";
 import { requireAdmin } from "../auth";
 import { AppError } from "../error";
+import { prisma } from "../prisma";
+import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
+import { IActionResponse, ICreateRecipeDto, IRecipeIngredient } from "../types";
+import {
+  DEFAULT_ACTION_ERROR,
+  UNAUTHORIZED_ACTION_ERROR,
+} from "./action.unwrapper";
 
-export const getRecipeCategories = async (): Promise<IRecipeCategory[]> => {
+export const getRecipeCategories = async (): Promise<
+  IActionResponse<IRecipeCategory[]>
+> => {
   try {
     const categories = await prisma.recipeCategory.findMany();
-    return categories;
+    return {
+      ok: true,
+      data: categories,
+    };
   } catch (e) {
-    console.error("Database error in getRecipeCategories:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Erro in getRecipeCategories:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
-export const getRecipes = async (): Promise<IRecipe[]> => {
+export const getRecipes = async (): Promise<IActionResponse<IRecipe[]>> => {
   try {
     const recipes = await prisma.recipe.findMany(recipeArgs);
-    return recipes;
-  } catch (e) {
-    console.error("Database error in getRecipes:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
 
-    throw new Error("Something went wrong");
+    return {
+      ok: true,
+      data: recipes,
+    };
+  } catch (e) {
+    console.error("Error in getRecipes:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
-export const createRecipeCategory = async (dto: ICreateRecipeCategoryDto) => {
+export const createRecipeCategory = async (
+  dto: ICreateRecipeCategoryDto,
+): Promise<IActionResponse<IRecipeCategory>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { title: dto.title },
     });
     if (existingCategory)
-      throw new AppError("A category with this title already exists.");
+      return {
+        ok: false,
+        message: "A category with this title already exists.",
+      };
+
     const newCategory = await prisma.recipeCategory.create({ data: dto });
 
-    return newCategory;
+    return {
+      ok: true,
+      data: newCategory,
+    };
   } catch (e) {
-    console.error("Database error in createRecipeCategory:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in createRecipeCategory:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
-export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
+export const createRecipe = async (
+  dto: ICreateRecipeDto,
+): Promise<IActionResponse<IRecipe>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const { title, description, notes, items, recipeCategoryId, inStock } = dto;
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { id: recipeCategoryId },
     });
     if (!existingCategory)
-      throw new AppError(`A category #${recipeCategoryId} not found`);
+      return {
+        ok: false,
+        message: `A category #${recipeCategoryId} not found`,
+      };
 
     const existingRecipe = await prisma.recipe.findFirst({
       where: { title },
     });
     if (existingRecipe)
-      throw new AppError("A recipe with this title already exists.");
+      return {
+        ok: false,
+        message: "A recipe with this title already exists.",
+      };
 
     const newRecipe = await prisma.recipe.create({
       data: {
@@ -88,23 +108,23 @@ export const createRecipe = async (dto: ICreateRecipeDto): Promise<IRecipe> => {
       },
       ...recipeArgs,
     });
-    return newRecipe;
+    return {
+      ok: true,
+      data: newRecipe,
+    };
   } catch (e) {
-    console.error("Database error in createRecipe:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in createRecipe:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const updateRecipeFields = async (
   id: number,
   dto: IRecipeDto,
-): Promise<IRecipe> => {
+): Promise<IActionResponse<IRecipe>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const existingRecipe = await prisma.recipe.findFirst({
       where: {
         title: dto.title,
@@ -114,122 +134,146 @@ export const updateRecipeFields = async (
       },
     });
     if (existingRecipe)
-      throw new AppError("A recipe with this title already exists.");
+      return {
+        ok: false,
+        message: "A recipe with this title already exists.",
+      };
 
-    return prisma.recipe.update({
+    const updatedRecipe = await prisma.recipe.update({
       where: {
         id,
       },
       data: dto,
       ...recipeArgs,
     });
+    return {
+      ok: true,
+      data: updatedRecipe,
+    };
   } catch (e) {
-    console.error("Database error in updateRecipeFields:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in updateRecipeFields:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const updateRecipeIngredients = async (
   recipeId: number,
   items: IRecipeIngredient[],
-): Promise<IRecipe> => {
+): Promise<IActionResponse<IRecipe>> => {
   try {
-    await requireAdmin();
-    if (!Array.isArray(items)) {
-      throw new AppError("Invalid items payload");
-    }
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    if (!Array.isArray(items))
+      return {
+        ok: false,
+        message: "Invalid items payload",
+      };
 
-    return prisma.$transaction(async (tx) => {
-      const recipe = await tx.recipe.findUnique({
-        where: { id: recipeId },
-        select: { id: true },
-      });
-
-      if (!recipe) throw new AppError("Recipe not found");
-
-      if (items.some((i) => !i.ingredientId || !i.amount)) {
-        throw new AppError("Invalid ingredient data");
-      }
-
-      await tx.recipeIngredient.deleteMany({
-        where: { recipeId },
-      });
-
-      if (items.length > 0) {
-        await tx.recipeIngredient.createMany({
-          data: items.map((i) => ({
-            recipeId,
-            ingredientId: i.ingredientId,
-            amount: i.amount,
-          })),
+    const response = await prisma.$transaction(
+      async (tx): Promise<IActionResponse<IRecipe>> => {
+        const recipe = await tx.recipe.findUnique({
+          where: { id: recipeId },
+          select: { id: true },
         });
-      }
 
-      const updated = await tx.recipe.findUnique({
-        where: { id: recipeId },
-        ...recipeArgs,
-      });
+        if (!recipe)
+          return {
+            ok: false,
+            message: "Recipe not found",
+          };
 
-      if (!updated) throw new AppError("Recipe not found after update");
+        if (items.some((i) => !i.ingredientId || !i.amount))
+          return {
+            ok: false,
+            message: "Invalid ingredient data",
+          };
 
-      return updated;
-    });
+        await tx.recipeIngredient.deleteMany({
+          where: { recipeId },
+        });
+
+        if (items.length > 0) {
+          await tx.recipeIngredient.createMany({
+            data: items.map((i) => ({
+              recipeId,
+              ingredientId: i.ingredientId,
+              amount: i.amount,
+            })),
+          });
+        }
+
+        const updated = await tx.recipe.findUnique({
+          where: { id: recipeId },
+          ...recipeArgs,
+        });
+
+        if (!updated)
+          return {
+            ok: false,
+            message: "Something went wrong",
+          };
+
+        return {
+          data: updated,
+          ok: true,
+        };
+      },
+    );
+    return response;
   } catch (e) {
-    console.error("Database error in updateRecipeIngredients:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in updateRecipeIngredients:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
-export const deleteRecipe = async (recipeId: number): Promise<void> => {
+export const deleteRecipe = async (
+  recipeId: number,
+): Promise<IActionResponse<number>> => {
   try {
-    await requireAdmin();
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
     const recipe = await prisma.recipe.findUnique({
       where: { id: recipeId },
       select: { id: true },
     });
 
-    if (!recipe) {
-      throw new AppError("Recipe not found");
-    }
+    if (!recipe)
+      return {
+        ok: false,
+        message: "Recipe not found",
+      };
 
-    await prisma.recipe.delete({
+    const deletedRecipe = await prisma.recipe.delete({
       where: { id: recipeId },
     });
+    return {
+      data: deletedRecipe.id,
+      ok: true,
+    };
   } catch (e) {
     console.error("Database error in deleteRecipe:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    return DEFAULT_ACTION_ERROR;
   }
 };
 
 export const toggleSavedRecipe = async (
   id: number,
   isSaved: boolean,
-): Promise<IRecipe> => {
+): Promise<IActionResponse<IRecipe>> => {
   try {
-    await requireAdmin();
-    return prisma.recipe.update({
+    const isAdmin = await requireAdmin();
+    if (isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    const updatedRecipe = await prisma.recipe.update({
       where: { id },
       data: { isSaved },
       ...recipeArgs,
     });
+    return {
+      ok: true,
+      data: updatedRecipe,
+    };
   } catch (e) {
-    console.error("Database error in toggleSavedRecipe:", e);
-    if (e instanceof AppError) {
-      throw e;
-    }
-
-    throw new Error("Something went wrong");
+    console.error("Error in toggleSavedRecipe:", e);
+    return DEFAULT_ACTION_ERROR;
   }
 };
