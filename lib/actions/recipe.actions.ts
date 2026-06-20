@@ -1,15 +1,13 @@
 "use server";
 
 import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
-import { requireAdmin } from "../auth";
+import { userIsAdmin } from "../auth";
+import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
 import { uploadHelper } from "../s3/upload.helper";
 import { IActionResponse, ICreateRecipeDto, IRecipeIngredient } from "../types";
-import {
-  DEFAULT_ACTION_ERROR,
-  UNAUTHORIZED_ACTION_ERROR,
-} from "./action.unwrapper";
+import { ACTION_ERROR } from "./action.unwrapper";
 
 export const getRecipeCategories = async (): Promise<
   IActionResponse<IRecipeCategory[]>
@@ -22,7 +20,10 @@ export const getRecipeCategories = async (): Promise<
     };
   } catch (e) {
     console.error("Erro in getRecipeCategories:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -36,7 +37,10 @@ export const getRecipes = async (): Promise<IActionResponse<IRecipe[]>> => {
     };
   } catch (e) {
     console.error("Error in getRecipes:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -44,8 +48,7 @@ export const createRecipeCategory = async (
   dto: ICreateRecipeCategoryDto,
 ): Promise<IActionResponse<IRecipeCategory>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { title: dto.title },
     });
@@ -63,7 +66,10 @@ export const createRecipeCategory = async (
     };
   } catch (e) {
     console.error("Error in createRecipeCategory:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -71,8 +77,7 @@ export const createRecipe = async (
   dto: ICreateRecipeDto,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const { title, description, notes, items, recipeCategoryId, inStock } = dto;
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { id: recipeCategoryId },
@@ -114,7 +119,10 @@ export const createRecipe = async (
     };
   } catch (e) {
     console.error("Error in createRecipe:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -123,8 +131,7 @@ export const updateRecipeFields = async (
   dto: IRecipeDto,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingRecipe = await prisma.recipe.findFirst({
       where: {
         title: dto.title,
@@ -152,7 +159,10 @@ export const updateRecipeFields = async (
     };
   } catch (e) {
     console.error("Error in updateRecipeFields:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -161,8 +171,7 @@ export const updateRecipeIngredients = async (
   items: IRecipeIngredient[],
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     if (!Array.isArray(items))
       return {
         ok: false,
@@ -222,7 +231,10 @@ export const updateRecipeIngredients = async (
     return response;
   } catch (e) {
     console.error("Error in updateRecipeIngredients:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -230,8 +242,7 @@ export const deleteRecipe = async (
   recipeId: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const recipe = await prisma.recipe.findUnique({
       where: { id: recipeId },
       select: { id: true },
@@ -252,7 +263,10 @@ export const deleteRecipe = async (
     };
   } catch (e) {
     console.error("Database error in deleteRecipe:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -261,8 +275,7 @@ export const toggleSavedRecipe = async (
   isSaved: boolean,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const updatedRecipe = await prisma.recipe.update({
       where: { id },
       data: { isSaved },
@@ -274,7 +287,10 @@ export const toggleSavedRecipe = async (
     };
   } catch (e) {
     console.error("Error in toggleSavedRecipe:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -283,8 +299,7 @@ export const uploadRecipeImage = async (
   file: File,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const imageKey = await uploadHelper.image({
       entity: "recipes",
       file,
@@ -304,7 +319,10 @@ export const uploadRecipeImage = async (
     };
   } catch (e) {
     console.error("Error in uploadRecipeImage:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -312,8 +330,7 @@ export const removeRecipeImage = async (
   recipeId: number,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const updatedRecipe = await prisma.recipe.update({
       where: { id: recipeId },
       data: {
@@ -328,6 +345,9 @@ export const removeRecipeImage = async (
     };
   } catch (e) {
     console.error("Error in removeRecipeImage:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
