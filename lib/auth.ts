@@ -8,5 +8,5 @@ export const userIsAdmin = async (): Promise<void> => {
   const permission = await getPermission(KINDE_ROLES.admin);
 
   const isAdmin = permission?.isGranted ?? false;
-  if (isAdmin) throw new AppError("Unauthorized");
+  if (!isAdmin) throw new AppError("Unauthorized");
 };
