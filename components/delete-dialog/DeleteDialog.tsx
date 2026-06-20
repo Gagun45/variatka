@@ -18,7 +18,7 @@ import { useState } from "react";
 interface Props {
   isDisabled: boolean;
   isPending: boolean;
-  label: string;
+  label?: string;
   alertTitle: string;
   alertDescription: string;
   onDelete: () => void;
@@ -37,12 +37,16 @@ const DeleteDialog = ({
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
         <Button
-          className="w-full py-8 text-lg sm:text-2xl items-center gap-4"
           variant="destructive"
+          size={label ? undefined : "icon"}
           disabled={isDisabled}
+          className={
+            label
+              ? "w-full py-8 text-lg sm:text-2xl items-center gap-4"
+              : undefined
+          }
         >
-          <TrashIcon className="size-4 md:size-7" />
-          {label}
+          {label ? label : <TrashIcon />}
         </Button>
       </AlertDialogTrigger>
 

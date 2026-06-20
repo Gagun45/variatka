@@ -61,6 +61,17 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
         {isAdmin && <SavedLinks />}
+        {isAdmin && (
+          <SidebarGroup className="mt-auto">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <SidebarLink href={frontendUrls.admin} label={"Admin"} />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="mt-auto py-4 border-t">
         <div className="flex justify-evenly gap-4">

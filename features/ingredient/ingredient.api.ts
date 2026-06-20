@@ -3,7 +3,9 @@ import {
   createIngredient,
   createIngredientCategory,
   deleteIngredient,
+  deleteIngredientCategory,
   editIngredient,
+  editIngredientCategory,
   getIngredientCategories,
   getIngredients,
   removeIngredientImage,
@@ -39,4 +41,11 @@ export const ingredientService = {
     unwrapAction(() => uploadIngredientImage(ingredientId, file)),
   removeImage: (ingredientId: number): Promise<IIngredient> =>
     unwrapAction(() => removeIngredientImage(ingredientId)),
+  deleteCategory: (id: number): Promise<number> =>
+    unwrapAction(() => deleteIngredientCategory(id)),
+  editCategory: (
+    id: number,
+    dto: ICreateIngredientCategoryDto,
+  ): Promise<IIngredientCategory> =>
+    unwrapAction(() => editIngredientCategory(id, dto)),
 };
