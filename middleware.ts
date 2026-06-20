@@ -13,5 +13,6 @@ export const config = {
     "/ingredients/saved",
     "/recipes/saved",
     "/stuff/:path*",
+    "/admin/:path*",
   ],
 };
