@@ -4,20 +4,17 @@ import {
   ICreateIngredientCategoryDto,
   IIngredientFormValues,
 } from "@/zod/ingredient.schema";
+import { userIsAdmin } from "../auth";
+import { AppError } from "../error";
 import { prisma } from "../prisma";
 import {
   IIngredient,
   IIngredientCategory,
   ingredientArgs,
 } from "../prisma.args";
-import { requireAdmin } from "../auth";
 import { uploadHelper } from "../s3/upload.helper";
-import { AppError } from "../error";
 import { IActionResponse } from "../types";
-import {
-  DEFAULT_ACTION_ERROR,
-  UNAUTHORIZED_ACTION_ERROR,
-} from "./action.unwrapper";
+import { ACTION_ERROR } from "./action.unwrapper";
 
 export const getIngredients = async (): Promise<
   IActionResponse<IIngredient[]>
@@ -30,7 +27,10 @@ export const getIngredients = async (): Promise<
     };
   } catch (e) {
     console.error("Error in getIngredients:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -45,7 +45,10 @@ export const getIngredientCategories = async (): Promise<
     };
   } catch (e) {
     console.error("Error in getIngredientCategories:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -53,8 +56,7 @@ export const createIngredientCategory = async (
   dto: ICreateIngredientCategoryDto,
 ): Promise<IActionResponse<IIngredientCategory>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { title: dto.title },
     });
@@ -71,7 +73,10 @@ export const createIngredientCategory = async (
     };
   } catch (e) {
     console.error("Error in createIngredientCategory:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -79,8 +84,7 @@ export const createIngredient = async (
   dto: IIngredientFormValues,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const { categoryId, title } = dto;
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { id: categoryId },
@@ -110,7 +114,10 @@ export const createIngredient = async (
     };
   } catch (e) {
     console.error("Error in updateRecipeFields:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -119,8 +126,7 @@ export const editIngredient = async (
   dto: IIngredientFormValues,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingIngredient = await prisma.ingredient.findFirst({
       where: {
         title: dto.title,
@@ -145,7 +151,10 @@ export const editIngredient = async (
     };
   } catch (e) {
     console.error("Error in updateIngredient:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -153,8 +162,7 @@ export const deleteIngredient = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const ingredient = await prisma.ingredient.findUnique({
       where: { id },
       select: {
@@ -185,7 +193,10 @@ export const deleteIngredient = async (
     };
   } catch (e) {
     console.error("Error in deleteIngredient:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -194,8 +205,7 @@ export const toggleSavedIngredient = async (
   isSaved: boolean,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
     });
@@ -216,7 +226,10 @@ export const toggleSavedIngredient = async (
     };
   } catch (e) {
     console.error("Error in toggleSavedIngredient:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -225,8 +238,7 @@ export const uploadIngredientImage = async (
   file: File,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const imageKey = await uploadHelper.image({
       entity: "ingredients",
       file,
@@ -246,7 +258,10 @@ export const uploadIngredientImage = async (
     };
   } catch (e) {
     console.error("Error in uploadIngredientImage:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -254,8 +269,7 @@ export const removeIngredientImage = async (
   ingredientId: number,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const updatedIngredient = await prisma.ingredient.update({
       where: { id: ingredientId },
       data: {
@@ -270,7 +284,10 @@ export const removeIngredientImage = async (
     };
   } catch (e) {
     console.error("Error in removeIngredientImage:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -279,8 +296,7 @@ export const toggleIngredientInStockValue = async (
   isInStock: boolean,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
     });
@@ -300,6 +316,9 @@ export const toggleIngredientInStockValue = async (
     };
   } catch (e) {
     console.error("Error in toggleIngredientInStockValue:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };

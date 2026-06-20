@@ -1,21 +1,18 @@
 "use server";
 
 import { ICreateStuffCategoryDto, ICreateStuffDto } from "@/zod/stuff.schema";
-import { requireAdmin } from "../auth";
 import { prisma } from "../prisma";
 import { IStuff, IStuffCategory, stuffArgs } from "../prisma.args";
 import { IActionResponse } from "../types";
-import {
-  DEFAULT_ACTION_ERROR,
-  UNAUTHORIZED_ACTION_ERROR,
-} from "./action.unwrapper";
+import { ACTION_ERROR, UNAUTHORIZED_ACTION_ERROR } from "./action.unwrapper";
+import { AppError } from "../error";
+import { userIsAdmin } from "../auth";
 
 export const createStuffCategory = async (
   dto: ICreateStuffCategoryDto,
 ): Promise<IActionResponse<IStuffCategory>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { title: dto.title },
     });
@@ -33,7 +30,10 @@ export const createStuffCategory = async (
     };
   } catch (e) {
     console.error("Error in createStuffCategory:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -48,7 +48,10 @@ export const getStuffCategories = async (): Promise<
     };
   } catch (e) {
     console.error("Error in getStuffCategories:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -61,7 +64,10 @@ export const getStuff = async (): Promise<IActionResponse<IStuff[]>> => {
     };
   } catch (e) {
     console.error("Error in getStuff:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -69,8 +75,7 @@ export const createStuff = async (
   dto: ICreateStuffDto,
 ): Promise<IActionResponse<IStuff>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const { stuffCategoryId, title } = dto;
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { id: stuffCategoryId },
@@ -100,7 +105,10 @@ export const createStuff = async (
     };
   } catch (e) {
     console.error("Error in createStuff:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -109,8 +117,7 @@ export const editStuff = async (
   dto: ICreateStuffDto,
 ): Promise<IActionResponse<IStuff>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingStuff = await prisma.stuff.findFirst({
       where: {
         title: dto.title,
@@ -135,7 +142,10 @@ export const editStuff = async (
     };
   } catch (e) {
     console.error("Error in editStuff:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };
 
@@ -143,8 +153,7 @@ export const deleteStuff = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) return UNAUTHORIZED_ACTION_ERROR;
+    await userIsAdmin();
     const existingStuff = await prisma.stuff.findUnique({
       where: { id },
     });
@@ -162,6 +171,9 @@ export const deleteStuff = async (
     };
   } catch (e) {
     console.error("Error in deleteStuff:", e);
-    return DEFAULT_ACTION_ERROR;
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
   }
 };

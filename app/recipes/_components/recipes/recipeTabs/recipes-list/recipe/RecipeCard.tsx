@@ -6,6 +6,16 @@ import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Props = {
   recipe: IRecipe;
@@ -17,11 +27,12 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
   const { id, title, imageKey, ingredients, isSaved, imageVersion } = recipe;
   const href = frontendUrls.recipes.view(id);
   const totalIngredients = ingredients.length;
-  const inStockIngredients = ingredients.filter(
-    (i) => i.ingredient.isInStock,
-  ).length;
 
-  const isReadyToMake = inStockIngredients === totalIngredients;
+  const missingIngredients = ingredients.filter((i) => !i.ingredient.isInStock);
+
+  const inStockIngredients = totalIngredients - missingIngredients.length;
+
+  const isReadyToMake = missingIngredients.length === 0;
   const onToggle = () => {
     if (onSavedToggle) {
       onSavedToggle({ recipeId: id, isSaved });
@@ -38,9 +49,37 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
             {onSavedToggle && (
               <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
             )}
-            <Badge variant={isReadyToMake ? "default" : "outline"}>
-              {inStockIngredients}/{totalIngredients}
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant={isReadyToMake ? "default" : "outline"}>
+                  {inStockIngredients}/{totalIngredients}
+                </Badge>
+              </TooltipTrigger>
+
+              <TooltipContent>
+                {isReadyToMake ? (
+                  <p>Ready to cook</p>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="font-medium">
+                      Missing ingredients ({missingIngredients.length}):
+                    </p>
+
+                    <ul>
+                      {missingIngredients.map((item) => (
+                        <li
+                          key={item.ingredient.id}
+                          className="flex items-center gap-1"
+                        >
+                          <span>•</span>
+                          <span>{item.ingredient.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
         <Link

@@ -1,16 +1,12 @@
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { KINDE_ROLES } from "./constants/kinde";
+import { AppError } from "./error";
 
-export const isAdmin = async () => {
+export const userIsAdmin = async (): Promise<void> => {
   const { getPermission } = getKindeServerSession();
 
   const permission = await getPermission(KINDE_ROLES.admin);
 
-  return permission?.isGranted ?? false;
-};
-
-export const requireAdmin = async (): Promise<boolean> => {
-  const admin = await isAdmin();
-  if (!admin) return false;
-  return true;
+  const isAdmin = permission?.isGranted ?? false;
+  if (!isAdmin) throw new AppError("Unauthorized");
 };

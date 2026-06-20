@@ -8,9 +8,13 @@ export const unwrapAction = async <T>(
   return res.data;
 };
 
-export const DEFAULT_ACTION_ERROR: IActionError = {
-  ok: false,
-  message: "Something went wrong",
+export const ACTION_ERROR = (
+  message: string = "Something went wrong",
+): IActionError => {
+  return {
+    ok: false,
+    message,
+  };
 };
 
 export const UNAUTHORIZED_ACTION_ERROR: IActionError = {
