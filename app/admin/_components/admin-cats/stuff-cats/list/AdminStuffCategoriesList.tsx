@@ -1,23 +1,22 @@
-import { useDeleteRecipeCategory } from "@/features/recipe/hooks/useDeleteRecipeCategory";
-import { useEditRecipeCategory } from "@/features/recipe/hooks/useEditRecipeCategory";
-import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
+import { useDeleteStuffCategory } from "@/features/stuff/hooks/useDeleteStuffCategory";
+import { useEditStuffCategory } from "@/features/stuff/hooks/useEditStuffCategory";
+import { IStuff, IStuffCategory } from "@/lib/prisma.args";
 import AdminCategoryCard from "../../../admin-cat-row/AdminCategoryCard";
 
 interface Props {
-  categories: IRecipeCategory[];
-  recipes: IRecipe[];
+  categories: IStuffCategory[];
+  stuff: IStuff[];
 }
 
-const AdminRecipeCategoriesList = ({ categories, recipes }: Props) => {
+const AdminStuffCategoriesList = ({ categories, stuff }: Props) => {
   const { mutate: deleteMutate, isPending: deletePending } =
-    useDeleteRecipeCategory();
+    useDeleteStuffCategory();
 
-  const { mutate: editMutate, isPending: editPending } =
-    useEditRecipeCategory();
+  const { mutate: editMutate, isPending: editPending } = useEditStuffCategory();
 
   const sortedCategories = [...categories].sort((a, b) => {
-    const aCount = recipes.filter((i) => i.recipeCategoryId === a.id).length;
-    const bCount = recipes.filter((i) => i.recipeCategoryId === b.id).length;
+    const aCount = stuff.filter((i) => i.stuffCategoryId === a.id).length;
+    const bCount = stuff.filter((i) => i.stuffCategoryId === b.id).length;
 
     return bCount - aCount || a.title.localeCompare(b.title);
   });
@@ -26,11 +25,11 @@ const AdminRecipeCategoriesList = ({ categories, recipes }: Props) => {
 
   return (
     <div className="space-y-4 border p-2">
-      <p className="text-center">Recipe categories</p>
+      <p className="text-center">Stuff categories</p>
 
       {sortedCategories.map((cat) => {
-        const totalItems = recipes.filter(
-          (i) => i.recipeCategoryId === cat.id,
+        const totalItems = stuff.filter(
+          (i) => i.stuffCategoryId === cat.id,
         ).length;
 
         return (
@@ -49,4 +48,4 @@ const AdminRecipeCategoriesList = ({ categories, recipes }: Props) => {
   );
 };
 
-export default AdminRecipeCategoriesList;
+export default AdminStuffCategoriesList;

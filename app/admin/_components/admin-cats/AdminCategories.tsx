@@ -2,6 +2,7 @@
 
 import AdminIngredientCategories from "./ing-cats/AdminIngredientCategories";
 import AdminRecipeCategories from "./rec-cats/AdminRecipeCategories";
+import AdminStuffCategories from "./stuff-cats/AdminStuffCategories";
 
 const AdminCategories = () => {
   return (
@@ -9,6 +10,7 @@ const AdminCategories = () => {
       <p className="text-center">Categories</p>
       <AdminIngredientCategories />
       <AdminRecipeCategories />
+      <AdminStuffCategories />
     </div>
   );
 };

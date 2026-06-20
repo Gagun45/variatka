@@ -15,9 +15,12 @@ const AdminIngredientCategoriesList = ({ categories, ingredients }: Props) => {
   const { mutate: editMutate, isPending: editPending } =
     useEditIngredientCategory();
 
-  const sortedCategories = categories.sort((a, b) =>
-    a.title.localeCompare(b.title),
-  );
+  const sortedCategories = [...categories].sort((a, b) => {
+    const aCount = ingredients.filter((i) => i.categoryId === a.id).length;
+    const bCount = ingredients.filter((i) => i.categoryId === b.id).length;
+
+    return bCount - aCount || a.title.localeCompare(b.title);
+  });
 
   const isPending = deletePending || editPending;
 
