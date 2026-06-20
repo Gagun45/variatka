@@ -15,6 +15,7 @@ import {
 import { uploadHelper } from "../s3/upload.helper";
 import { IActionResponse } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
+import { Prisma } from "@prisma/client";
 
 export const getIngredients = async (): Promise<
   IActionResponse<IIngredient[]>
@@ -316,6 +317,73 @@ export const toggleIngredientInStockValue = async (
     };
   } catch (e) {
     console.error("Error in toggleIngredientInStockValue:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const deleteIngredientCategory = async (
+  id: number,
+): Promise<IActionResponse<number>> => {
+  try {
+    await userIsAdmin();
+    const existingCategory = await prisma.ingredientCategory.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        _count: {
+          select: {
+            ingredients: true,
+          },
+        },
+      },
+    });
+    if (!existingCategory) throw new AppError("Category not found");
+    if (existingCategory._count.ingredients > 0)
+      throw new AppError("Category has items, cannot be deleted");
+    await prisma.ingredientCategory.delete({
+      where: { id },
+    });
+    return {
+      ok: true,
+      data: id,
+    };
+  } catch (e) {
+    console.error("Error in deleteIngredientCategory:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const editIngredientCategory = async (
+  id: number,
+  dto: ICreateIngredientCategoryDto,
+): Promise<IActionResponse<IIngredientCategory>> => {
+  try {
+    await userIsAdmin();
+
+    const updatedCategory = await prisma.ingredientCategory.update({
+      where: { id },
+      data: dto,
+    });
+    return {
+      ok: true,
+      data: updatedCategory,
+    };
+  } catch (e) {
+    console.error("Error in editIngredientCategory:", e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025") {
+        return ACTION_ERROR("Category not found");
+      }
+      if (e.code === "P2002") {
+        return ACTION_ERROR("Category with the same title already exists");
+      }
+    }
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }

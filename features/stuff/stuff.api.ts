@@ -3,7 +3,9 @@ import {
   createStuff,
   createStuffCategory,
   deleteStuff,
+  deleteStuffCategory,
   editStuff,
+  editStuffCategory,
   getStuff,
   getStuffCategories,
 } from "@/lib/actions/stuff.actions";
@@ -21,4 +23,10 @@ export const stuffService = {
   edit: (id: number, dto: ICreateStuffDto): Promise<IStuff> =>
     unwrapAction(() => editStuff(id, dto)),
   delete: (id: number): Promise<number> => unwrapAction(() => deleteStuff(id)),
+  deleteCategory: (id: number): Promise<number> =>
+    unwrapAction(() => deleteStuffCategory(id)),
+  editCategory: (
+    id: number,
+    dto: ICreateStuffCategoryDto,
+  ): Promise<IStuffCategory> => unwrapAction(() => editStuffCategory(id, dto)),
 };

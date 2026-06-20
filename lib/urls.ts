@@ -17,4 +17,5 @@ export const frontendUrls = {
     edit: (id: number) => `/stuff/${id}/edit`,
   },
   index: "/",
+  admin: "/admin",
 };

@@ -1,12 +1,13 @@
 "use server";
 
 import { ICreateStuffCategoryDto, ICreateStuffDto } from "@/zod/stuff.schema";
+import { userIsAdmin } from "../auth";
+import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IStuff, IStuffCategory, stuffArgs } from "../prisma.args";
 import { IActionResponse } from "../types";
-import { ACTION_ERROR, UNAUTHORIZED_ACTION_ERROR } from "./action.unwrapper";
-import { AppError } from "../error";
-import { userIsAdmin } from "../auth";
+import { ACTION_ERROR } from "./action.unwrapper";
+import { Prisma } from "@prisma/client";
 
 export const createStuffCategory = async (
   dto: ICreateStuffCategoryDto,
@@ -171,6 +172,83 @@ export const deleteStuff = async (
     };
   } catch (e) {
     console.error("Error in deleteStuff:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const editStuffCategory = async (
+  id: number,
+  dto: ICreateStuffCategoryDto,
+): Promise<IActionResponse<IStuffCategory>> => {
+  try {
+    await userIsAdmin();
+
+    const updatedCategory = await prisma.stuffCategory.update({
+      where: { id },
+      data: dto,
+    });
+    return {
+      ok: true,
+      data: updatedCategory,
+    };
+  } catch (e) {
+    console.error("Error in editStuffCategory:", e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025") {
+        return ACTION_ERROR("Category not found");
+      }
+      if (e.code === "P2002") {
+        return ACTION_ERROR("Category with the same title already exists");
+      }
+    }
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const deleteStuffCategory = async (
+  id: number,
+): Promise<IActionResponse<number>> => {
+  try {
+    await userIsAdmin();
+    const existingCategory = await prisma.stuffCategory.findUnique({
+      where: { id },
+      select: {
+        _count: {
+          select: {
+            stuff: true,
+          },
+        },
+      },
+    });
+    if (!existingCategory) throw new AppError("Category not found");
+    const totalItems = existingCategory._count.stuff;
+    if (totalItems > 0)
+      throw new AppError(
+        `Cannot delete category because it contains ${totalItems} stuff`,
+      );
+    await prisma.stuffCategory.delete({
+      where: { id },
+    });
+    return {
+      ok: true,
+      data: id,
+    };
+  } catch (e) {
+    console.error("Error in deleteStuffCategory:", e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025") {
+        return ACTION_ERROR("Category not found");
+      }
+      if (e.code === "P2003") {
+        return ACTION_ERROR("Cannot delete category because it is in use");
+      }
+    }
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }
