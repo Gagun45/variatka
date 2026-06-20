@@ -1,19 +1,19 @@
-import { useDeleteIngredientCategory } from "@/features/ingredient/hooks/useDeleteIngredientCategory";
-import { useEditIngredientCategory } from "@/features/ingredient/hooks/useEditIngredientCategory";
-import { IIngredient, IIngredientCategory } from "@/lib/prisma.args";
+import { useDeleteRecipeCategory } from "@/features/recipe/hooks/useDeleteRecipeCategory";
+import { useEditRecipeCategory } from "@/features/recipe/hooks/useEditRecipeCategory";
+import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
 import AdminCategoryCard from "../../../admin-cat-row/AdminCategoryCard";
 
 interface Props {
-  categories: IIngredientCategory[];
-  ingredients: IIngredient[];
+  categories: IRecipeCategory[];
+  recipes: IRecipe[];
 }
 
-const AdminIngredientCategoriesList = ({ categories, ingredients }: Props) => {
+const AdminRecipeCategoriesList = ({ categories, recipes }: Props) => {
   const { mutate: deleteMutate, isPending: deletePending } =
-    useDeleteIngredientCategory();
+    useDeleteRecipeCategory();
 
   const { mutate: editMutate, isPending: editPending } =
-    useEditIngredientCategory();
+    useEditRecipeCategory();
 
   const sortedCategories = categories.sort((a, b) =>
     a.title.localeCompare(b.title),
@@ -23,11 +23,11 @@ const AdminIngredientCategoriesList = ({ categories, ingredients }: Props) => {
 
   return (
     <div className="space-y-4 border p-2">
-      <p className="text-center">Ingredient categories</p>
+      <p className="text-center">Recipe categories</p>
 
       {sortedCategories.map((cat) => {
-        const totalItems = ingredients.filter(
-          (i) => i.categoryId === cat.id,
+        const totalItems = recipes.filter(
+          (i) => i.recipeCategoryId === cat.id,
         ).length;
 
         return (
@@ -46,4 +46,4 @@ const AdminIngredientCategoriesList = ({ categories, ingredients }: Props) => {
   );
 };
 
-export default AdminIngredientCategoriesList;
+export default AdminRecipeCategoriesList;

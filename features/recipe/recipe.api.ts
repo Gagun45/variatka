@@ -3,6 +3,8 @@ import {
   createRecipe,
   createRecipeCategory,
   deleteRecipe,
+  deleteRecipeCategory,
+  editRecipeCategory,
   getRecipeCategories,
   getRecipes,
   removeRecipeImage,
@@ -37,4 +39,11 @@ export const recipeService = {
     items: IRecipeIngredient[],
   ): Promise<IRecipe> => unwrapAction(() => updateRecipeIngredients(id, items)),
   delete: (id: number): Promise<number> => unwrapAction(() => deleteRecipe(id)),
+  deleteCategory: (id: number): Promise<number> =>
+    unwrapAction(() => deleteRecipeCategory(id)),
+  editCategory: (
+    id: number,
+    dto: ICreateRecipeCategoryDto,
+  ): Promise<IRecipeCategory> =>
+    unwrapAction(() => editRecipeCategory(id, dto)),
 };
