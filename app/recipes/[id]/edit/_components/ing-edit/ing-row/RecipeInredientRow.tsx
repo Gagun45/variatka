@@ -14,7 +14,7 @@ const RecipeIngredientRow = ({
   onRemove,
 }: RecipeIngredientRowProps) => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 border px-2 py-1 rounded-md">
       <div className="flex-1">{item.title}</div>
 
       <Input
