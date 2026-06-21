@@ -18,10 +18,7 @@ export const createStuffCategory = async (
       where: { title: dto.title },
     });
     if (existingCategory)
-      return {
-        ok: false,
-        message: "A category with this title already exists.",
-      };
+      throw new AppError("A category with this title already exists.");
 
     const newCategory = await prisma.stuffCategory.create({ data: dto });
 
@@ -81,20 +78,13 @@ export const createStuff = async (
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { id: stuffCategoryId },
     });
-    if (!existingCategory)
-      return {
-        ok: false,
-        message: `A category #${stuffCategoryId} not found`,
-      };
+    if (!existingCategory) throw new AppError("Category not found");
 
     const existingStuff = await prisma.stuff.findUnique({
       where: { title },
     });
     if (existingStuff)
-      return {
-        ok: false,
-        message: "A stuff with this title already exists",
-      };
+      throw new AppError("A stuff with this title already exists");
 
     const newStuff = await prisma.stuff.create({
       data: dto,
@@ -128,10 +118,8 @@ export const editStuff = async (
       },
     });
     if (existingStuff)
-      return {
-        ok: false,
-        message: "A stuff with this title already exists.",
-      };
+      throw new AppError("A stuff with this title already exists.");
+
     const updatedStuff = await prisma.stuff.update({
       where: { id },
       data: dto,
@@ -158,11 +146,8 @@ export const deleteStuff = async (
     const existingStuff = await prisma.stuff.findUnique({
       where: { id },
     });
-    if (!existingStuff)
-      return {
-        ok: false,
-        message: "Stuff not found",
-      };
+    if (!existingStuff) throw new AppError("Stuff not found");
+
     await prisma.stuff.delete({
       where: { id },
     });
