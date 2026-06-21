@@ -62,10 +62,7 @@ export const createIngredientCategory = async (
       where: { title: dto.title },
     });
     if (existingCategory)
-      return {
-        ok: false,
-        message: "A category with this title already exists.",
-      };
+      throw new AppError("A category with this title already exists.");
     const newCategory = await prisma.ingredientCategory.create({ data: dto });
 
     return {
@@ -90,20 +87,13 @@ export const createIngredient = async (
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { id: categoryId },
     });
-    if (!existingCategory)
-      return {
-        ok: false,
-        message: `A category #${categoryId} not found`,
-      };
+    if (!existingCategory) throw new AppError("Category not found");
 
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { title },
     });
     if (existingIngredient)
-      return {
-        ok: false,
-        message: "An ingredient with this title already exists.",
-      };
+      throw new AppError("An ingredient with this title already exists.");
 
     const newIngredient = await prisma.ingredient.create({
       data: dto,
@@ -137,10 +127,7 @@ export const editIngredient = async (
       },
     });
     if (existingIngredient)
-      return {
-        ok: false,
-        message: "An ingredient with this title already exists.",
-      };
+      throw new AppError("An ingredient with this title already exists.");
     const updatedIngredient = await prisma.ingredient.update({
       where: { id },
       data: dto,
@@ -174,17 +161,10 @@ export const deleteIngredient = async (
         },
       },
     });
-    if (!ingredient)
-      return {
-        ok: false,
-        message: "Ingredient not found",
-      };
+    if (!ingredient) throw new AppError("Ingredient not found");
 
     if (ingredient._count.recipeIngredients > 0)
-      return {
-        ok: false,
-        message: "Cannot delete ingredients used in recipes",
-      };
+      throw new AppError("Cannot delete ingredients used in recipes");
     await prisma.ingredient.delete({
       where: { id },
     });
@@ -210,11 +190,7 @@ export const toggleSavedIngredient = async (
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
     });
-    if (!existingIngredient)
-      return {
-        ok: false,
-        message: "Ingredient not found",
-      };
+    if (!existingIngredient) throw new AppError("Ingredient not found");
 
     const updatedIngredient = await prisma.ingredient.update({
       where: { id },
@@ -301,11 +277,7 @@ export const toggleIngredientInStockValue = async (
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
     });
-    if (!existingIngredient)
-      return {
-        ok: false,
-        message: "Ingredient not found",
-      };
+    if (!existingIngredient) throw new AppError("Ingredient not found");
     const updatedIngredient = await prisma.ingredient.update({
       where: { id },
       data: { isInStock },

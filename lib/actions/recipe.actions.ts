@@ -54,10 +54,7 @@ export const createRecipeCategory = async (
       where: { title: dto.title },
     });
     if (existingCategory)
-      return {
-        ok: false,
-        message: "A category with this title already exists.",
-      };
+      throw new AppError("A category with this title already exists.");
 
     const newCategory = await prisma.recipeCategory.create({ data: dto });
 
@@ -83,20 +80,13 @@ export const createRecipe = async (
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { id: recipeCategoryId },
     });
-    if (!existingCategory)
-      return {
-        ok: false,
-        message: `A category #${recipeCategoryId} not found`,
-      };
+    if (!existingCategory) throw new AppError("Category not found");
 
     const existingRecipe = await prisma.recipe.findFirst({
       where: { title },
     });
     if (existingRecipe)
-      return {
-        ok: false,
-        message: "A recipe with this title already exists.",
-      };
+      throw new AppError("A recipe with this title already exists.");
 
     const newRecipe = await prisma.recipe.create({
       data: {
@@ -142,10 +132,7 @@ export const updateRecipeFields = async (
       },
     });
     if (existingRecipe)
-      return {
-        ok: false,
-        message: "A recipe with this title already exists.",
-      };
+      throw new AppError("A recipe with this title already exists.");
 
     const updatedRecipe = await prisma.recipe.update({
       where: {
@@ -173,11 +160,7 @@ export const updateRecipeIngredients = async (
 ): Promise<IActionResponse<IRecipe>> => {
   try {
     await userIsAdmin();
-    if (!Array.isArray(items))
-      return {
-        ok: false,
-        message: "Invalid items payload",
-      };
+    if (!Array.isArray(items)) throw new AppError("Invalid items payload");
 
     const response = await prisma.$transaction(
       async (tx): Promise<IActionResponse<IRecipe>> => {
@@ -186,17 +169,10 @@ export const updateRecipeIngredients = async (
           select: { id: true },
         });
 
-        if (!recipe)
-          return {
-            ok: false,
-            message: "Recipe not found",
-          };
+        if (!recipe) throw new AppError("Recipe not found");
 
         if (items.some((i) => !i.ingredientId || !i.amount))
-          return {
-            ok: false,
-            message: "Invalid ingredient data",
-          };
+          throw new AppError("Invalid ingredient data");
 
         await tx.recipeIngredient.deleteMany({
           where: { recipeId },
@@ -217,11 +193,7 @@ export const updateRecipeIngredients = async (
           ...recipeArgs,
         });
 
-        if (!updated)
-          return {
-            ok: false,
-            message: "Something went wrong",
-          };
+        if (!updated) throw new Error("Not found after update");
 
         return {
           data: updated,
@@ -249,11 +221,7 @@ export const deleteRecipe = async (
       select: { id: true },
     });
 
-    if (!recipe)
-      return {
-        ok: false,
-        message: "Recipe not found",
-      };
+    if (!recipe) throw new AppError("Recipe not found");
 
     await prisma.recipe.delete({
       where: { id: recipeId },
