@@ -1,28 +1,36 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
+
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { useStuff } from "@/features/stuff/hooks/useStuff";
+import { IIngredient, IRecipe, IStuff } from "@/lib/prisma.args";
 import {
   ISearchBarItem,
   ISearchBarItemType,
   useSearch,
 } from "@/zustand/search.store";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import SuggestionsList from "./list/SuggestionsList";
-import { IIngredient, IRecipe, IStuff } from "@/lib/prisma.args";
+
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { SearchGroup } from "./group/SearchGroup";
 
 const SearchBar = () => {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
+  const router = useRouter();
 
   const recentQueries = useSearch((s) => s.recentQueries);
   const addRecentQuery = useSearch((s) => s.addRecentQuery);
@@ -32,10 +40,6 @@ const SearchBar = () => {
   const { data: ingredients = [] } = useIngredients();
   const { data: recipes = [] } = useRecipes();
   const { data: stuff = [] } = useStuff();
-
-  // -----------------------------
-  // URL is the single source of truth
-  // -----------------------------
 
   const query = searchParams.get("search") ?? "";
   const queryLowerCase = query.toLowerCase();
@@ -49,97 +53,95 @@ const SearchBar = () => {
       .slice(0, 5)
       .map((i) => ({ id: i.id, title: i.title, type }));
 
-  // -----------------------------
-  // update URL
-  // -----------------------------
   const setQuery = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-
     if (value.trim()) {
       params.set("search", value);
     } else {
       params.delete("search");
     }
-
-    router.replace(params.toString() ? `${pathname}?${params}` : pathname, {
-      scroll: false,
-    });
+    router.replace(params.toString() ? `${pathname}?${params}` : pathname);
   };
 
-  // -----------------------------
-  // suggestions
-  // -----------------------------
-
-  const ingredientItems = filterItems(ingredients, "ingredient");
-  const recipeItems = filterItems(recipes, "recipe");
-  const stuffItems = filterItems(stuff, "stuff");
-  const recentSuggestions = recentQueries.filter((i) =>
-    i.title.toLowerCase().includes(queryLowerCase),
+  const ingredientItems = useMemo(
+    () => filterItems(ingredients, "ingredient"),
+    [ingredients, queryLowerCase],
+  );
+  const recipeItems = useMemo(
+    () => filterItems(recipes, "recipe"),
+    [recipes, queryLowerCase],
+  );
+  const stuffItems = useMemo(
+    () => filterItems(stuff, "stuff"),
+    [stuff, queryLowerCase],
   );
 
-  const totalItemsLength =
-    recentSuggestions.length +
-    ingredientItems.length +
-    recipeItems.length +
-    stuffItems.length;
+  const recentSuggestions = useMemo(
+    () =>
+      recentQueries.filter((i) =>
+        i.title.toLowerCase().includes(queryLowerCase),
+      ),
+    [recentQueries, queryLowerCase],
+  );
 
-  const itemsNotFound = totalItemsLength === 0;
-
-  // -----------------------------
-  // select handler
-  // -----------------------------
   const onSelect = (item: ISearchBarItem) => {
     addRecentQuery(item);
     setOpen(false);
   };
 
+  const groups: { heading: string; items: ISearchBarItem[] }[] = [
+    { heading: "Recent", items: recentSuggestions },
+    { heading: "Ingredients", items: ingredientItems },
+    { heading: "Recipes", items: recipeItems },
+    { heading: "Stuff", items: stuffItems },
+  ];
+
+  const activeGroups = groups.filter((g) => g.items.length > 0);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Input
-          value={query}
-          type="search"
-          placeholder="Search..."
-          onChange={(e) => {
-            setQuery(e.target.value);
-            if (!open) setOpen(true);
-          }}
-        />
-      </PopoverTrigger>
+    <div className="w-full max-w-md mx-auto">
+      {/* 1. Wrap the entire operation in a single Command state wrapper */}
+      <Command shouldFilter={false} className="overflow-visible bg-transparent">
+        <Popover open={open} onOpenChange={setOpen}>
+          {/* 2. PopoverTrigger now wraps the actual shadcn CommandInput component */}
+          <PopoverTrigger asChild>
+            <div className="w-full">
+              <CommandInput
+                placeholder="Search..."
+                value={query}
+                onValueChange={(val) => {
+                  setQuery(val);
+                  setOpen(val.length > 0 || activeGroups.length > 0);
+                }}
+              />
+            </div>
+          </PopoverTrigger>
 
-      <PopoverContent
-        align="start"
-        className="p-3 space-y-4 w-(--radix-popover-trigger-width)"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
-      >
-        {itemsNotFound && query.trim() && (
-          <p className="text-muted-foreground text-sm py-2">
-            No matching items found
-          </p>
-        )}
+          {/* 3. PopoverContent holds just the results list */}
+          <PopoverContent
+            align="start"
+            className="p-0 w-(--radix-popover-trigger-width) mt-1"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
+            <CommandList>
+              <CommandEmpty>No matching items found</CommandEmpty>
 
-        <SuggestionsList
-          items={recentSuggestions}
-          title="Recent"
-          onSelect={onSelect}
-        />
-
-        <SuggestionsList
-          items={ingredientItems}
-          title="Ingredients"
-          onSelect={onSelect}
-        />
-
-        <SuggestionsList
-          items={recipeItems}
-          title="Recipes"
-          onSelect={onSelect}
-        />
-
-        <SuggestionsList items={stuffItems} title="Stuff" onSelect={onSelect} />
-      </PopoverContent>
-    </Popover>
+              {activeGroups.map((group, index) => (
+                <div key={group.heading}>
+                  <SearchGroup
+                    heading={group.heading}
+                    items={group.items}
+                    onSelect={onSelect}
+                  />
+                  {index < activeGroups.length - 1 && <CommandSeparator />}
+                </div>
+              ))}
+            </CommandList>
+          </PopoverContent>
+        </Popover>
+      </Command>
+    </div>
   );
 };
 
