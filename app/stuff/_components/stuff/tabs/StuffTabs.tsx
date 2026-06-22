@@ -11,6 +11,7 @@ import StuffList from "../list/StuffList";
 import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
 
 import { IStuff, IStuffCategory } from "@/lib/prisma.args";
+import { useSearchParams } from "next/navigation";
 
 interface Props {
   categories: IStuffCategory[];
@@ -18,8 +19,9 @@ interface Props {
 }
 
 const StuffTabs = ({ categories, stuff }: Props) => {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") ?? "";
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const searchQuery = useSearch((s) => s.query);
 
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 

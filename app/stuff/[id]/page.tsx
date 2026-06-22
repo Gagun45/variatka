@@ -23,7 +23,6 @@ const StuffPage = async ({ params }: Props) => {
   return (
     <main>
       <PageBreadcrumb items={BREADCRUMB_ITEMS.stuff.view(stuffId)} />
-      <h1>Stuff page</h1>
       <Stuff id={stuffId} />
     </main>
   );

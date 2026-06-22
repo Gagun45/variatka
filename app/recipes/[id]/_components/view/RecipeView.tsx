@@ -10,6 +10,8 @@ import RecipeNotes from "./notes/RecipeNotes";
 import { useAuthStore } from "@/zustand/auth.store";
 import RecipeImageViewAdmin from "./img/RecipeImageViewAdmin";
 import ImageViewPublic from "@/components/img-upload/ImageViewPublic";
+import { frontendUrls } from "@/lib/urls";
+import ViewItemEditLink from "@/components/view-item/ViewItemEditLink";
 
 interface Props {
   recipe: IRecipe;
@@ -17,12 +19,12 @@ interface Props {
 
 const RecipeView = ({ recipe }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const { imageKey, imageVersion, title } = recipe;
+  const { imageKey, imageVersion, title, id, notes } = recipe;
   return (
-    <Card className="mx-auto">
+    <Card>
       <RecipeHeader recipe={recipe} isAdmin={isAdmin} />
 
-      <CardContent className="flex flex-col gap-5">
+      <CardContent className="view-item-card-content">
         <Separator />
 
         {isAdmin ? (
@@ -39,14 +41,9 @@ const RecipeView = ({ recipe }: Props) => {
 
         <Separator />
 
-        <RecipeNotes notes={recipe.notes} />
+        <RecipeNotes notes={notes} />
 
-        {isAdmin && (
-          <>
-            <Separator />
-            <RecipeActions id={recipe.id} />
-          </>
-        )}
+        {isAdmin && <ViewItemEditLink href={frontendUrls.recipes.edit(id)} />}
       </CardContent>
     </Card>
   );

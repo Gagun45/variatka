@@ -27,6 +27,7 @@ const Ingredient = ({ id }: Props) => {
   if (!ingredient) return <StateScreen title="Ingredient not found" />;
   return (
     <>
+      <h1>{ingredient.title}</h1>
       <IngredientView ingredient={ingredient} />
       <Separator />
       <IngredientRecipes id={id} />

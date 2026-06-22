@@ -1,19 +1,22 @@
 import { IIngredient } from "@/lib/prisma.args";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import ImageViewPublic from "@/components/img-upload/ImageViewPublic";
+import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import StockBadge from "@/components/stock-badge/StockBadge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useToggleIngredientStock } from "@/features/ingredient/hooks/useToggleIngredientStock";
+import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleSavedIngredient";
 import { frontendUrls } from "@/lib/urls";
 import { useAuthStore } from "@/zustand/auth.store";
 import { useRecipeStore } from "@/zustand/recipe.store";
 import Link from "next/link";
 import IngredientImageViewAdmin from "./img-admin/IngredientImageViewAdmin";
-import SaveToggleButton from "@/components/save-button/SaveToggleButton";
-import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleSavedIngredient";
-import { useToggleIngredientStock } from "@/features/ingredient/hooks/useToggleIngredientStock";
+import ViewItemCategory from "@/components/view-item/ViewItemCategory";
+import ViewItemDescription from "@/components/view-item/ViewItemDescription";
+import ViewItemEditLink from "@/components/view-item/ViewItemEditLink";
 
 interface Props {
   ingredient: IIngredient;
@@ -52,34 +55,17 @@ const IngredientView = ({ ingredient }: Props) => {
   const addItem = useRecipeStore((state) => state.addItem);
 
   return (
-    <Card className="max-w-md mx-auto overflow-hidden">
-      {isAdmin ? (
-        <IngredientImageViewAdmin ingredient={ingredient} />
-      ) : (
-        <ImageViewPublic
-          imageVersion={imageVersion}
-          imageKey={imageKey}
-          title={title}
-        />
-      )}
-
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
-        <CardTitle className="text-xl">{title}</CardTitle>
-
-        <StockBadge
-          isInStock={isInStock}
-          onClick={isAdmin ? onToggleStock : undefined}
-        />
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-3">
-        <div className="text-sm text-muted-foreground flex items-center justify-between">
-          <span>
-            Category:{" "}
-            <span className="text-foreground font-medium">
-              {category.title}
-            </span>
-          </span>
+    <Card>
+      <CardHeader className="view-item-card-header">
+        <div className="view-item-card-header-row">
+          <ViewItemCategory categoryTitle={category.title} />
+          <StockBadge
+            isInStock={isInStock}
+            onClick={isAdmin ? onToggleStock : undefined}
+          />
+        </div>
+        <div className="view-item-card-header-row">
+          <ViewItemDescription description={description} />
           {isAdmin && (
             <SaveToggleButton
               isSaved={ingredient.isSaved}
@@ -87,20 +73,25 @@ const IngredientView = ({ ingredient }: Props) => {
             />
           )}
         </div>
+      </CardHeader>
+
+      <CardContent className="view-item-card-content">
+        {isAdmin ? (
+          <IngredientImageViewAdmin ingredient={ingredient} />
+        ) : (
+          <ImageViewPublic
+            imageVersion={imageVersion}
+            imageKey={imageKey}
+            title={title}
+          />
+        )}
 
         <Separator />
 
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {description}
-        </p>
         {isAdmin && (
           <>
-            <Link
-              className={buttonVariants({ className: "px-8 text-base!" })}
-              href={frontendUrls.ingredients.edit(id)}
-            >
-              Edit
-            </Link>
+            <ViewItemEditLink href={frontendUrls.ingredients.edit(id)} />
+
             <Button
               onClick={() =>
                 isAdded

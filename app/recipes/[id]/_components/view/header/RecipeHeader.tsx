@@ -1,9 +1,10 @@
-import { IRecipe } from "@/lib/prisma.args";
-import { CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import StockBadge from "@/components/stock-badge/StockBadge";
-import { useToggleSavedRecipe } from "@/features/recipe/hooks/useToggleSavedRecipe";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
+import StockBadge from "@/components/stock-badge/StockBadge";
+import { CardHeader } from "@/components/ui/card";
+import ViewItemCategory from "@/components/view-item/ViewItemCategory";
+import ViewItemDescription from "@/components/view-item/ViewItemDescription";
+import { useToggleSavedRecipe } from "@/features/recipe/hooks/useToggleSavedRecipe";
+import { IRecipe } from "@/lib/prisma.args";
 
 interface Props {
   recipe: IRecipe;
@@ -16,23 +17,20 @@ const RecipeHeader = ({ recipe, isAdmin }: Props) => {
   const onToggleSaved = () => {
     mutate({ isSaved, recipeId: id });
   };
-  const { title, recipeCategory, description, inStock } = recipe;
+  const { recipeCategory, description, inStock } = recipe;
 
   return (
-    <CardHeader className="space-y-3">
-      <div className="flex items-center justify-between gap-4">
-        <CardTitle className="text-2xl">{title}</CardTitle>
-
-        <Badge variant="secondary">{recipeCategory.title}</Badge>
-      </div>
-      <div className="flex justify-between items-center gap-2">
+    <CardHeader className="view-item-card-header">
+      <div className="view-item-card-header-row">
+        <ViewItemCategory categoryTitle={recipeCategory.title} />
         <StockBadge isInStock={!!inStock} quantity={inStock} />
+      </div>
+      <div className="view-item-card-header-row">
+        <ViewItemDescription description={description} />
         {isAdmin && (
           <SaveToggleButton isSaved={isSaved} onToggle={onToggleSaved} />
         )}
       </div>
-
-      <p className="text-sm text-muted-foreground">{description}</p>
     </CardHeader>
   );
 };
