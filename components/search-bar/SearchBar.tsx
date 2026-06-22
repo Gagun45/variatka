@@ -11,7 +11,7 @@ import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { useStuff } from "@/features/stuff/hooks/useStuff";
 import { ISearchBarItem, useSearch } from "@/zustand/search.store";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useDebounce } from "use-debounce";
 import SuggestionsList from "./list/SuggestionsList";
 
@@ -20,93 +20,121 @@ const SearchBar = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const query = useSearch((s) => s.query);
-  const setQuery = useSearch((s) => s.setQuery);
   const recentQueries = useSearch((s) => s.recentQueries);
   const addRecentQuery = useSearch((s) => s.addRecentQuery);
 
-  const [debouncedQuery] = useDebounce(query, 300);
   const [open, setOpen] = useState(false);
-
-  const initialized = useRef(false);
 
   const { data: ingredients = [] } = useIngredients();
   const { data: recipes = [] } = useRecipes();
   const { data: stuff = [] } = useStuff();
 
-  // init from URL once
-  useEffect(() => {
-    if (initialized.current) return;
+  // -----------------------------
+  // URL is the single source of truth
+  // -----------------------------
+  const query = searchParams.get("search") ?? "";
+  const [debouncedQuery] = useDebounce(query, 300);
 
-    setQuery(searchParams.get("search") ?? "");
-    initialized.current = true;
-  }, [searchParams, setQuery]);
+  // -----------------------------
+  // update URL
+  // -----------------------------
+  const setQuery = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
 
-  // sync Zustand -> URL (debounced)
-  useEffect(() => {
-    if (!initialized.current) return;
-
-    const params = new URLSearchParams();
-
-    if (debouncedQuery.trim()) {
-      params.set("search", debouncedQuery);
+    if (value.trim()) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
     }
 
-    const qs = params.toString();
-
-    router.replace(qs ? `${pathname}?${qs}` : pathname, {
+    router.replace(params.toString() ? `${pathname}?${params}` : pathname, {
       scroll: false,
     });
-  }, [debouncedQuery, pathname, router]);
+  };
 
+  // -----------------------------
   // suggestions
+  // -----------------------------
+  const q = debouncedQuery.toLowerCase();
 
-  const q = query.toLowerCase();
+  const recentSuggestions: ISearchBarItem[] = useMemo(
+    () =>
+      recentQueries
+        .filter((i) => i.title.toLowerCase().includes(q))
+        .slice(0, 5)
+        .map((i) => ({
+          type: i.type,
+          id: i.id,
+          title: i.title,
+        })),
+    [recentQueries, q],
+  );
 
-  const ingredientItems: ISearchBarItem[] = ingredients
-    .filter((i) => i.title.toLowerCase().includes(q))
-    .slice(0, 5)
-    .map((item) => ({
-      type: "ingredient",
-      id: item.id,
-      title: item.title,
-    }));
+  const ingredientItems: ISearchBarItem[] = useMemo(
+    () =>
+      ingredients
+        .filter((i) => i.title.toLowerCase().includes(q))
+        .slice(0, 5)
+        .map((i) => ({
+          type: "ingredient",
+          id: i.id,
+          title: i.title,
+        })),
+    [ingredients, q],
+  );
 
-  const recipeItems: ISearchBarItem[] = recipes
-    .filter((i) => i.title.toLowerCase().includes(q))
-    .slice(0, 5)
-    .map((item) => ({
-      type: "recipe",
-      id: item.id,
-      title: item.title,
-    }));
+  const recipeItems: ISearchBarItem[] = useMemo(
+    () =>
+      recipes
+        .filter((r) => r.title.toLowerCase().includes(q))
+        .slice(0, 5)
+        .map((r) => ({
+          type: "recipe",
+          id: r.id,
+          title: r.title,
+        })),
+    [recipes, q],
+  );
 
-  const stuffItems: ISearchBarItem[] = stuff
-    .filter((i) => i.title.toLowerCase().includes(q))
-    .slice(0, 5)
-    .map((item) => ({
-      type: "stuff",
-      id: item.id,
-      title: item.title,
-    }));
+  const stuffItems: ISearchBarItem[] = useMemo(
+    () =>
+      stuff
+        .filter((s) => s.title.toLowerCase().includes(q))
+        .slice(0, 5)
+        .map((s) => ({
+          type: "stuff",
+          id: s.id,
+          title: s.title,
+        })),
+    [stuff, q],
+  );
 
   const totalItemsLength =
-    recentQueries.length +
-    stuffItems.length +
+    recentSuggestions.length +
+    ingredientItems.length +
     recipeItems.length +
-    ingredientItems.length;
+    stuffItems.length;
+
   const itemsNotFound = totalItemsLength === 0;
 
+  // -----------------------------
+  // select handler
+  // -----------------------------
   const onSelect = (item: ISearchBarItem) => {
     addRecentQuery(item);
     setOpen(false);
   };
 
+  // -----------------------------
+  // derived input value
+  // -----------------------------
+  const inputValue = query;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Input
-          value={query}
+          value={inputValue}
           type="search"
           placeholder="Search..."
           onChange={(e) => {
@@ -116,17 +144,19 @@ const SearchBar = () => {
         />
       </PopoverTrigger>
 
-      {/* interleaveOpenFocus={false} prevents focus from jumping into the popover,
-        keeping the cursor active inside your Input.
-      */}
       <PopoverContent
-        className="p-3 space-y-4 w-(--radix-popover-trigger-width)"
         align="start"
+        className="p-3 space-y-4 w-(--radix-popover-trigger-width)"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        {itemsNotFound && <p>No matching items</p>}
+        {itemsNotFound && query.trim() && (
+          <p className="text-muted-foreground text-sm py-2">
+            No matching items found
+          </p>
+        )}
+
         <SuggestionsList
-          items={recentQueries}
+          items={recentSuggestions}
           title="Recent"
           onSelect={onSelect}
         />

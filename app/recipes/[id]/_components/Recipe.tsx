@@ -24,7 +24,10 @@ const Recipe = ({ id }: Props) => {
   if (!recipe) return <StateScreen title="Recipe not found" />;
   return (
     <div className="space-y-24">
-      <RecipeView recipe={recipe} />
+      <div>
+        <h1>{recipe.title}</h1>
+        <RecipeView recipe={recipe} />
+      </div>
       <SimilarRecipes allRecipes={recipes} recipe={recipe} />
     </div>
   );

@@ -22,7 +22,6 @@ const IngredientPage = async ({ params }: Props) => {
   return (
     <main>
       <PageBreadcrumb items={BREADCRUMB_ITEMS.ingredients.view(ingredientId)} />
-      <h1>Ingredient page</h1>
       <Ingredient id={ingredientId} />
     </main>
   );

@@ -1,11 +1,11 @@
 "use client";
 
 import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
-import { useSearch } from "@/zustand/search.store";
 import { useState } from "react";
 
 import CategoryButton from "@/components/cat-button/CategoryButton";
 import { SortSelect } from "@/components/sort-select/SortSelect";
+import { FilterButtons } from "@/components/stock-filter/StockFilter";
 import { Separator } from "@/components/ui/separator";
 import { useRecipesFilter } from "@/hooks/useRecipesFilter";
 import {
@@ -15,9 +15,9 @@ import {
 import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
 import { IRecipeSortType, RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
 import { useAuthStore } from "@/zustand/auth.store";
+import { useSearchParams } from "next/navigation";
 import RecipeFormsDialog from "./forms-dialog/RecipeFormsDialog";
 import RecipesList from "./recipes-list/RecipesList";
-import { FilterButtons } from "@/components/stock-filter/StockFilter";
 
 interface Props {
   categories: IRecipeCategory[];
@@ -26,7 +26,8 @@ interface Props {
 
 const RecipeTabs = ({ categories, recipes }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const searchQuery = useSearch((s) => s.query);
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") ?? "";
 
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 

@@ -17,6 +17,7 @@ import { useIngredientsFilter } from "@/hooks/useIngredientsFilter";
 import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
 import IngredientFormsDialog from "./forms-dialog/IngredientFormsDialog";
 import IngredienstList from "./list/IngredienstList";
+import { useSearchParams } from "next/navigation";
 
 interface Props {
   categories: IIngredientCategory[];
@@ -25,7 +26,8 @@ interface Props {
 
 const IngredientsTabs = ({ categories, ingredients }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const searchQuery = useSearch((s) => s.query);
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") ?? "";
 
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 

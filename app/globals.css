@@ -134,3 +134,15 @@
     @apply text-center py-4 text-4xl font-semibold
   }
 }
+
+@layer components {
+  .view-item-card-header {
+    @apply space-y-3
+  }
+  .view-item-card-header-row {
+    @apply flex items-center justify-between gap-2 break-all
+  }
+  .view-item-card-content {
+    @apply flex flex-col gap-3
+  }
+}

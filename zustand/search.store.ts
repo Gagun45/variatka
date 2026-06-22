@@ -8,23 +8,14 @@ export interface ISearchBarItem {
 }
 
 interface ISearchState {
-  query: string;
   recentQueries: ISearchBarItem[];
-
   addRecentQuery: (item: ISearchBarItem) => void;
-  setQuery: (query: string) => void;
-  clear: () => void;
 }
 
 export const useSearch = create<ISearchState>()(
   persist(
     (set) => ({
-      query: "",
       recentQueries: [],
-
-      setQuery: (query) => set({ query }),
-
-      clear: () => set({ query: "" }),
 
       addRecentQuery: (item) =>
         set((state) => {

@@ -27,6 +27,7 @@ const Stuff = ({ id }: Props) => {
   if (!singleStuff) return <StateScreen title="Stuff not found" />;
   return (
     <>
+      <h1>{singleStuff.title}</h1>
       <StuffView stuff={singleStuff} isAdmin={isAdmin} />
     </>
   );
