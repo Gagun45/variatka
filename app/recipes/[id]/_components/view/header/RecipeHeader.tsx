@@ -17,7 +17,7 @@ const RecipeHeader = ({ recipe }: Props) => {
 
         <Badge variant="secondary">{recipeCategory.title}</Badge>
       </div>
-      <StockBadge inInStock={!!inStock} quantity={inStock} />
+      <StockBadge isInStock={!!inStock} quantity={inStock} />
 
       <p className="text-sm text-muted-foreground">{description}</p>
     </CardHeader>

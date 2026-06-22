@@ -49,7 +49,7 @@ const IngredientView = ({ ingredient }: Props) => {
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <CardTitle className="text-xl">{title}</CardTitle>
 
-        <StockBadge inInStock={isInStock} />
+        <StockBadge isInStock={isInStock} />
       </CardHeader>
 
       <CardContent className="flex flex-col gap-3">

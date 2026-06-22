@@ -1,4 +1,5 @@
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
+import StockBadge from "@/components/stock-badge/StockBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IIngredient } from "@/lib/prisma.args";
@@ -6,7 +7,6 @@ import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/zustand/recipe.store";
 import { CheckIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
-import StockToggleButton from "./toggle-stock-btn/StockToggleButton";
 
 interface Props {
   ingredient: IIngredient;
@@ -72,10 +72,7 @@ const IngredientCard = ({
             )}
 
             {isAdmin && (
-              <StockToggleButton
-                isInStock={isInStock}
-                onToggle={onToggleStock}
-              />
+              <StockBadge isInStock={isInStock} onClick={onToggleStock} />
             )}
             <span className="text-xs text-muted-foreground">
               Used in {ingredient._count.recipeIngredients} recipes
