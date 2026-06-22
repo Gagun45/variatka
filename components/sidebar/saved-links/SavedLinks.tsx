@@ -17,24 +17,17 @@ const SavedLinks = () => {
   const savedRecipesLength = recipes.filter((r) => r.isSaved).length;
 
   return (
-    <SidebarGroup className="border-b">
-      <SidebarMenu className="space-y-2">
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild>
-            <SidebarLink
-              href={frontendUrls.ingredients.saved}
-              label={`Saved ingredients${savedIngredientsLength > 0 ? ` (${savedIngredientsLength})` : ""}`}
-            />
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild>
-            <SidebarLink
-              href={frontendUrls.recipes.saved}
-              label={`Saved recipes${savedRecipesLength > 0 ? ` (${savedRecipesLength})` : ""}`}
-            />
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+    <SidebarGroup>
+      <SidebarMenu>
+        <SidebarLink
+          href={frontendUrls.ingredients.saved}
+          label={`Saved ingredients${savedIngredientsLength > 0 ? ` (${savedIngredientsLength})` : ""}`}
+        />
+
+        <SidebarLink
+          href={frontendUrls.recipes.saved}
+          label={`Saved recipes${savedRecipesLength > 0 ? ` (${savedRecipesLength})` : ""}`}
+        />
       </SidebarMenu>
     </SidebarGroup>
   );

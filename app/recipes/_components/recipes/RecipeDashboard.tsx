@@ -37,7 +37,7 @@ const RecipeDashboard = () => {
   if (!categories.length) {
     return (
       <div className="space-y-6 text-center mx-auto">
-        <h1>No recipes categories yet</h1>
+        <h2>No recipes categories yet</h2>
         <NewRecipeCategoryForm
           isPending={isPending}
           onCreate={onCategoryCreate}

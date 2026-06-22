@@ -37,7 +37,7 @@ const IngredientsDashboard = () => {
   if (!categories.length) {
     return (
       <div className="space-y-6 text-center mx-auto">
-        <h1>No categories yet</h1>
+        <h2>No categories yet</h2>
         <p>Create your first category to get started.</p>
         <NewCategoryForm isPending={isPending} onCreate={onCategoryCreate} />
       </div>
