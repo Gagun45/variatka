@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export type ISearchBarItemType = "ingredient" | "recipe" | "stuff";
+
 export interface ISearchBarItem {
-  type: "ingredient" | "recipe" | "stuff";
+  type: ISearchBarItemType;
   id: number;
   title: string;
 }

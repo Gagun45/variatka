@@ -9,11 +9,15 @@ import {
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { useStuff } from "@/features/stuff/hooks/useStuff";
-import { ISearchBarItem, useSearch } from "@/zustand/search.store";
+import {
+  ISearchBarItem,
+  ISearchBarItemType,
+  useSearch,
+} from "@/zustand/search.store";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { useDebounce } from "use-debounce";
 import SuggestionsList from "./list/SuggestionsList";
+import { IIngredient, IRecipe, IStuff } from "@/lib/prisma.args";
 
 const SearchBar = () => {
   const searchParams = useSearchParams();
@@ -32,8 +36,18 @@ const SearchBar = () => {
   // -----------------------------
   // URL is the single source of truth
   // -----------------------------
+
   const query = searchParams.get("search") ?? "";
-  const [debouncedQuery] = useDebounce(query, 300);
+  const queryLowerCase = query.toLowerCase();
+
+  const filterItems = (
+    items: (IIngredient | IRecipe | IStuff)[],
+    type: ISearchBarItemType,
+  ): ISearchBarItem[] =>
+    items
+      .filter((i) => i.title.toLowerCase().includes(queryLowerCase))
+      .slice(0, 5)
+      .map((i) => ({ id: i.id, title: i.title, type }));
 
   // -----------------------------
   // update URL
@@ -55,58 +69,12 @@ const SearchBar = () => {
   // -----------------------------
   // suggestions
   // -----------------------------
-  const q = debouncedQuery.toLowerCase();
 
-  const recentSuggestions: ISearchBarItem[] = useMemo(
-    () =>
-      recentQueries
-        .filter((i) => i.title.toLowerCase().includes(q))
-        .slice(0, 5)
-        .map((i) => ({
-          type: i.type,
-          id: i.id,
-          title: i.title,
-        })),
-    [recentQueries, q],
-  );
-
-  const ingredientItems: ISearchBarItem[] = useMemo(
-    () =>
-      ingredients
-        .filter((i) => i.title.toLowerCase().includes(q))
-        .slice(0, 5)
-        .map((i) => ({
-          type: "ingredient",
-          id: i.id,
-          title: i.title,
-        })),
-    [ingredients, q],
-  );
-
-  const recipeItems: ISearchBarItem[] = useMemo(
-    () =>
-      recipes
-        .filter((r) => r.title.toLowerCase().includes(q))
-        .slice(0, 5)
-        .map((r) => ({
-          type: "recipe",
-          id: r.id,
-          title: r.title,
-        })),
-    [recipes, q],
-  );
-
-  const stuffItems: ISearchBarItem[] = useMemo(
-    () =>
-      stuff
-        .filter((s) => s.title.toLowerCase().includes(q))
-        .slice(0, 5)
-        .map((s) => ({
-          type: "stuff",
-          id: s.id,
-          title: s.title,
-        })),
-    [stuff, q],
+  const ingredientItems = filterItems(ingredients, "ingredient");
+  const recipeItems = filterItems(recipes, "recipe");
+  const stuffItems = filterItems(stuff, "stuff");
+  const recentSuggestions = recentQueries.filter((i) =>
+    i.title.toLowerCase().includes(queryLowerCase),
   );
 
   const totalItemsLength =
@@ -125,16 +93,11 @@ const SearchBar = () => {
     setOpen(false);
   };
 
-  // -----------------------------
-  // derived input value
-  // -----------------------------
-  const inputValue = query;
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Input
-          value={inputValue}
+          value={query}
           type="search"
           placeholder="Search..."
           onChange={(e) => {
