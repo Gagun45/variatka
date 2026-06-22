@@ -3,6 +3,7 @@ import { IRecipe } from "@/lib/prisma.args";
 import { IRecipeSortType, RECIPE_SORTERS } from "@/lib/sorting.recipes";
 import { IStockType } from "@/lib/constants/stock.options";
 import { IReadyToMakeType } from "@/lib/constants/ready-to-make.options";
+import { IConfirmedType } from "@/lib/constants/confirmed.optionts";
 
 export function useRecipesFilter({
   recipes,
@@ -10,6 +11,7 @@ export function useRecipesFilter({
   categoryId,
   stock,
   readyToMake,
+  confirmed,
   sort,
 }: {
   recipes: IRecipe[];
@@ -17,6 +19,7 @@ export function useRecipesFilter({
   categoryId?: number;
   stock: IStockType;
   readyToMake: IReadyToMakeType;
+  confirmed: IConfirmedType;
   sort: IRecipeSortType;
 }) {
   return useMemo(() => {
@@ -46,6 +49,14 @@ export function useRecipesFilter({
       return readyToMake === "ready" ? isReadyToMake : !isReadyToMake;
     });
 
-    return [...readyFiltered].sort(RECIPE_SORTERS[sort]);
-  }, [recipes, searchQuery, categoryId, stock, readyToMake, sort]);
+    const confirmedFiltered = readyFiltered.filter((recipe) => {
+      if (confirmed === "all") return true;
+
+      return confirmed === "confirmed"
+        ? recipe.isConfirmed
+        : !recipe.isConfirmed;
+    });
+
+    return [...confirmedFiltered].sort(RECIPE_SORTERS[sort]);
+  }, [recipes, searchQuery, categoryId, stock, readyToMake, sort, confirmed]);
 }

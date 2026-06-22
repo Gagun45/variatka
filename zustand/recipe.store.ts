@@ -26,6 +26,8 @@ const initialDraft: IRecipeDto = {
   notes: "",
   inStock: 0,
   recipeCategoryId: 0,
+  confirmationNotes: "",
+  isConfirmed: false,
 };
 
 export const useRecipeStore = create<IRecipeState>()(

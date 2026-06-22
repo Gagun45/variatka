@@ -16,9 +16,9 @@ import CategorySelectField from "./fields/CategorySelectField";
 import ConfirmationNotesField from "./fields/ConfirmationNotesField";
 import DescriptionField from "./fields/DescriptionField";
 import InStockField from "./fields/InStockField";
+import IsConfirmedField from "./fields/IsConfirmedField";
 import NotesField from "./fields/NotesField";
 import TitleField from "./fields/TitleField";
-import IsConfirmedField from "./fields/IsConfirmedField";
 
 interface Props {
   categories: IRecipeCategory[];

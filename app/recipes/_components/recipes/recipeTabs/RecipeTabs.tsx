@@ -18,6 +18,10 @@ import { useAuthStore } from "@/zustand/auth.store";
 import { useSearchParams } from "next/navigation";
 import RecipeFormsDialog from "./forms-dialog/RecipeFormsDialog";
 import RecipesList from "./recipes-list/RecipesList";
+import {
+  CONFIRMED_OPTIONS,
+  IConfirmedType,
+} from "@/lib/constants/confirmed.optionts";
 
 interface Props {
   categories: IRecipeCategory[];
@@ -33,6 +37,7 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
 
   const [stockFilter, setStockFilter] = useState<IStockType>("all");
   const [readyFilter, setReadyFilter] = useState<IReadyToMakeType>("all");
+  const [confirmedFilter, setConfirmedFilter] = useState<IConfirmedType>("all");
 
   const [sort, setSort] = useState<IRecipeSortType>("newest");
 
@@ -45,6 +50,7 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
     stock: stockFilter,
     sort,
     readyToMake: readyFilter,
+    confirmed: confirmedFilter,
   });
 
   return (
@@ -85,6 +91,13 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
               value={readyFilter}
               onChange={setReadyFilter}
               options={READY_TO_MAKE_OPTIONS}
+            />
+          </div>
+          <div className="flex gap-2">
+            <FilterButtons
+              value={confirmedFilter}
+              onChange={setConfirmedFilter}
+              options={CONFIRMED_OPTIONS}
             />
           </div>
         </div>
