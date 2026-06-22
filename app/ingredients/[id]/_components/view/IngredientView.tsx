@@ -11,6 +11,8 @@ import { useAuthStore } from "@/zustand/auth.store";
 import { useRecipeStore } from "@/zustand/recipe.store";
 import Link from "next/link";
 import IngredientImageViewAdmin from "./img-admin/IngredientImageViewAdmin";
+import SaveToggleButton from "@/components/save-button/SaveToggleButton";
+import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleSavedIngredient";
 
 interface Props {
   ingredient: IIngredient;
@@ -18,18 +20,24 @@ interface Props {
 
 const IngredientView = ({ ingredient }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const { mutate } = useToggleSavedIngredient();
   const {
     description,
     title,
     category,
     isInStock,
     id,
+    isSaved,
     imageKey,
     imageVersion,
   } = ingredient;
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
   );
+
+  const onToggleSaved = () => {
+    mutate({ ingredientId: id, isSaved });
+  };
 
   const removeItem = useRecipeStore((state) => state.removeItem);
   const addItem = useRecipeStore((state) => state.addItem);
@@ -53,9 +61,19 @@ const IngredientView = ({ ingredient }: Props) => {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-3">
-        <div className="text-sm text-muted-foreground">
-          Category:{" "}
-          <span className="text-foreground font-medium">{category.title}</span>
+        <div className="text-sm text-muted-foreground flex items-center justify-between">
+          <span>
+            Category:{" "}
+            <span className="text-foreground font-medium">
+              {category.title}
+            </span>
+          </span>
+          {isAdmin && (
+            <SaveToggleButton
+              isSaved={ingredient.isSaved}
+              onToggle={onToggleSaved}
+            />
+          )}
         </div>
 
         <Separator />

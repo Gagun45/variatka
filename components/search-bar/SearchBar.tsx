@@ -1,118 +1,151 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
-import { frontendUrls } from "@/lib/urls";
-import { useSearch } from "@/zustand/search";
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button, buttonVariants } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
+import { useStuff } from "@/features/stuff/hooks/useStuff";
+import { ISearchBarItem, useSearch } from "@/zustand/search.store";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useDebounce } from "use-debounce";
+import SuggestionsList from "./list/SuggestionsList";
 
 const SearchBar = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const query = useSearch((s) => s.query);
   const setQuery = useSearch((s) => s.setQuery);
-  const { data: ingredients = [] } = useIngredients();
-  const { data: recipes = [] } = useRecipes();
+  const recentQueries = useSearch((s) => s.recentQueries);
+  const addRecentQuery = useSearch((s) => s.addRecentQuery);
 
+  const [debouncedQuery] = useDebounce(query, 300);
   const [open, setOpen] = useState(false);
 
-  const suggestions = useMemo(() => {
-    const q = query.toLowerCase();
+  const initialized = useRef(false);
 
-    return [
-      ...ingredients
-        .filter((i) => i.title.toLowerCase().includes(q))
-        .sort((a, b) => a.title.localeCompare(b.title))
-        .slice(0, 5)
-        .map((i) => ({
-          id: i.id,
-          title: i.title,
-          type: "ingredient",
-        })),
+  const { data: ingredients = [] } = useIngredients();
+  const { data: recipes = [] } = useRecipes();
+  const { data: stuff = [] } = useStuff();
 
-      ...recipes
-        .filter((r) => r.title.toLowerCase().includes(q))
-        .sort((a, b) => a.title.localeCompare(b.title))
-        .slice(0, 3)
-        .map((r) => ({
-          id: r.id,
-          title: r.title,
-          type: "recipe",
-        })),
-    ];
-  }, [query, ingredients, recipes]);
+  // init from URL once
+  useEffect(() => {
+    if (initialized.current) return;
+
+    setQuery(searchParams.get("search") ?? "");
+    initialized.current = true;
+  }, [searchParams, setQuery]);
+
+  // sync Zustand -> URL (debounced)
+  useEffect(() => {
+    if (!initialized.current) return;
+
+    const params = new URLSearchParams();
+
+    if (debouncedQuery.trim()) {
+      params.set("search", debouncedQuery);
+    }
+
+    const qs = params.toString();
+
+    router.replace(qs ? `${pathname}?${qs}` : pathname, {
+      scroll: false,
+    });
+  }, [debouncedQuery, pathname, router]);
+
+  // suggestions
+
+  const q = query.toLowerCase();
+
+  const ingredientItems: ISearchBarItem[] = ingredients
+    .filter((i) => i.title.toLowerCase().includes(q))
+    .slice(0, 5)
+    .map((item) => ({
+      type: "ingredient",
+      id: item.id,
+      title: item.title,
+    }));
+
+  const recipeItems: ISearchBarItem[] = recipes
+    .filter((i) => i.title.toLowerCase().includes(q))
+    .slice(0, 5)
+    .map((item) => ({
+      type: "recipe",
+      id: item.id,
+      title: item.title,
+    }));
+
+  const stuffItems: ISearchBarItem[] = stuff
+    .filter((i) => i.title.toLowerCase().includes(q))
+    .slice(0, 5)
+    .map((item) => ({
+      type: "stuff",
+      id: item.id,
+      title: item.title,
+    }));
+
+  const totalItemsLength =
+    recentQueries.length +
+    stuffItems.length +
+    recipeItems.length +
+    ingredientItems.length;
+  const itemsNotFound = totalItemsLength === 0;
+
+  const onSelect = (item: ISearchBarItem) => {
+    addRecentQuery(item);
+    setOpen(false);
+  };
 
   return (
-    <div
-      className="relative flex w-full"
-      onBlur={(e) => {
-        // if focus moves outside the whole wrapper → close
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          setOpen(false);
-        }
-      }}
-    >
-      <Input
-        value={query}
-        className="w-full"
-        type="search"
-        placeholder="Search ingredients or recipes..."
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-      />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Input
+          value={query}
+          type="search"
+          placeholder="Search..."
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (!open) setOpen(true);
+          }}
+        />
+      </PopoverTrigger>
 
-      {open && (
-        <Card className="absolute top-full z-50 mt-2 w-full py-1 shadow-lg">
-          <CardContent className="p-1">
-            <div className="h-fit space-y-2">
-              {suggestions.map((item) => (
-                <Button
-                  variant={"ghost"}
-                  className="w-full"
-                  key={`${item.type}-${item.id}`}
-                  onClick={() => {
-                    setQuery(item.title);
-                    setOpen(false);
-                  }}
-                >
-                  {/* LEFT SIDE */}
-                  <div className="flex items-center w-full justify-between gap-2 min-w-0">
-                    <p className="truncate text-sm font-medium">{item.title}</p>
-                    {item.type === "recipe" && <Badge>R</Badge>}
-                  </div>
+      {/* interleaveOpenFocus={false} prevents focus from jumping into the popover,
+        keeping the cursor active inside your Input.
+      */}
+      <PopoverContent
+        className="p-3 space-y-4 w-(--radix-popover-trigger-width)"
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        {itemsNotFound && <p>No matching items</p>}
+        <SuggestionsList
+          items={recentQueries}
+          title="Recent"
+          onSelect={onSelect}
+        />
 
-                  {/* RIGHT SIDE */}
+        <SuggestionsList
+          items={ingredientItems}
+          title="Ingredients"
+          onSelect={onSelect}
+        />
 
-                  <Link
-                    href={
-                      item.type === "recipe"
-                        ? frontendUrls.recipes.view(item.id)
-                        : frontendUrls.ingredients.view(item.id)
-                    }
-                    className={buttonVariants({
-                      variant: "outline",
-                      size: "sm",
-                    })}
-                    onClick={() => {
-                      setQuery(item.title);
-                      setOpen(false);
-                    }}
-                  >
-                    Go to
-                  </Link>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        <SuggestionsList
+          items={recipeItems}
+          title="Recipes"
+          onSelect={onSelect}
+        />
+
+        <SuggestionsList items={stuffItems} title="Stuff" onSelect={onSelect} />
+      </PopoverContent>
+    </Popover>
   );
 };
 

@@ -20,7 +20,7 @@ const RecipeView = ({ recipe }: Props) => {
   const { imageKey, imageVersion, title } = recipe;
   return (
     <Card className="mx-auto">
-      <RecipeHeader recipe={recipe} />
+      <RecipeHeader recipe={recipe} isAdmin={isAdmin} />
 
       <CardContent className="flex flex-col gap-5">
         <Separator />

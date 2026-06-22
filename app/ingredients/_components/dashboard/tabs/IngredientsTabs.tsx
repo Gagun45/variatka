@@ -7,7 +7,7 @@ import {
   INGREDIENT_SORT_OPTIONS,
 } from "@/lib/sorting.ingredients";
 import { useAuthStore } from "@/zustand/auth.store";
-import { useSearch } from "@/zustand/search";
+import { useSearch } from "@/zustand/search.store";
 import { useState } from "react";
 
 import CategoryButton from "@/components/cat-button/CategoryButton";
