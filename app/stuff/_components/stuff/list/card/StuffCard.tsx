@@ -17,7 +17,7 @@ const StuffCard = ({ stuff }: Props) => {
       <Card>
         <CardContent className="flex flex-col gap-4">
           <h3 className="font-medium">{title}</h3>
-          <StockBadge inInStock={!!inStock} quantity={inStock} />
+          <StockBadge isInStock={!!inStock} quantity={inStock} />
         </CardContent>
       </Card>
     </Link>

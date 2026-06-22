@@ -1,23 +1,23 @@
-import { Badge } from "../ui/badge";
+import StatusBadge from "../badge/StatusBadge";
 
 interface Props {
-  inInStock: boolean;
+  isInStock: boolean;
   quantity?: number;
   className?: string;
   onClick?: () => void;
 }
 
-const StockBadge = ({ inInStock, quantity, className, onClick }: Props) => {
+const StockBadge = ({ isInStock, quantity, className, onClick }: Props) => {
+  const positiveLabel = `In stock ${quantity ? `(${quantity})` : ""}`;
+  const negateiLabel = "Out of stock";
   return (
-    <Badge
+    <StatusBadge
       onClick={onClick}
       className={`${className} w-24`}
-      variant={inInStock ? "default" : "destructive"}
-    >
-      {inInStock
-        ? `In stock ${quantity ? `(${quantity})` : ""}`
-        : "Out of stock"}
-    </Badge>
+      isPositive={isInStock}
+      negativeLabel={negateiLabel}
+      positiveLabel={positiveLabel}
+    />
   );
 };
 

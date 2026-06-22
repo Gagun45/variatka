@@ -1,7 +1,7 @@
 "use client";
 
 import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
-import { useSearch } from "@/zustand/search";
+import { useSearch } from "@/zustand/search.store";
 import { useState } from "react";
 
 import CategoryButton from "@/components/cat-button/CategoryButton";

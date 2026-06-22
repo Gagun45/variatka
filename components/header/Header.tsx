@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Draft from "../recipe-draft-sheet/Draft";
 import SearchBar from "../search-bar/SearchBar";
 import { SidebarTrigger } from "../ui/sidebar";
@@ -15,9 +16,15 @@ const Header = () => {
         </div>
 
         {/* Center */}
-        <div className="flex w-full justify-center ">
-          <SearchBar />
-        </div>
+        <Suspense
+          fallback={
+            <div className="w-full h-10 bg-muted animate-pulse rounded-md" />
+          }
+        >
+          <div className="flex w-full justify-center ">
+            <SearchBar />
+          </div>
+        </Suspense>
 
         {/* Right */}
         <div className="flex items-center justify-end ">

@@ -2,12 +2,20 @@ import { IRecipe } from "@/lib/prisma.args";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StockBadge from "@/components/stock-badge/StockBadge";
+import { useToggleSavedRecipe } from "@/features/recipe/hooks/useToggleSavedRecipe";
+import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 
 interface Props {
   recipe: IRecipe;
+  isAdmin: boolean;
 }
 
-const RecipeHeader = ({ recipe }: Props) => {
+const RecipeHeader = ({ recipe, isAdmin }: Props) => {
+  const { mutate } = useToggleSavedRecipe();
+  const { id, isSaved } = recipe;
+  const onToggleSaved = () => {
+    mutate({ isSaved, recipeId: id });
+  };
   const { title, recipeCategory, description, inStock } = recipe;
 
   return (
@@ -17,7 +25,12 @@ const RecipeHeader = ({ recipe }: Props) => {
 
         <Badge variant="secondary">{recipeCategory.title}</Badge>
       </div>
-      <StockBadge inInStock={!!inStock} quantity={inStock} />
+      <div className="flex justify-between items-center gap-2">
+        <StockBadge isInStock={!!inStock} quantity={inStock} />
+        {isAdmin && (
+          <SaveToggleButton isSaved={isSaved} onToggle={onToggleSaved} />
+        )}
+      </div>
 
       <p className="text-sm text-muted-foreground">{description}</p>
     </CardHeader>

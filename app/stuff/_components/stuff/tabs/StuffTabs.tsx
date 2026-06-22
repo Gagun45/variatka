@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSearch } from "@/zustand/search";
+import { useSearch } from "@/zustand/search.store";
 import { useAuthStore } from "@/zustand/auth.store";
 
 import { Separator } from "@/components/ui/separator";

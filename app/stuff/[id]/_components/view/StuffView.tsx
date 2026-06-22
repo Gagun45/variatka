@@ -5,7 +5,6 @@ import { Separator } from "@/components/ui/separator";
 import { IStuff } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import Link from "next/link";
-import DeleteStuff from "../delete/DeleteStuff";
 
 interface Props {
   stuff: IStuff;
@@ -19,7 +18,7 @@ const StuffView = ({ stuff, isAdmin }: Props) => {
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <CardTitle className="text-xl">{title}</CardTitle>
 
-        <StockBadge inInStock={!!inStock} quantity={inStock} />
+        <StockBadge isInStock={!!inStock} quantity={inStock} />
       </CardHeader>
 
       <CardContent className="flex flex-col gap-3">
