@@ -13,6 +13,7 @@ import Link from "next/link";
 import IngredientImageViewAdmin from "./img-admin/IngredientImageViewAdmin";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleSavedIngredient";
+import { useToggleIngredientStock } from "@/features/ingredient/hooks/useToggleIngredientStock";
 
 interface Props {
   ingredient: IIngredient;
@@ -21,6 +22,7 @@ interface Props {
 const IngredientView = ({ ingredient }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const { mutate } = useToggleSavedIngredient();
+  const { mutate: stockMutate } = useToggleIngredientStock();
   const {
     description,
     title,
@@ -37,6 +39,13 @@ const IngredientView = ({ ingredient }: Props) => {
 
   const onToggleSaved = () => {
     mutate({ ingredientId: id, isSaved });
+  };
+
+  const onToggleStock = () => {
+    stockMutate({
+      ingredientId: id,
+      isInStock,
+    });
   };
 
   const removeItem = useRecipeStore((state) => state.removeItem);
@@ -57,7 +66,10 @@ const IngredientView = ({ ingredient }: Props) => {
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <CardTitle className="text-xl">{title}</CardTitle>
 
-        <StockBadge isInStock={isInStock} />
+        <StockBadge
+          isInStock={isInStock}
+          onClick={isAdmin ? onToggleStock : undefined}
+        />
       </CardHeader>
 
       <CardContent className="flex flex-col gap-3">
