@@ -13,10 +13,12 @@ import { IRecipeCategory } from "@/lib/prisma.args";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useEffect } from "react";
 import CategorySelectField from "./fields/CategorySelectField";
+import ConfirmationNotesField from "./fields/ConfirmationNotesField";
 import DescriptionField from "./fields/DescriptionField";
 import InStockField from "./fields/InStockField";
 import NotesField from "./fields/NotesField";
 import TitleField from "./fields/TitleField";
+import IsConfirmedField from "./fields/IsConfirmedField";
 
 interface Props {
   categories: IRecipeCategory[];
@@ -48,6 +50,8 @@ const RecipeForm = ({
     notes: initialValues?.notes ?? "",
     title: initialValues?.title ?? "",
     inStock: initialValues?.inStock ?? 0,
+    confirmationNotes: initialValues?.confirmationNotes ?? "",
+    isConfirmed: initialValues?.isConfirmed ?? false,
   };
   const form = useForm<IRecipeDto>({
     resolver: zodResolver(schema),
@@ -94,6 +98,8 @@ const RecipeForm = ({
           <DescriptionField />
           <NotesField />
           <InStockField />
+          <IsConfirmedField />
+          <ConfirmationNotesField />
           <Button
             type="reset"
             className="w-full"

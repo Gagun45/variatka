@@ -51,6 +51,9 @@ model Recipe {
   inStock Int     @default(0)
   isSaved Boolean @default(false)
 
+  isConfirmed       Boolean @default(false)
+  confirmationNotes String?
+
   imageKey     String?
   imageVersion Int     @default(0)
 

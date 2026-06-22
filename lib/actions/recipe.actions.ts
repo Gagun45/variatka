@@ -76,7 +76,16 @@ export const createRecipe = async (
 ): Promise<IActionResponse<IRecipe>> => {
   try {
     await userIsAdmin();
-    const { title, description, notes, items, recipeCategoryId, inStock } = dto;
+    const {
+      title,
+      description,
+      notes,
+      items,
+      confirmationNotes,
+      isConfirmed,
+      recipeCategoryId,
+      inStock,
+    } = dto;
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { id: recipeCategoryId },
     });
@@ -95,6 +104,8 @@ export const createRecipe = async (
         title,
         recipeCategoryId,
         inStock,
+        confirmationNotes,
+        isConfirmed,
         ingredients: {
           create: items.map((item) => ({
             amount: item.amount,
@@ -256,6 +267,30 @@ export const toggleSavedRecipe = async (
     };
   } catch (e) {
     console.error("Error in toggleSavedRecipe:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const toggleConfirmedRecipe = async (
+  id: number,
+  isConfirmed: boolean,
+): Promise<IActionResponse<IRecipe>> => {
+  try {
+    await userIsAdmin();
+    const updatedRecipe = await prisma.recipe.update({
+      where: { id },
+      data: { isConfirmed },
+      ...recipeArgs,
+    });
+    return {
+      ok: true,
+      data: updatedRecipe,
+    };
+  } catch (e) {
+    console.error("Error in toggleConfirmedRecipe:", e);
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }

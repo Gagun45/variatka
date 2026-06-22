@@ -7,6 +7,8 @@ export const recipeSchema = z.object({
   notes: z.string(),
   inStock: z.number().min(0),
   recipeCategoryId: z.number().int("Category ID must be an integer."),
+  confirmationNotes: z.string(),
+  isConfirmed: z.boolean(),
 });
 
 export const createRecipeCategorySchema = z.object({

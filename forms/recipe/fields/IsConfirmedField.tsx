@@ -1,19 +1,19 @@
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
-import { IIngredientFormValues } from "@/zod/ingredient.schema";
+import { IRecipeDto } from "@/zod/recipe.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
-const IsInStockField = () => {
-  const { control } = useFormContext<IIngredientFormValues>();
+const IsConfirmedField = () => {
+  const { control } = useFormContext<IRecipeDto>();
 
   return (
     <Controller
-      name="isInStock"
+      name="isConfirmed"
       control={control}
       render={({ field, fieldState }) => (
         <Field className="w-fit">
           <div className="flex flex-row p-2 border rounded-md items-center gap-4 transition">
-            <FieldLabel htmlFor="isInStock">Is in stock</FieldLabel>
+            <FieldLabel htmlFor="isConfirmed">Is confirmed</FieldLabel>
 
             <div
               className={`rounded-md p-1 transition flex justify-center items-center
@@ -21,7 +21,7 @@ const IsInStockField = () => {
               `}
             >
               <Switch
-                id="isInStock"
+                id="isConfirmed"
                 checked={field.value}
                 onCheckedChange={field.onChange}
               />
@@ -35,4 +35,4 @@ const IsInStockField = () => {
   );
 };
 
-export default IsInStockField;
+export default IsConfirmedField;

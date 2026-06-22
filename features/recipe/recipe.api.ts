@@ -8,6 +8,7 @@ import {
   getRecipeCategories,
   getRecipes,
   removeRecipeImage,
+  toggleConfirmedRecipe,
   toggleSavedRecipe,
   updateRecipeFields,
   updateRecipeIngredients,
@@ -46,4 +47,6 @@ export const recipeService = {
     dto: ICreateRecipeCategoryDto,
   ): Promise<IRecipeCategory> =>
     unwrapAction(() => editRecipeCategory(id, dto)),
+  toggleConfirmed: (id: number, isConfirmed: boolean): Promise<IRecipe> =>
+    unwrapAction(() => toggleConfirmedRecipe(id, !isConfirmed)),
 };

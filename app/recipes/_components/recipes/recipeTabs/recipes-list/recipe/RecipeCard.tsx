@@ -16,15 +16,30 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import ConfirmToggleButton from "@/components/confirmation-btn/ConfirmToggleButton";
 
 type Props = {
   recipe: IRecipe;
   isAdmin?: boolean;
   onSavedToggle?: (value: { recipeId: number; isSaved: boolean }) => void;
+  onConfirmToggle?: (value: { recipeId: number; isConfirmed: boolean }) => void;
 };
 
-const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
-  const { id, title, imageKey, ingredients, isSaved, imageVersion } = recipe;
+const RecipeCard = ({
+  recipe,
+  isAdmin,
+  onSavedToggle,
+  onConfirmToggle,
+}: Props) => {
+  const {
+    id,
+    title,
+    imageKey,
+    ingredients,
+    isSaved,
+    isConfirmed,
+    imageVersion,
+  } = recipe;
   const href = frontendUrls.recipes.view(id);
   const totalIngredients = ingredients.length;
 
@@ -39,6 +54,12 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
     } else return;
   };
 
+  const onToggleConfirm = () => {
+    if (onConfirmToggle) {
+      onConfirmToggle({ recipeId: id, isConfirmed });
+    } else return;
+  };
+
   const imageSrc = getImageUrl(imageKey, imageVersion);
 
   return (
@@ -49,6 +70,10 @@ const RecipeCard = ({ recipe, isAdmin, onSavedToggle }: Props) => {
             {onSavedToggle && (
               <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
             )}
+            <ConfirmToggleButton
+              isConfirmed={isConfirmed}
+              onToggle={onToggleConfirm}
+            />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Badge variant={isReadyToMake ? "default" : "outline"}>
