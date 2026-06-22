@@ -7,14 +7,14 @@ import {
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { PUBLIC_LINKS } from "@/lib/links";
 import { frontendUrls } from "@/lib/urls";
 import { useAuthStore } from "@/zustand/auth.store";
+import Link from "next/link";
 import Auth from "../auth/Auth";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
+import { buttonVariants } from "../ui/button";
 import SidebarLink from "./link/SidebarLink";
 import SavedLinks from "./saved-links/SavedLinks";
 
@@ -24,39 +24,27 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="offcanvas">
       <SidebarHeader className="h-24 p-0 flex items-center border-b justify-center">
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem className="flex justify-center">
-              <SidebarLink
-                href={"/"}
-                label="Nomly"
-                className="text-4xl! tracking-widest"
-              />
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+        <Link
+          className={buttonVariants({
+            className:
+              "size-full! flex justify-center text-4xl! rounded-none items-center",
+            variant: "ghost",
+          })}
+          href={frontendUrls.index}
+        >
+          Nomly
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup className="border-b">
-          <SidebarMenu className="space-y-2">
+        <SidebarGroup>
+          <SidebarMenu>
             {PUBLIC_LINKS.map(({ href, label }) => (
-              <SidebarMenuItem key={href}>
-                <SidebarMenuButton asChild>
-                  <SidebarLink href={href} label={label} />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <SidebarLink key={href} href={href} label={label} />
             ))}
 
             {isAdmin && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <SidebarLink
-                    href={frontendUrls.stuff.index}
-                    label={"Stuff"}
-                  />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <SidebarLink href={frontendUrls.stuff.index} label={"Stuff"} />
             )}
           </SidebarMenu>
         </SidebarGroup>
@@ -64,11 +52,7 @@ export function AppSidebar() {
         {isAdmin && (
           <SidebarGroup className="mt-auto">
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <SidebarLink href={frontendUrls.admin} label={"Admin"} />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <SidebarLink href={frontendUrls.admin} label={"Admin"} />
             </SidebarMenu>
           </SidebarGroup>
         )}

@@ -38,7 +38,7 @@ const StuffDashboard = () => {
   if (!categories.length) {
     return (
       <div className="space-y-6 text-center mx-auto">
-        <h1>No stuff categories yet</h1>
+        <h2>No stuff categories yet</h2>
         <StuffCategoryForm isPending={isPending} onSubmit={onCategoryCreate} />
       </div>
     );

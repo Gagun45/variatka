@@ -7,9 +7,7 @@ export const metadata = {
 const StuffPage = () => {
   return (
     <main>
-      <div className="flex items-center justify-center">
-        <h1 className="text-4xl tracking-widest font-bold">Stuff</h1>
-      </div>
+      <h1>Stuff</h1>
       <StuffDashboard />
     </main>
   );
