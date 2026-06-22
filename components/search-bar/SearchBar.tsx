@@ -111,6 +111,7 @@ const SearchBar = () => {
         align="start"
         className="p-3 space-y-4 w-(--radix-popover-trigger-width)"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         {itemsNotFound && query.trim() && (
           <p className="text-muted-foreground text-sm py-2">
