@@ -13,8 +13,11 @@ export const useCreateRecipeCategory = () => {
     ICreateRecipeCategoryDto
   >({
     mutationFn: recipeService.createCategory,
-    onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: recipeKeys.categories });
+    onSuccess: (newRecipeCategory) => {
+      qclient.setQueryData<IRecipeCategory[]>(
+        recipeKeys.categories,
+        (old = []) => [newRecipeCategory, ...old],
+      );
       toast.success("Category created successfully!");
     },
     onError: (e) => {

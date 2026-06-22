@@ -10,8 +10,11 @@ export const useCreateStuff = () => {
   const mutation = useMutation<IStuff, Error, ICreateStuffDto>({
     mutationFn: stuffService.create,
 
-    onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: stuffKeys.stuff });
+    onSuccess: (newStuff) => {
+      qclient.setQueryData<IStuff[]>(stuffKeys.stuff, (old = []) => [
+        newStuff,
+        ...old,
+      ]);
       toast.success("Stuff created!");
     },
 

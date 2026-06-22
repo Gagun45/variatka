@@ -9,8 +9,11 @@ export const useCreateStuffCategory = () => {
   const qclient = useQueryClient();
   const mutation = useMutation<IStuffCategory, Error, ICreateStuffCategoryDto>({
     mutationFn: stuffService.createCategory,
-    onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: stuffKeys.categories });
+    onSuccess: (newStuffCategory) => {
+      qclient.setQueryData<IStuffCategory[]>(
+        stuffKeys.categories,
+        (old = []) => [newStuffCategory, ...old],
+      );
       toast.success("Category created successfully!");
     },
     onError: (e) => {

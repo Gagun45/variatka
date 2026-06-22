@@ -9,8 +9,11 @@ export const useCreateIngredient = () => {
   const qclient = useQueryClient();
   const mutation = useMutation<IIngredient, Error, IIngredientFormValues>({
     mutationFn: ingredientService.create,
-    onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+    onSuccess: (newIngredient) => {
+      qclient.setQueryData<IIngredient[]>(
+        ingredientKeys.ingredients,
+        (old = []) => [newIngredient, ...old],
+      );
       toast.success("Ingredient created!");
     },
     onError: (e) => {

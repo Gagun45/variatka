@@ -11,8 +11,11 @@ export const useCreateRecipe = () => {
   const qclient = useQueryClient();
   const mutation = useMutation<IRecipe, Error, ICreateRecipeDto>({
     mutationFn: recipeService.create,
-    onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+    onSuccess: (newRecipe) => {
+      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) => [
+        newRecipe,
+        ...old,
+      ]);
       qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
       toast.success("Recipe created!");
     },
