@@ -4,7 +4,7 @@ interface Props {
 
 const ViewItemDescription = ({ description }: Props) => {
   return (
-    <p className="text-sm leading-relaxed text-muted-foreground">
+    <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
       {description ? (
         description
       ) : (
