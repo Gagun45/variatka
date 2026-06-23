@@ -6,21 +6,41 @@ import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { toast } from "sonner";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 
+type TVariables = { id: number; dto: IIngredientFormValues };
+
+type TContext = {
+  prevIngredients?: IIngredient[];
+};
+
 export const useEditIngredient = () => {
   const qclient = useQueryClient();
-  const mutation = useMutation<
-    IIngredient,
-    Error,
-    { id: number; dto: IIngredientFormValues }
-  >({
+  const mutation = useMutation<IIngredient, Error, TVariables, TContext>({
     mutationFn: ({ dto, id }) => ingredientService.edit(id, dto),
+    onMutate: ({ id, dto }) => {
+      qclient.cancelQueries({ queryKey: ingredientKeys.ingredients });
+      const prevIngredients = qclient.getQueryData<IIngredient[]>(
+        ingredientKeys.ingredients,
+      );
+      qclient.setQueryData<IIngredient[]>(
+        ingredientKeys.ingredients,
+        (old = []) =>
+          old.map((ing) => (ing.id === id ? { ...ing, ...dto } : ing)),
+      );
+      return { prevIngredients };
+    },
     onSuccess: () => {
       qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
       toast.success("Ingredient edited successfully!");
     },
-    onError: (e) => {
+    onError: (e, _variables, context) => {
       toast.error(e.message);
+      if (context?.prevIngredients) {
+        qclient.setQueryData(
+          ingredientKeys.ingredients,
+          context.prevIngredients,
+        );
+      }
     },
   });
   return mutation;
