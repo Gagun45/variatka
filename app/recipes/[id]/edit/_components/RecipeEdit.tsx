@@ -51,13 +51,17 @@ const RecipeEdit = ({ id }: Props) => {
   const recipe = recipes.find((r) => r.id === id);
   if (!recipe) return <StateScreen title="Recipe not found" />;
   const onSubmit = (dto: IRecipeDto) => {
-    mutate({
-      dto,
-      id,
-    });
-    queueMicrotask(() => {
-      router.push(frontendUrls.recipes.view(id));
-    });
+    mutate(
+      {
+        dto,
+        id,
+      },
+      {
+        onSuccess: () => {
+          router.push(frontendUrls.recipes.view(id));
+        },
+      },
+    );
   };
 
   return (

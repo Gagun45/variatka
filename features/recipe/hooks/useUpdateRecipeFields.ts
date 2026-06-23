@@ -16,26 +16,25 @@ export const useUpdateRecipeFields = () => {
   const qclient = useQueryClient();
   const mutation = useMutation<IRecipe, Error, TVariables, TContext>({
     mutationFn: ({ dto, id }) => recipeService.updateFields(id, dto),
-    onMutate: async ({ dto, id }) => {
-      await qclient.cancelQueries({ queryKey: recipeKeys.recipes });
-      const prevRecipes = qclient.getQueryData<IRecipe[]>(recipeKeys.recipes);
+
+    onSuccess: (updatedRecipe) => {
       qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
-        old.map((rec) => (rec.id === id ? { ...rec, ...dto } : rec)),
+        old.map((recipe) =>
+          recipe.id === updatedRecipe.id ? updatedRecipe : recipe,
+        ),
       );
-      return { prevRecipes };
-    },
-    onSettled: () => {
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
-    },
-    onSuccess: () => {
+
+      qclient.invalidateQueries({
+        queryKey: recipeKeys.recipes,
+      });
+
       toast.success("Recipe edited successfully!");
     },
     onError: (e, _, context) => {
+      toast.error(e.message);
       if (context?.prevRecipes) {
         qclient.setQueryData(recipeKeys.recipes, context.prevRecipes);
       }
-
-      toast.error(e.message);
     },
   });
   return mutation;

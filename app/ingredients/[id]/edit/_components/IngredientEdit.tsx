@@ -34,13 +34,17 @@ const IngredientEdit = ({ id }: Props) => {
   const ingredient = ingredients.find((ing) => ing.id === id);
   if (!ingredient) return <StateScreen title="Ingredient not found" />;
   const onSubmit = (dto: IIngredientFormValues) => {
-    mutate({
-      dto,
-      id,
-    });
-    queueMicrotask(() => {
-      router.push(frontendUrls.ingredients.view(id));
-    });
+    mutate(
+      {
+        dto,
+        id,
+      },
+      {
+        onSuccess: () => {
+          router.push(frontendUrls.ingredients.view(id));
+        },
+      },
+    );
   };
 
   return (
