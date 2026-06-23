@@ -1,22 +1,12 @@
+import ConfirmToggleButton from "@/components/confirmation-btn/ConfirmToggleButton";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getImageUrl } from "@/lib/image.helper";
 import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import ConfirmToggleButton from "@/components/confirmation-btn/ConfirmToggleButton";
+import ReadyToCookTooltip from "./tooltip/ReadyToCookTooltip";
 
 type Props = {
   recipe: IRecipe;
@@ -31,23 +21,9 @@ const RecipeCard = ({
   onSavedToggle,
   onConfirmToggle,
 }: Props) => {
-  const {
-    id,
-    title,
-    imageKey,
-    ingredients,
-    isSaved,
-    isConfirmed,
-    imageVersion,
-  } = recipe;
+  const { id, title, imageKey, isSaved, isConfirmed, imageVersion } = recipe;
   const href = frontendUrls.recipes.view(id);
-  const totalIngredients = ingredients.length;
 
-  const missingIngredients = ingredients.filter((i) => !i.ingredient.isInStock);
-
-  const inStockIngredients = totalIngredients - missingIngredients.length;
-
-  const isReadyToMake = missingIngredients.length === 0;
   const onToggle = () => {
     if (onSavedToggle) {
       onSavedToggle({ recipeId: id, isSaved });
@@ -74,37 +50,7 @@ const RecipeCard = ({
               isConfirmed={isConfirmed}
               onToggle={onToggleConfirm}
             />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant={isReadyToMake ? "default" : "outline"}>
-                  {inStockIngredients}/{totalIngredients}
-                </Badge>
-              </TooltipTrigger>
-
-              <TooltipContent>
-                {isReadyToMake ? (
-                  <p>Ready to cook</p>
-                ) : (
-                  <div className="space-y-1">
-                    <p className="font-medium">
-                      Missing ingredients ({missingIngredients.length}):
-                    </p>
-
-                    <ul>
-                      {missingIngredients.map((item) => (
-                        <li
-                          key={item.ingredient.id}
-                          className="flex items-center gap-1"
-                        >
-                          <span>•</span>
-                          <span>{item.ingredient.title}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </TooltipContent>
-            </Tooltip>
+            <ReadyToCookTooltip recipe={recipe} />
           </div>
         )}
         <Link

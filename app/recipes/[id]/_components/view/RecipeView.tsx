@@ -19,7 +19,7 @@ interface Props {
 
 const RecipeView = ({ recipe }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const { imageKey, imageVersion, title, id, notes } = recipe;
+  const { imageKey, imageVersion, title, id } = recipe;
   return (
     <Card>
       <RecipeHeader recipe={recipe} isAdmin={isAdmin} />
@@ -41,7 +41,7 @@ const RecipeView = ({ recipe }: Props) => {
 
         <Separator />
 
-        <RecipeNotes notes={notes} />
+        <RecipeNotes recipe={recipe} />
 
         {isAdmin && <ViewItemEditLink href={frontendUrls.recipes.edit(id)} />}
       </CardContent>
