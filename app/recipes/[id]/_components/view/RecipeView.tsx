@@ -2,16 +2,15 @@ import { IRecipe } from "@/lib/prisma.args";
 
 import { Card, CardContent } from "@/components/ui/card";
 
+import ImageViewPublic from "@/components/img-upload/ImageViewPublic";
 import { Separator } from "@/components/ui/separator";
-import RecipeActions from "./actions/RecipeActions";
+import ViewItemEditLink from "@/components/view-item/ViewItemEditLink";
+import { frontendUrls } from "@/lib/urls";
+import { useAuthStore } from "@/zustand/auth.store";
 import RecipeHeader from "./header/RecipeHeader";
+import RecipeImageViewAdmin from "./img/RecipeImageViewAdmin";
 import RecipeIngredients from "./ings/RecipeIngredients";
 import RecipeNotes from "./notes/RecipeNotes";
-import { useAuthStore } from "@/zustand/auth.store";
-import RecipeImageViewAdmin from "./img/RecipeImageViewAdmin";
-import ImageViewPublic from "@/components/img-upload/ImageViewPublic";
-import { frontendUrls } from "@/lib/urls";
-import ViewItemEditLink from "@/components/view-item/ViewItemEditLink";
 
 interface Props {
   recipe: IRecipe;
