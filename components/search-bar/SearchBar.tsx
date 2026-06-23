@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
@@ -28,20 +27,16 @@ import {
 import { SearchGroup } from "./group/SearchGroup";
 
 const SearchBar = () => {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
-
   const recentQueries = useSearch((s) => s.recentQueries);
   const addRecentQuery = useSearch((s) => s.addRecentQuery);
 
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   const { data: ingredients = [] } = useIngredients();
   const { data: recipes = [] } = useRecipes();
   const { data: stuff = [] } = useStuff();
 
-  const query = searchParams.get("search") ?? "";
   const queryLowerCase = query.toLowerCase();
 
   const filterItems = (
@@ -51,26 +46,22 @@ const SearchBar = () => {
     items
       .filter((i) => i.title.toLowerCase().includes(queryLowerCase))
       .slice(0, 5)
-      .map((i) => ({ id: i.id, title: i.title, type }));
-
-  const setQuery = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value.trim()) {
-      params.set("search", value);
-    } else {
-      params.delete("search");
-    }
-    router.replace(params.toString() ? `${pathname}?${params}` : pathname);
-  };
+      .map((i) => ({
+        id: i.id,
+        title: i.title,
+        type,
+      }));
 
   const ingredientItems = useMemo(
     () => filterItems(ingredients, "ingredient"),
     [ingredients, queryLowerCase],
   );
+
   const recipeItems = useMemo(
     () => filterItems(recipes, "recipe"),
     [recipes, queryLowerCase],
   );
+
   const stuffItems = useMemo(
     () => filterItems(stuff, "stuff"),
     [stuff, queryLowerCase],
@@ -99,28 +90,28 @@ const SearchBar = () => {
   const activeGroups = groups.filter((g) => g.items.length > 0);
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      {/* 1. Wrap the entire operation in a single Command state wrapper */}
+    <div className="mx-auto w-full max-w-md">
       <Command shouldFilter={false} className="overflow-visible bg-transparent">
         <Popover open={open} onOpenChange={setOpen}>
-          {/* 2. PopoverTrigger now wraps the actual shadcn CommandInput component */}
           <PopoverTrigger asChild>
             <div className="w-full">
               <CommandInput
                 placeholder="Search..."
                 value={query}
-                onValueChange={(val) => {
-                  setQuery(val);
-                  setOpen(val.length > 0 || activeGroups.length > 0);
+                onValueChange={(value) => {
+                  setQuery(value);
+                  setOpen(
+                    value.trim().length > 0 &&
+                      activeGroups.some((g) => g.items.length > 0),
+                  );
                 }}
               />
             </div>
           </PopoverTrigger>
 
-          {/* 3. PopoverContent holds just the results list */}
           <PopoverContent
             align="start"
-            className="p-0 w-(--radix-popover-trigger-width) mt-1"
+            className="mt-1 w-(--radix-popover-trigger-width) p-0"
             onOpenAutoFocus={(e) => e.preventDefault()}
             onCloseAutoFocus={(e) => e.preventDefault()}
           >
@@ -134,6 +125,7 @@ const SearchBar = () => {
                     items={group.items}
                     onSelect={onSelect}
                   />
+
                   {index < activeGroups.length - 1 && <CommandSeparator />}
                 </div>
               ))}
