@@ -28,6 +28,9 @@ export const useToggleSavedRecipe = () => {
       );
       return { prevRecipes };
     },
+    onSettled: () => {
+      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+    },
     onError: (e, _variables, context) => {
       toast.error(e.message);
       if (context?.prevRecipes) {

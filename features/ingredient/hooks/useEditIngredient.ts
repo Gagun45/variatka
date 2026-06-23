@@ -16,8 +16,8 @@ export const useEditIngredient = () => {
   const qclient = useQueryClient();
   const mutation = useMutation<IIngredient, Error, TVariables, TContext>({
     mutationFn: ({ dto, id }) => ingredientService.edit(id, dto),
-    onMutate: ({ id, dto }) => {
-      qclient.cancelQueries({ queryKey: ingredientKeys.ingredients });
+    onMutate: async ({ id, dto }) => {
+      await qclient.cancelQueries({ queryKey: ingredientKeys.ingredients });
       const prevIngredients = qclient.getQueryData<IIngredient[]>(
         ingredientKeys.ingredients,
       );
@@ -28,9 +28,11 @@ export const useEditIngredient = () => {
       );
       return { prevIngredients };
     },
-    onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+    onSettled: () => {
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+    },
+    onSuccess: () => {
       toast.success("Ingredient edited successfully!");
     },
     onError: (e, _variables, context) => {
