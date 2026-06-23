@@ -31,7 +31,7 @@ interface Props {
 const RecipeTabs = ({ categories, recipes }: Props) => {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("search") ?? "";
+  const searchQuery = searchParams.get("query") ?? "";
 
   const [activeCategory, setActiveCategory] = useState(categories[0].title);
 

@@ -9,9 +9,8 @@ interface Props {
 const RecipeNotes = ({ recipe }: Props) => {
   const { confirmationNotes, notes } = recipe;
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 whitespace-pre-wrap">
       <p className="text-sm font-semibold text-muted-foreground">Notes</p>
-
       <p className="text-sm text-muted-foreground leading-relaxed">{notes}</p>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
@@ -25,13 +25,32 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { SearchGroup } from "./group/SearchGroup";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
 
 const SearchBar = () => {
   const recentQueries = useSearch((s) => s.recentQueries);
   const addRecentQuery = useSearch((s) => s.addRecentQuery);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const initialQuery = searchParams.get("query") || "";
+
+  const [query, setQuery] = useState(initialQuery);
+
+  const updateURL = useDebouncedCallback(() => {
+    const params = new URLSearchParams();
+
+    if (query) params.set("query", query);
+
+    router.replace(`${pathname}?${params.toString()}`);
+  }, 250);
+  useEffect(() => {
+    updateURL();
+  }, [query, updateURL]);
 
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
 
   const { data: ingredients = [] } = useIngredients();
   const { data: recipes = [] } = useRecipes();

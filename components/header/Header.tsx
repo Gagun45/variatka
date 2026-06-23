@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+import Loader from "../loader/Loader";
 import Draft from "../recipe-draft-sheet/Draft";
 import { SidebarTrigger } from "../ui/sidebar";
 import Search from "./search/Search";
@@ -17,10 +19,11 @@ const Header = () => {
         </div>
 
         {/* Center */}
-
-        <div className="flex w-full justify-center ">
-          <Search />
-        </div>
+        <Suspense fallback={<Loader />}>
+          <div className="flex w-full justify-center">
+            <Search />
+          </div>
+        </Suspense>
 
         {/* Right */}
         <div className="flex items-center justify-end ">
