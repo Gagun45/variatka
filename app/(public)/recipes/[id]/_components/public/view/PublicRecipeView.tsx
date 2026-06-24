@@ -4,6 +4,7 @@ import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
 import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
+import { useAuthStore } from "@/zustand/auth.store";
 import Image from "next/image";
 
 interface Props {
@@ -21,6 +22,7 @@ export default function PublicRecipeView({ recipe }: Props) {
     description,
   } = recipe;
   const imageSrc = getImageUrl(imageKey);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const wishlistIdsSet = useWishlistIdsSet();
   const isWished = wishlistIdsSet.has(id);
   const { mutate } = useToggleWishlist();
@@ -39,11 +41,13 @@ export default function PublicRecipeView({ recipe }: Props) {
             height={350}
             className="aspect-square w-full rounded-lg border object-cover"
           />
-          <WishedToggleButton
-            className="absolute right-3 top-3 bg-background/80 backdrop-blur"
-            isWished={isWished}
-            onToggle={onToggleWished}
-          />
+          {isAuthenticated && (
+            <WishedToggleButton
+              className="absolute right-3 top-3 bg-background/80 backdrop-blur"
+              isWished={isWished}
+              onToggle={onToggleWished}
+            />
+          )}
         </div>
 
         <section className="space-y-6">
@@ -52,12 +56,6 @@ export default function PublicRecipeView({ recipe }: Props) {
               <Badge variant="secondary">{recipeCategory.title}</Badge>
             </div>
           </div>
-
-          <p className="whitespace-pre-wrap text-muted-foreground">
-            {description}
-          </p>
-          <p className="whitespace-pre-wrap text-muted-foreground">{notes}</p>
-
           <div>
             <h2 className="mb-2 font-medium">
               Ingredients ({ingredients.length})
@@ -69,6 +67,11 @@ export default function PublicRecipeView({ recipe }: Props) {
               ))}
             </div>
           </div>
+
+          <p className="whitespace-pre-wrap text-muted-foreground">
+            {description}
+          </p>
+          <p className="whitespace-pre-wrap text-muted-foreground">{notes}</p>
         </section>
       </div>
     </div>
