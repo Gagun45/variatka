@@ -5,6 +5,7 @@ import {
   deleteRecipe,
   deleteRecipeCategory,
   editRecipeCategory,
+  getPublicRecipes,
   getRecipeCategories,
   getRecipes,
   removeRecipeImage,
@@ -15,7 +16,11 @@ import {
   uploadRecipeImage,
 } from "@/lib/actions/recipe.actions";
 import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
-import { ICreateRecipeDto, IRecipeIngredient } from "@/lib/types";
+import {
+  ICreateRecipeDto,
+  IPublicRecipe,
+  IRecipeIngredient,
+} from "@/lib/types";
 import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
 
 export const recipeService = {
@@ -49,4 +54,6 @@ export const recipeService = {
     unwrapAction(() => editRecipeCategory(id, dto)),
   toggleConfirmed: (id: number, isConfirmed: boolean): Promise<IRecipe> =>
     unwrapAction(() => toggleConfirmedRecipe(id, !isConfirmed)),
+  getPublicRecipes: (): Promise<IPublicRecipe[]> =>
+    unwrapAction(() => getPublicRecipes()),
 };

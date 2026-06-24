@@ -38,3 +38,19 @@ export type IActionError = {
 };
 
 export type IUser = Prisma.UserGetPayload<object>;
+
+export interface IPublicRecipeIngredient {
+  id: number;
+  title: string;
+}
+export type IPublicRecipe = {
+  id: number;
+  title: string;
+  description: string;
+  imageKey: string | null;
+  recipeCategory: {
+    id: number;
+    title: string;
+  };
+  ingredients: IPublicRecipeIngredient[];
+};

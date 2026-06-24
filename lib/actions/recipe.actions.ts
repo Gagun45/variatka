@@ -6,7 +6,12 @@ import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
 import { uploadHelper } from "../s3/upload.helper";
-import { IActionResponse, ICreateRecipeDto, IRecipeIngredient } from "../types";
+import {
+  IActionResponse,
+  ICreateRecipeDto,
+  IPublicRecipe,
+  IRecipeIngredient,
+} from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
 import { Prisma } from "@prisma/client";
 
@@ -418,6 +423,42 @@ export const deleteRecipeCategory = async (
     };
   } catch (e) {
     console.error("Error in deleteRecipeCategory:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const getPublicRecipes = async (): Promise<
+  IActionResponse<IPublicRecipe[]>
+> => {
+  try {
+    const recipes = await prisma.recipe.findMany({
+      where: { isConfirmed: true },
+      ...recipeArgs,
+    });
+    const publicRecipes: IPublicRecipe[] = recipes.map((r) => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      imageKey: r.imageKey,
+      recipeCategory: {
+        id: r.recipeCategory.id,
+        title: r.recipeCategory.title,
+      },
+      ingredients: r.ingredients.map((ri) => ({
+        id: ri.ingredientId,
+        title: ri.ingredient.title,
+      })),
+    }));
+
+    return {
+      ok: true,
+      data: publicRecipes,
+    };
+  } catch (e) {
+    console.error("Error in getPublicRecipes:", e);
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }

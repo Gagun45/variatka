@@ -1,9 +1,10 @@
 "use server";
 
-import { getCurrentUser } from "@/features/user/user.server";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { AppError } from "../error";
 import { IActionResponse, IUser } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
+import { prisma } from "../prisma";
 
 export const getMe = async (): Promise<IActionResponse<IUser>> => {
   try {
@@ -19,4 +20,23 @@ export const getMe = async (): Promise<IActionResponse<IUser>> => {
     }
     return ACTION_ERROR();
   }
+};
+
+export const getCurrentUser = async (): Promise<IUser> => {
+  const { getUser } = getKindeServerSession();
+  const kindeUser = await getUser();
+
+  if (!kindeUser) throw new AppError("Unauthorized");
+
+  return prisma.user.upsert({
+    where: {
+      kindeId: kindeUser.id,
+    },
+    update: {}, // do nothing if exists
+    create: {
+      kindeId: kindeUser.id,
+      email: kindeUser.email ?? null,
+      name: kindeUser.given_name ?? "Unknown User",
+    },
+  });
 };
