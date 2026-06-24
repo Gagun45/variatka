@@ -22,6 +22,7 @@ export const frontendUrls = {
   admin: "/admin/admin",
   public: {
     recipes: "/recipes",
+    wishlist: "/wishlist",
     view: (id: number) => `/recipes/${id}`,
   },
 };

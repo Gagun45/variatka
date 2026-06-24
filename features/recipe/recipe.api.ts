@@ -8,9 +8,11 @@ import {
   getPublicRecipes,
   getRecipeCategories,
   getRecipes,
+  getWishlist,
   removeRecipeImage,
   toggleConfirmedRecipe,
   toggleSavedRecipe,
+  toggleWishlist,
   updateRecipeFields,
   updateRecipeIngredients,
   uploadRecipeImage,
@@ -56,4 +58,8 @@ export const recipeService = {
     unwrapAction(() => toggleConfirmedRecipe(id, !isConfirmed)),
   getPublicRecipes: (): Promise<IPublicRecipe[]> =>
     unwrapAction(() => getPublicRecipes()),
+  getWishlist: (): Promise<IPublicRecipe[]> =>
+    unwrapAction(() => getWishlist()),
+  toggleWishlist: (recipeId: number): Promise<boolean> =>
+    unwrapAction(() => toggleWishlist(recipeId)),
 };

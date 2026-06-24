@@ -16,4 +16,5 @@ export const ADMIN_LINKS: ILink[] = [
 ];
 export const PUBLIC_LINKS: ILink[] = [
   { href: frontendUrls.public.recipes, label: "Рецепти" },
+  { href: frontendUrls.public.wishlist, label: "Wishlist" },
 ];

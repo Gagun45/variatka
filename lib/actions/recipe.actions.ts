@@ -14,6 +14,8 @@ import {
 } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
 import { Prisma } from "@prisma/client";
+import { recipePresenter } from "../recipe.presenter";
+import { getCurrentUser } from "./user.actions";
 
 export const getRecipeCategories = async (): Promise<
   IActionResponse<IRecipeCategory[]>
@@ -438,20 +440,9 @@ export const getPublicRecipes = async (): Promise<
       where: { isConfirmed: true },
       ...recipeArgs,
     });
-    const publicRecipes: IPublicRecipe[] = recipes.map((r) => ({
-      id: r.id,
-      title: r.title,
-      description: r.description,
-      imageKey: r.imageKey,
-      recipeCategory: {
-        id: r.recipeCategory.id,
-        title: r.recipeCategory.title,
-      },
-      ingredients: r.ingredients.map((ri) => ({
-        id: ri.ingredientId,
-        title: ri.ingredient.title,
-      })),
-    }));
+    const publicRecipes: IPublicRecipe[] = recipes.map(
+      recipePresenter.toPublic,
+    );
 
     return {
       ok: true,
@@ -459,6 +450,78 @@ export const getPublicRecipes = async (): Promise<
     };
   } catch (e) {
     console.error("Error in getPublicRecipes:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const getWishlist = async (): Promise<
+  IActionResponse<IPublicRecipe[]>
+> => {
+  try {
+    const user = await getCurrentUser();
+    const recipes: IRecipe[] = await prisma.recipe.findMany({
+      where: {
+        withlistItems: {
+          some: {
+            userId: user.id,
+          },
+        },
+      },
+      ...recipeArgs,
+    });
+    const publicRecipes = recipes.map(recipePresenter.toPublic);
+    return {
+      ok: true,
+      data: publicRecipes,
+    };
+  } catch (e) {
+    console.error("Error in getWishlist:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const toggleWishlist = async (
+  recipeId: number,
+): Promise<IActionResponse<boolean>> => {
+  try {
+    const user = await getCurrentUser();
+    const existing = await prisma.withlistItem.findUnique({
+      where: {
+        userId_recipeId: {
+          userId: user.id,
+          recipeId,
+        },
+      },
+    });
+    if (existing) {
+      await prisma.withlistItem.delete({
+        where: {
+          userId_recipeId: {
+            userId: user.id,
+            recipeId,
+          },
+        },
+      });
+      return { ok: true, data: false };
+    }
+    await prisma.withlistItem.create({
+      data: {
+        userId: user.id,
+        recipeId,
+      },
+    });
+    return {
+      ok: true,
+      data: true,
+    };
+  } catch (e) {
+    console.error("Error in toggleWishlist:", e);
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }

@@ -1,0 +1,19 @@
+import { IRecipe } from "./prisma.args";
+import { IPublicRecipe } from "./types";
+
+export const recipePresenter = {
+  toPublic: (r: IRecipe): IPublicRecipe => ({
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    imageKey: r.imageKey,
+    recipeCategory: {
+      id: r.recipeCategory.id,
+      title: r.recipeCategory.title,
+    },
+    ingredients: r.ingredients.map((ri) => ({
+      id: ri.ingredientId,
+      title: ri.ingredient.title,
+    })),
+  }),
+};
