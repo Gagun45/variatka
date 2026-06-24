@@ -8,7 +8,7 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
-import { MAIN_LINKS, PUBLIC_LINKS } from "@/lib/links";
+import { ADMIN_LINKS, MAIN_LINKS, PUBLIC_LINKS } from "@/lib/links";
 import { frontendUrls } from "@/lib/urls";
 import Link from "next/link";
 import Auth from "../auth/Auth";
@@ -48,7 +48,9 @@ export function AppSidebar() {
             <SavedLinks />
             <SidebarGroup className="mt-auto">
               <SidebarMenu>
-                <SidebarLink href={frontendUrls.admin} label={"Admin"} />
+                {ADMIN_LINKS.map(({ href, label }) => (
+                  <SidebarLink key={href} href={href} label={label} />
+                ))}
               </SidebarMenu>
             </SidebarGroup>
           </>

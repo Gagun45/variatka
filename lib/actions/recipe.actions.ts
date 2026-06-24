@@ -1,10 +1,18 @@
 "use server";
 
 import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
+import { Prisma } from "@prisma/client";
 import { userIsAdmin } from "../auth";
 import { AppError } from "../error";
 import { prisma } from "../prisma";
-import { IRecipe, IRecipeCategory, recipeArgs } from "../prisma.args";
+import {
+  IRecipe,
+  IRecipeCategory,
+  IUserWithWishlist,
+  recipeArgs,
+  userWithWishlistArgs,
+} from "../prisma.args";
+import { recipePresenter } from "../recipe.presenter";
 import { uploadHelper } from "../s3/upload.helper";
 import {
   IActionResponse,
@@ -13,8 +21,6 @@ import {
   IRecipeIngredient,
 } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
-import { Prisma } from "@prisma/client";
-import { recipePresenter } from "../recipe.presenter";
 import { getCurrentUser } from "./user.actions";
 
 export const getRecipeCategories = async (): Promise<
@@ -522,6 +528,31 @@ export const toggleWishlist = async (
     };
   } catch (e) {
     console.error("Error in toggleWishlist:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const getAdminWishlists = async (): Promise<
+  IActionResponse<IUserWithWishlist[]>
+> => {
+  try {
+    const wishlistItems = await prisma.user.findMany({
+      where: {
+        withlistItems: {
+          some: {},
+        },
+      },
+      ...userWithWishlistArgs,
+    });
+    return {
+      ok: true,
+      data: wishlistItems,
+    };
+  } catch (e) {
+    console.error("Error in getAdminWishlists:", e);
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }

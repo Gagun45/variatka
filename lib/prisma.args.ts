@@ -28,6 +28,18 @@ export const stuffArgs = {
   },
 } satisfies Omit<Prisma.StuffFindManyArgs, "where">;
 
+export const userWithWishlistArgs = {
+  include: {
+    withlistItems: {
+      include: {
+        recipe: {
+          include: { ingredients: { include: { ingredient: true } } },
+        },
+      },
+    },
+  },
+} satisfies Omit<Prisma.UserFindManyArgs, "where">;
+
 export type IRecipe = Prisma.RecipeGetPayload<typeof recipeArgs>;
 export type IRecipeCategory = Prisma.RecipeCategoryGetPayload<object>;
 
@@ -36,3 +48,7 @@ export type IIngredientCategory = Prisma.IngredientCategoryGetPayload<object>;
 
 export type IStuffCategory = Prisma.StuffCategoryGetPayload<object>;
 export type IStuff = Prisma.StuffGetPayload<typeof stuffArgs>;
+
+export type IUserWithWishlist = Prisma.UserGetPayload<
+  typeof userWithWishlistArgs
+>;
