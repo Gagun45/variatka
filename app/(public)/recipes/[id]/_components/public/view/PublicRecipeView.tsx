@@ -11,8 +11,15 @@ interface Props {
 }
 
 export default function PublicRecipeView({ recipe }: Props) {
-  const { imageKey, title, recipeCategory, ingredients, id, description } =
-    recipe;
+  const {
+    imageKey,
+    title,
+    recipeCategory,
+    ingredients,
+    id,
+    notes,
+    description,
+  } = recipe;
   const imageSrc = getImageUrl(imageKey);
   const wishlistIdsSet = useWishlistIdsSet();
   const isWished = wishlistIdsSet.has(id);
@@ -49,6 +56,7 @@ export default function PublicRecipeView({ recipe }: Props) {
           <p className="whitespace-pre-wrap text-muted-foreground">
             {description}
           </p>
+          <p className="whitespace-pre-wrap text-muted-foreground">{notes}</p>
 
           <div>
             <h2 className="mb-2 font-medium">

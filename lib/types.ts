@@ -47,6 +47,7 @@ export type IPublicRecipe = {
   id: number;
   title: string;
   description: string;
+  notes: string;
   imageKey: string | null;
   recipeCategory: {
     id: number;

@@ -17,6 +17,7 @@ import { buttonVariants } from "../ui/button";
 import SidebarLink from "./link/SidebarLink";
 import SavedLinks from "./saved-links/SavedLinks";
 import { useAuthStore } from "@/zustand/auth.store";
+import PublicLinks from "./public-links/PublicLinks";
 
 export function AppSidebar() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -36,6 +37,7 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
+        <PublicLinks />
         {isAdmin && (
           <>
             <SidebarGroup>
@@ -46,7 +48,7 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroup>
             <SavedLinks />
-            <SidebarGroup className="mt-auto">
+            <SidebarGroup>
               <SidebarMenu>
                 {ADMIN_LINKS.map(({ href, label }) => (
                   <SidebarLink key={href} href={href} label={label} />
@@ -55,13 +57,6 @@ export function AppSidebar() {
             </SidebarGroup>
           </>
         )}
-        <SidebarGroup>
-          <SidebarMenu>
-            {PUBLIC_LINKS.map(({ href, label }) => (
-              <SidebarLink key={href} href={href} label={label} />
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="mt-auto py-4 border-t">
         <div className="flex justify-evenly gap-4">
