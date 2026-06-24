@@ -8,15 +8,15 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
-import { PUBLIC_LINKS } from "@/lib/links";
+import { MAIN_LINKS, PUBLIC_LINKS } from "@/lib/links";
 import { frontendUrls } from "@/lib/urls";
-import { useAuthStore } from "@/zustand/auth.store";
 import Link from "next/link";
 import Auth from "../auth/Auth";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
 import { buttonVariants } from "../ui/button";
 import SidebarLink from "./link/SidebarLink";
 import SavedLinks from "./saved-links/SavedLinks";
+import { useAuthStore } from "@/zustand/auth.store";
 
 export function AppSidebar() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -35,27 +35,31 @@ export function AppSidebar() {
           Nomly
         </Link>
       </SidebarHeader>
-
       <SidebarContent>
+        {isAdmin && (
+          <>
+            <SidebarGroup>
+              <SidebarMenu>
+                {MAIN_LINKS.map(({ href, label }) => (
+                  <SidebarLink key={href} href={href} label={label} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+            <SavedLinks />
+            <SidebarGroup className="mt-auto">
+              <SidebarMenu>
+                <SidebarLink href={frontendUrls.admin} label={"Admin"} />
+              </SidebarMenu>
+            </SidebarGroup>
+          </>
+        )}
         <SidebarGroup>
           <SidebarMenu>
             {PUBLIC_LINKS.map(({ href, label }) => (
               <SidebarLink key={href} href={href} label={label} />
             ))}
-
-            {isAdmin && (
-              <SidebarLink href={frontendUrls.stuff.index} label={"Stuff"} />
-            )}
           </SidebarMenu>
         </SidebarGroup>
-        {isAdmin && <SavedLinks />}
-        {isAdmin && (
-          <SidebarGroup className="mt-auto">
-            <SidebarMenu>
-              <SidebarLink href={frontendUrls.admin} label={"Admin"} />
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
       </SidebarContent>
       <SidebarFooter className="mt-auto py-4 border-t">
         <div className="flex justify-evenly gap-4">

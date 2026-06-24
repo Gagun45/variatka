@@ -2,24 +2,28 @@ import { ISearchBarItem } from "@/zustand/search.store";
 
 export const frontendUrls = {
   ingredients: {
-    index: "/ingredients",
-    view: (id: number) => `/ingredients/${id}`,
-    edit: (id: number) => `/ingredients/${id}/edit`,
-    saved: "/ingredients/saved",
+    index: "/admin/ingredients",
+    view: (id: number) => `/admin/ingredients/${id}`,
+    edit: (id: number) => `/admin/ingredients/${id}/edit`,
+    saved: "/admin/ingredients/saved",
   },
   recipes: {
-    index: "/recipes",
-    view: (id: number) => `/recipes/${id}`,
-    edit: (id: number) => `/recipes/${id}/edit`,
-    saved: "/recipes/saved",
+    index: "/admin/recipes",
+    view: (id: number) => `/admin/recipes/${id}`,
+    edit: (id: number) => `/admin/recipes/${id}/edit`,
+    saved: "/admin/recipes/saved",
   },
   stuff: {
-    index: "/stuff",
-    view: (id: number) => `/stuff/${id}`,
-    edit: (id: number) => `/stuff/${id}/edit`,
+    index: "/admin/stuff",
+    view: (id: number) => `/admin/stuff/${id}`,
+    edit: (id: number) => `/admin/stuff/${id}/edit`,
   },
   index: "/",
-  admin: "/admin",
+  admin: "/admin/admin",
+  public: {
+    recipes: "/recipes",
+    view: (id: number) => `/recipes/${id}`,
+  },
 };
 
 export const getSearchItemHref = (item: ISearchBarItem) => {

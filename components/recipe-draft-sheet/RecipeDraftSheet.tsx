@@ -27,8 +27,7 @@ const RecipeDraftSheet = () => {
   const setDraft = useRecipeStore((s) => s.setDraft);
   const { data: categories, isLoading, isError } = useRecipeCategories();
   const { mutate, isPending } = useCreateRecipe();
-  if (isLoading) return <Loader />;
-  if (isError || !categories) return <p>No recipe categories</p>;
+  if (isLoading || isError || !categories) return null;
   const isAmountNotSet = items.some((i) => !i.amount);
   const onSubmit = (values: IRecipeDto) => {
     if (isAmountNotSet) {

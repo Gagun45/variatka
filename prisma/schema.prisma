@@ -95,3 +95,14 @@ model Stuff {
   stuffCategory   StuffCategory @relation(fields: [stuffCategoryId], references: [id], onDelete: Restrict)
   stuffCategoryId Int
 }
+
+model User {
+  id Int @id @default(autoincrement())
+
+  kindeId String  @unique
+  email   String?
+  name    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,9 +1,11 @@
 import SearchBar from "@/components/search-bar/SearchBar";
+import { useAuthStore } from "@/zustand/auth.store";
 import { usePathname } from "next/navigation";
-import React from "react";
 
 const Search = () => {
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const pathname = usePathname();
+  if (!isAdmin) return null;
   return <SearchBar key={pathname} />;
 };
 

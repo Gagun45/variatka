@@ -7,12 +7,5 @@ export default function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/ingredients/:id/edit",
-    "/recipes/:id/edit",
-    "/ingredients/saved",
-    "/recipes/saved",
-    "/stuff/:path*",
-    "/admin/:path*",
-  ],
+  matcher: ["/admin/:path*"],
 };

@@ -1,16 +1,16 @@
 import { ReactNode } from "react";
 
-import { ThemeProvider } from "./ThemeProvider";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import QueryProvider from "./QueryProvider";
-import { AuthProvider } from "./AuthProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "./AuthProvider";
+import { ThemeProvider } from "./ThemeProvider";
+import QueryProvider from "./QueryProvider";
 
 const Providers = ({ children }: { children: ReactNode }) => {
   return (
-    <TooltipProvider>
-      <AuthProvider>
-        <QueryProvider>
+    <QueryProvider>
+      <TooltipProvider>
+        <AuthProvider>
           <SidebarProvider>
             <ThemeProvider
               attribute="class"
@@ -21,9 +21,9 @@ const Providers = ({ children }: { children: ReactNode }) => {
               {children}
             </ThemeProvider>
           </SidebarProvider>
-        </QueryProvider>
-      </AuthProvider>
-    </TooltipProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryProvider>
   );
 };
 

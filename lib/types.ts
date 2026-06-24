@@ -1,4 +1,6 @@
 import { IRecipeDto } from "@/zod/recipe.schema";
+import { Prisma } from "@prisma/client";
+import { object } from "zod";
 
 export interface IResponse {
   success: boolean;
@@ -34,3 +36,5 @@ export type IActionError = {
   ok: false;
   message: string;
 };
+
+export type IUser = Prisma.UserGetPayload<object>;

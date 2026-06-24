@@ -6,12 +6,15 @@ import { recipeService } from "@/features/recipe/recipe.api";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 import { stuffService } from "@/features/stuff/stuff.api";
 import { stuffKeys } from "@/features/stuff/stuff.keys";
+import { useAuthStore } from "@/zustand/auth.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 const QueryPrefetcher = () => {
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const qclient = useQueryClient();
   useEffect(() => {
+    if (!isAdmin) return;
     qclient.prefetchQuery({
       queryKey: ingredientKeys.categories,
       queryFn: ingredientService.getCategories,
@@ -37,7 +40,7 @@ const QueryPrefetcher = () => {
       queryKey: stuffKeys.stuff,
       queryFn: stuffService.get,
     });
-  }, [qclient]);
+  }, [qclient, isAdmin]);
   return null;
 };
 

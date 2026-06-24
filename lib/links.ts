@@ -5,11 +5,15 @@ export interface ILink {
   label: string;
 }
 
-export const PUBLIC_LINKS: ILink[] = [
+export const MAIN_LINKS: ILink[] = [
   { href: frontendUrls.ingredients.index, label: "Ingredients" },
   { href: frontendUrls.recipes.index, label: "Recipes" },
+  { href: frontendUrls.stuff.index, label: "Stuff" },
 ];
 
 export const ADMIN_LINKS: ILink[] = [
   { href: frontendUrls.admin, label: "Admin" },
+];
+export const PUBLIC_LINKS: ILink[] = [
+  { href: frontendUrls.public.recipes, label: "Рецепти" },
 ];

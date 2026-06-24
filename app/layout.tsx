@@ -1,12 +1,12 @@
+import QueryPrefetcher from "@/components/QueryPrefetcher";
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import Header from "../components/header/Header";
 import { AppSidebar } from "../components/sidebar/AppSidebar";
-import "./globals.css";
 import Providers from "../providers/Providers";
-import { Toaster } from "@/components/ui/sonner";
-import QueryPrefetcher from "@/components/QueryPrefetcher";
+import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
