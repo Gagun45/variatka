@@ -3,6 +3,7 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { usePublicRecipes } from "@/features/recipe/hooks/usePublicRecipes";
+import PublicRecipeView from "./view/PublicRecipeView";
 
 interface Props {
   id: number;
@@ -14,7 +15,8 @@ const PublicRecipe = ({ id }: Props) => {
   if (isError || !recipes) return <StateScreen />;
   const recipe = recipes.find((r) => r.id === id);
   if (!recipe) return <StateScreen title="Recipe not found" />;
-  return <div>PublicRecipe - {id}</div>;
+
+  return <PublicRecipeView recipe={recipe} />;
 };
 
 export default PublicRecipe;
