@@ -11,9 +11,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 const QueryPrefetcher = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const qclient = useQueryClient();
   useEffect(() => {
+    qclient.prefetchQuery({
+      queryKey: recipeKeys.categories,
+      queryFn: recipeService.getCategories,
+    });
+    qclient.prefetchQuery({
+      queryKey: recipeKeys.public,
+      queryFn: recipeService.getPublicRecipes,
+    });
+    if (!isAuthenticated) return;
+    qclient.prefetchQuery({
+      queryKey: recipeKeys.wishlist,
+      queryFn: recipeService.getWishlist,
+    });
     if (!isAdmin) return;
     qclient.prefetchQuery({
       queryKey: ingredientKeys.categories,
@@ -24,10 +37,6 @@ const QueryPrefetcher = () => {
       queryFn: ingredientService.get,
     });
 
-    qclient.prefetchQuery({
-      queryKey: recipeKeys.categories,
-      queryFn: recipeService.getCategories,
-    });
     qclient.prefetchQuery({
       queryKey: recipeKeys.recipes,
       queryFn: recipeService.get,
@@ -40,7 +49,11 @@ const QueryPrefetcher = () => {
       queryKey: stuffKeys.stuff,
       queryFn: stuffService.get,
     });
-  }, [qclient, isAdmin]);
+    qclient.prefetchQuery({
+      queryKey: recipeKeys.adminWishlists,
+      queryFn: recipeService.getAdminWishlists,
+    });
+  }, [qclient, isAdmin, isAuthenticated]);
   return null;
 };
 

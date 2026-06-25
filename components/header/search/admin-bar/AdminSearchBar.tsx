@@ -24,11 +24,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { SearchGroup } from "./group/SearchGroup";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
+import { SearchGroup } from "./group/SearchGroup";
 
-const SearchBar = () => {
+const AdminSearchBar = () => {
   const recentQueries = useSearch((s) => s.recentQueries);
   const addRecentQuery = useSearch((s) => s.addRecentQuery);
   const searchParams = useSearchParams();
@@ -156,4 +156,4 @@ const SearchBar = () => {
   );
 };
 
-export default SearchBar;
+export default AdminSearchBar;
