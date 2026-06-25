@@ -1,9 +1,8 @@
+import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
+import { useAuth } from "@/hooks/useAuth";
 import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
 import { IPublicRecipe } from "@/lib/types";
 import PublicRecipeCard from "./card/PublicRecipeCard";
-import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
-import { useSession } from "next-auth/react";
-import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   recipes: IPublicRecipe[];

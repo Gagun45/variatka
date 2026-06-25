@@ -1,10 +1,10 @@
-import PublicRecipes from "./_components/public/PublicRecipes";
+import PublicRecipesDashboard from "./_components/public/PublicRecipesDashboard";
 
 const PublicRecipesPage = () => {
   return (
     <main>
       <h1>Рецепти</h1>
-      <PublicRecipes />
+      <PublicRecipesDashboard />
     </main>
   );
 };
