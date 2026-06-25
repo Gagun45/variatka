@@ -4,7 +4,6 @@ import {
   ICreateIngredientCategoryDto,
   IIngredientFormValues,
 } from "@/zod/ingredient.schema";
-import { userIsAdmin } from "../auth";
 import { AppError } from "../error";
 import { prisma } from "../prisma";
 import {
@@ -16,6 +15,7 @@ import { uploadHelper } from "../s3/upload.helper";
 import { IActionResponse } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
 import { Prisma } from "@prisma/client";
+import { requireAdmin } from "./user.actions";
 
 export const getIngredients = async (): Promise<
   IActionResponse<IIngredient[]>
@@ -57,7 +57,7 @@ export const createIngredientCategory = async (
   dto: ICreateIngredientCategoryDto,
 ): Promise<IActionResponse<IIngredientCategory>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { title: dto.title },
     });
@@ -82,7 +82,7 @@ export const createIngredient = async (
   dto: IIngredientFormValues,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const { categoryId, title } = dto;
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { id: categoryId },
@@ -117,7 +117,7 @@ export const editIngredient = async (
   dto: IIngredientFormValues,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingIngredient = await prisma.ingredient.findFirst({
       where: {
         title: dto.title,
@@ -150,7 +150,7 @@ export const deleteIngredient = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const ingredient = await prisma.ingredient.findUnique({
       where: { id },
       select: {
@@ -186,7 +186,7 @@ export const toggleSavedIngredient = async (
   isSaved: boolean,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
     });
@@ -215,7 +215,7 @@ export const uploadIngredientImage = async (
   file: File,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const imageKey = await uploadHelper.image({
       entity: "ingredients",
       file,
@@ -246,7 +246,7 @@ export const removeIngredientImage = async (
   ingredientId: number,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const updatedIngredient = await prisma.ingredient.update({
       where: { id: ingredientId },
       data: {
@@ -273,7 +273,7 @@ export const toggleIngredientInStockValue = async (
   isInStock: boolean,
 ): Promise<IActionResponse<IIngredient>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
     });
@@ -300,7 +300,7 @@ export const deleteIngredientCategory = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingCategory = await prisma.ingredientCategory.findUnique({
       where: { id },
       select: {
@@ -336,7 +336,7 @@ export const editIngredientCategory = async (
   dto: ICreateIngredientCategoryDto,
 ): Promise<IActionResponse<IIngredientCategory>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
 
     const updatedCategory = await prisma.ingredientCategory.update({
       where: { id },

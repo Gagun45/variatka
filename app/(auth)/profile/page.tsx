@@ -1,9 +1,9 @@
 "use client";
 
 import Loader from "@/components/loader/Loader";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
+import { signIn } from "next-auth/react";
 import Profile from "./_components/profile/Profile";
 
 export default function ProfilePage() {
@@ -16,9 +16,9 @@ export default function ProfilePage() {
         <h1>Profile</h1>
         <div className="flex flex-col items-center gap-4">
           <p>You need to log in</p>
-          <LoginLink className={buttonVariants({ className: "w-fit" })}>
-            Login
-          </LoginLink>
+          <Button className="w-fit" onClick={() => signIn("google")}>
+            Login via Google
+          </Button>
         </div>
       </main>
     );

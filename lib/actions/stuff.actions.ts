@@ -1,19 +1,20 @@
 "use server";
 
 import { ICreateStuffCategoryDto, ICreateStuffDto } from "@/zod/stuff.schema";
-import { userIsAdmin } from "../auth";
+
 import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IStuff, IStuffCategory, stuffArgs } from "../prisma.args";
 import { IActionResponse } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
 import { Prisma } from "@prisma/client";
+import { requireAdmin } from "./user.actions";
 
 export const createStuffCategory = async (
   dto: ICreateStuffCategoryDto,
 ): Promise<IActionResponse<IStuffCategory>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { title: dto.title },
     });
@@ -73,7 +74,7 @@ export const createStuff = async (
   dto: ICreateStuffDto,
 ): Promise<IActionResponse<IStuff>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const { stuffCategoryId, title } = dto;
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { id: stuffCategoryId },
@@ -108,7 +109,7 @@ export const editStuff = async (
   dto: ICreateStuffDto,
 ): Promise<IActionResponse<IStuff>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingStuff = await prisma.stuff.findFirst({
       where: {
         title: dto.title,
@@ -142,7 +143,7 @@ export const deleteStuff = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingStuff = await prisma.stuff.findUnique({
       where: { id },
     });
@@ -169,7 +170,7 @@ export const editStuffCategory = async (
   dto: ICreateStuffCategoryDto,
 ): Promise<IActionResponse<IStuffCategory>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
 
     const updatedCategory = await prisma.stuffCategory.update({
       where: { id },
@@ -200,7 +201,7 @@ export const deleteStuffCategory = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingCategory = await prisma.stuffCategory.findUnique({
       where: { id },
       select: {

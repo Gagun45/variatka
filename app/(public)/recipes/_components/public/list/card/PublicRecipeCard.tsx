@@ -29,8 +29,9 @@ const PublicRecipeCard = ({
           <Image
             src={imageSrc}
             alt={recipe.title}
+            sizes="384px"
             fill
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       </Link>

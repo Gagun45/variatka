@@ -4,6 +4,7 @@ export const useAuth = () => {
   const { data: session, status } = useSession();
 
   const isAuthenticated = status === "authenticated";
+  const isLoading = status === "loading";
   const isAdmin = session?.user.role === "ADMIN";
 
   return {
@@ -12,5 +13,6 @@ export const useAuth = () => {
     status,
     isAuthenticated,
     isAdmin,
+    isLoading,
   };
 };

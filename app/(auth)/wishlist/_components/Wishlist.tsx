@@ -1,9 +1,9 @@
 "use client";
 
+import PublicRecipesList from "@/app/(public)/recipes/_components/public/list/PublicRecipesList";
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useWishlist } from "@/features/recipe/hooks/useWishlist";
-import PublicRecipesList from "../../recipes/_components/public/list/PublicRecipesList";
 
 const Wishlist = () => {
   const { data: recipes, isLoading, isError } = useWishlist();

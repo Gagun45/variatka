@@ -2,7 +2,6 @@
 
 import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
 import { Prisma } from "@prisma/client";
-import { userIsAdmin } from "../auth";
 import { AppError } from "../error";
 import { prisma } from "../prisma";
 import {
@@ -21,7 +20,7 @@ import {
   IRecipeIngredient,
 } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
-import { getCurrentUser } from "./user.actions";
+import { getCurrentUser, requireAdmin } from "./user.actions";
 
 export const getRecipeCategories = async (): Promise<
   IActionResponse<IRecipeCategory[]>
@@ -62,7 +61,7 @@ export const createRecipeCategory = async (
   dto: ICreateRecipeCategoryDto,
 ): Promise<IActionResponse<IRecipeCategory>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { title: dto.title },
     });
@@ -88,7 +87,7 @@ export const createRecipe = async (
   dto: ICreateRecipeDto,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const {
       title,
       description,
@@ -146,7 +145,7 @@ export const updateRecipeFields = async (
   dto: IRecipeDto,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingRecipe = await prisma.recipe.findFirst({
       where: {
         title: dto.title,
@@ -183,7 +182,7 @@ export const updateRecipeIngredients = async (
   items: IRecipeIngredient[],
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     if (!Array.isArray(items)) throw new AppError("Invalid items payload");
 
     const response = await prisma.$transaction(
@@ -239,7 +238,7 @@ export const deleteRecipe = async (
   recipeId: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const recipe = await prisma.recipe.findUnique({
       where: { id: recipeId },
       select: { id: true },
@@ -268,7 +267,7 @@ export const toggleSavedRecipe = async (
   isSaved: boolean,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const updatedRecipe = await prisma.recipe.update({
       where: { id },
       data: { isSaved },
@@ -292,7 +291,7 @@ export const toggleConfirmedRecipe = async (
   isConfirmed: boolean,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const updatedRecipe = await prisma.recipe.update({
       where: { id },
       data: { isConfirmed },
@@ -316,7 +315,7 @@ export const uploadRecipeImage = async (
   file: File,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const imageKey = await uploadHelper.image({
       entity: "recipes",
       file,
@@ -347,7 +346,7 @@ export const removeRecipeImage = async (
   recipeId: number,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const updatedRecipe = await prisma.recipe.update({
       where: { id: recipeId },
       data: {
@@ -374,7 +373,7 @@ export const editRecipeCategory = async (
   dto: ICreateRecipeCategoryDto,
 ): Promise<IActionResponse<IRecipeCategory>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
 
     const updatedCategory = await prisma.recipeCategory.update({
       where: { id },
@@ -405,7 +404,7 @@ export const deleteRecipeCategory = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
   try {
-    await userIsAdmin();
+    await requireAdmin();
     const existingCategory = await prisma.recipeCategory.findUnique({
       where: { id },
       select: {

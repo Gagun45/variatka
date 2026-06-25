@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "../authentication";
+import { auth } from "../auth";
 import { AppError } from "../error";
 import { IActionResponse, IUser } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
@@ -24,7 +24,7 @@ export const getMe = async (): Promise<IActionResponse<IUser>> => {
 export const getCurrentUser = async (): Promise<IUser> => {
   const session = await auth();
 
-  if (!session) throw new AppError("Unauthorized");
+  if (!session?.user) throw new AppError("Unauthorized");
   const { user } = session;
 
   return {
@@ -33,4 +33,10 @@ export const getCurrentUser = async (): Promise<IUser> => {
     name: user.name,
     role: user.role,
   };
+};
+
+export const requireAdmin = async (): Promise<IUser> => {
+  const user = await getCurrentUser();
+  if (user.role !== "ADMIN") throw new AppError("Forbidden");
+  return user;
 };
