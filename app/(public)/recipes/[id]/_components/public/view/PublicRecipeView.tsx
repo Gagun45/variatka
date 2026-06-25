@@ -1,10 +1,10 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
 import { Badge } from "@/components/ui/badge";
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
+import { useAuth } from "@/hooks/useAuth";
 import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
-import { useAuthStore } from "@/zustand/auth.store";
 import Image from "next/image";
 
 interface Props {
@@ -21,8 +21,8 @@ export default function PublicRecipeView({ recipe }: Props) {
     notes,
     description,
   } = recipe;
+  const { isAuthenticated } = useAuth();
   const imageSrc = getImageUrl(imageKey);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const wishlistIdsSet = useWishlistIdsSet();
   const isWished = wishlistIdsSet.has(id);
   const { mutate } = useToggleWishlist();

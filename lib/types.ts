@@ -1,7 +1,4 @@
 import { IRecipeDto } from "@/zod/recipe.schema";
-import { Prisma } from "@prisma/client";
-import { Session } from "next-auth";
-import { object } from "zod";
 
 export interface IResponse {
   success: boolean;
@@ -38,9 +35,7 @@ export type IActionError = {
   message: string;
 };
 
-export type IUser = Prisma.UserGetPayload<object>;
-
-export interface INextUser {
+export interface IUser {
   pid: number;
   role: "USER" | "ADMIN";
   name: string;

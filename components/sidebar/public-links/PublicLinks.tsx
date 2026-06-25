@@ -1,10 +1,10 @@
 import { SidebarGroup, SidebarMenu } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 import { frontendUrls } from "@/lib/urls";
 import SidebarLink from "../link/SidebarLink";
-import { useAuthStore } from "@/zustand/auth.store";
 
 const PublicLinks = () => {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated } = useAuth();
   return (
     <SidebarGroup>
       <SidebarMenu>

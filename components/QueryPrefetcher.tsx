@@ -6,12 +6,12 @@ import { recipeService } from "@/features/recipe/recipe.api";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 import { stuffService } from "@/features/stuff/stuff.api";
 import { stuffKeys } from "@/features/stuff/stuff.keys";
-import { useAuthStore } from "@/zustand/auth.store";
+import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 const QueryPrefetcher = () => {
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const { isAdmin } = useAuth();
   const qclient = useQueryClient();
   useEffect(() => {
     if (!isAdmin) return;

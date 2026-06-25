@@ -1,7 +1,8 @@
 "use client";
 
 import Loader from "@/components/loader/Loader";
-import { useAuthStore } from "@/zustand/auth.store";
+import { useAuth } from "@/hooks/useAuth";
+import { frontendUrls } from "@/lib/urls";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -10,18 +11,17 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { isAdmin, status } = useAuth();
+  const isLoading = status === "loading";
   const router = useRouter();
 
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const hydrated = useAuthStore((s) => s.hydrated);
-
   useEffect(() => {
-    if (hydrated && !isAdmin) {
-      router.replace("/");
+    if (!isLoading && !isAdmin) {
+      router.replace(frontendUrls.index);
     }
-  }, [hydrated, isAdmin, router]);
+  }, [isLoading, isAdmin, router]);
 
-  if (!hydrated) {
+  if (isLoading) {
     return <Loader />;
   }
 
@@ -29,5 +29,5 @@ export default function ProtectedLayout({
     return null;
   }
 
-  return <>{children}</>;
+  return children;
 }

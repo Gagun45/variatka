@@ -29,10 +29,8 @@ export const getCurrentUser = async (): Promise<IUser> => {
 
   return {
     email: user.email,
-    id: user.pid,
+    pid: user.pid,
     name: user.name,
     role: user.role,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 };

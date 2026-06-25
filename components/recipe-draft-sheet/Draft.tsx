@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuthStore } from "@/zustand/auth.store";
+import { useAuth } from "@/hooks/useAuth";
 import RecipeDraftSheet from "./RecipeDraftSheet";
 
 const Draft = () => {
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const { isAdmin } = useAuth();
   if (!isAdmin) return null;
   return <RecipeDraftSheet />;
 };

@@ -1,14 +1,13 @@
 "use client";
 
-import { useAuthStore } from "@/zustand/auth.store";
+import Loader from "@/components/loader/Loader";
+import { buttonVariants } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import Profile from "./_components/profile/Profile";
-import { buttonVariants } from "@/components/ui/button";
-import { useSession } from "next-auth/react";
-import Loader from "@/components/loader/Loader";
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { status, session } = useAuth();
   if (status === "loading") return <Loader />;
 
   if (!session) {

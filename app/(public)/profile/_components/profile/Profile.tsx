@@ -1,7 +1,7 @@
-import { INextUser } from "@/lib/types";
+import { IUser } from "@/lib/types";
 
 interface Props {
-  user: INextUser;
+  user: IUser;
 }
 
 const Profile = ({ user }: Props) => {

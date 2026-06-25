@@ -6,8 +6,6 @@ import {
   IIngredientSortType,
   INGREDIENT_SORT_OPTIONS,
 } from "@/lib/sorting.ingredients";
-import { useAuthStore } from "@/zustand/auth.store";
-import { useSearch } from "@/zustand/search.store";
 import { useState } from "react";
 
 import CategoryButton from "@/components/cat-button/CategoryButton";
@@ -15,9 +13,9 @@ import { SortSelect } from "@/components/sort-select/SortSelect";
 import { FilterButtons } from "@/components/stock-filter/StockFilter";
 import { useIngredientsFilter } from "@/hooks/useIngredientsFilter";
 import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
+import { useSearchParams } from "next/navigation";
 import IngredientFormsDialog from "./forms-dialog/IngredientFormsDialog";
 import IngredienstList from "./list/IngredienstList";
-import { useSearchParams } from "next/navigation";
 
 interface Props {
   categories: IIngredientCategory[];

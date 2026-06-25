@@ -8,9 +8,9 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 import { ADMIN_LINKS, MAIN_LINKS } from "@/lib/links";
 import { frontendUrls } from "@/lib/urls";
-import { useAuthStore } from "@/zustand/auth.store";
 import Link from "next/link";
 import AuthSidebar from "../auth/AuthSidebar";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
@@ -20,7 +20,7 @@ import PublicLinks from "./public-links/PublicLinks";
 import SavedLinks from "./saved-links/SavedLinks";
 
 export function AppSidebar() {
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const { isAdmin } = useAuth();
 
   return (
     <Sidebar collapsible="offcanvas">

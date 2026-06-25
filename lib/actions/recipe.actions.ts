@@ -472,7 +472,7 @@ export const getWishlist = async (): Promise<
       where: {
         withlistItems: {
           some: {
-            userId: user.id,
+            userId: user.pid,
           },
         },
       },
@@ -500,7 +500,7 @@ export const toggleWishlist = async (
     const existing = await prisma.withlistItem.findUnique({
       where: {
         userId_recipeId: {
-          userId: user.id,
+          userId: user.pid,
           recipeId,
         },
       },
@@ -509,7 +509,7 @@ export const toggleWishlist = async (
       await prisma.withlistItem.delete({
         where: {
           userId_recipeId: {
-            userId: user.id,
+            userId: user.pid,
             recipeId,
           },
         },
@@ -518,7 +518,7 @@ export const toggleWishlist = async (
     }
     await prisma.withlistItem.create({
       data: {
-        userId: user.id,
+        userId: user.pid,
         recipeId,
       },
     });
