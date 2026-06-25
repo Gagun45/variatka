@@ -1,15 +1,15 @@
-import Loader from "@/components/loader/Loader";
-import StateScreen from "@/components/state-screen/StateScreen";
-import { useMe } from "@/features/user/hooks/useMe";
+import { INextUser } from "@/lib/types";
 
-const Profile = () => {
-  const { data: me, isLoading, isError } = useMe();
-  if (isLoading) return <Loader />;
-  if (!me || isError) return <StateScreen />;
+interface Props {
+  user: INextUser;
+}
+
+const Profile = ({ user }: Props) => {
+  const { email, name } = user;
   return (
     <div className="flex flex-col gap-4">
-      <p>Email - {me.email}</p>
-      <p>Name - {me.name}</p>
+      <p>Email - {email}</p>
+      <p>Name - {name}</p>
     </div>
   );
 };

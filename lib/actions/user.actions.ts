@@ -1,10 +1,9 @@
 "use server";
 
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { auth } from "../authentication";
 import { AppError } from "../error";
 import { IActionResponse, IUser } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
-import { prisma } from "../prisma";
 
 export const getMe = async (): Promise<IActionResponse<IUser>> => {
   try {
@@ -23,20 +22,17 @@ export const getMe = async (): Promise<IActionResponse<IUser>> => {
 };
 
 export const getCurrentUser = async (): Promise<IUser> => {
-  const { getUser } = getKindeServerSession();
-  const kindeUser = await getUser();
+  const session = await auth();
 
-  if (!kindeUser) throw new AppError("Unauthorized");
+  if (!session) throw new AppError("Unauthorized");
+  const { user } = session;
 
-  return prisma.user.upsert({
-    where: {
-      kindeId: kindeUser.id,
-    },
-    update: {}, // do nothing if exists
-    create: {
-      kindeId: kindeUser.id,
-      email: kindeUser.email ?? null,
-      name: kindeUser.given_name ?? "Unknown User",
-    },
-  });
+  return {
+    email: user.email,
+    id: user.pid,
+    name: user.name,
+    role: user.role,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 };

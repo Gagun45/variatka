@@ -97,12 +97,18 @@ model Stuff {
   stuffCategoryId Int
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id Int @id @default(autoincrement())
 
-  kindeId String  @unique
-  email   String?
-  name    String
+  email String @unique
+  name  String
+
+  role Role @default(USER)
 
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt

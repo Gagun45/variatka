@@ -8,16 +8,16 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
-import { ADMIN_LINKS, MAIN_LINKS, PUBLIC_LINKS } from "@/lib/links";
+import { ADMIN_LINKS, MAIN_LINKS } from "@/lib/links";
 import { frontendUrls } from "@/lib/urls";
+import { useAuthStore } from "@/zustand/auth.store";
 import Link from "next/link";
-import Auth from "../auth/Auth";
+import AuthSidebar from "../auth/AuthSidebar";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
 import { buttonVariants } from "../ui/button";
 import SidebarLink from "./link/SidebarLink";
-import SavedLinks from "./saved-links/SavedLinks";
-import { useAuthStore } from "@/zustand/auth.store";
 import PublicLinks from "./public-links/PublicLinks";
+import SavedLinks from "./saved-links/SavedLinks";
 
 export function AppSidebar() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -61,7 +61,7 @@ export function AppSidebar() {
       <SidebarFooter className="mt-auto py-4 border-t">
         <div className="flex justify-evenly gap-4">
           <ThemeToggle />
-          <Auth />
+          <AuthSidebar />
         </div>
       </SidebarFooter>
     </Sidebar>

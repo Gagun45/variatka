@@ -1,5 +1,6 @@
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { Prisma } from "@prisma/client";
+import { Session } from "next-auth";
 import { object } from "zod";
 
 export interface IResponse {
@@ -38,6 +39,15 @@ export type IActionError = {
 };
 
 export type IUser = Prisma.UserGetPayload<object>;
+
+export interface INextUser {
+  pid: number;
+  role: "USER" | "ADMIN";
+  name: string;
+  email: string;
+  image?: string | null;
+  id?: string; // (Inherited from DefaultSession, which we left in)
+}
 
 export interface IPublicRecipeIngredient {
   id: number;

@@ -4,14 +4,14 @@ import { useAuthStore } from "@/zustand/auth.store";
 import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import Profile from "./_components/profile/Profile";
 import { buttonVariants } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import Loader from "@/components/loader/Loader";
 
 export default function ProfilePage() {
-  const hydrated = useAuthStore((s) => s.hydrated);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { data: session, status } = useSession();
+  if (status === "loading") return <Loader />;
 
-  if (!hydrated) return null;
-
-  if (!isAuthenticated) {
+  if (!session) {
     return (
       <main>
         <h1>Profile</h1>
@@ -25,10 +25,12 @@ export default function ProfilePage() {
     );
   }
 
+  const { user } = session;
+
   return (
     <main>
       <h1>Your Profile</h1>
-      <Profile />
+      <Profile user={user} />
     </main>
   );
 }

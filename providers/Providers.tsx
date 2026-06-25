@@ -3,14 +3,14 @@ import { ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./AuthProvider";
-import { ThemeProvider } from "./ThemeProvider";
 import QueryProvider from "./QueryProvider";
+import { ThemeProvider } from "./ThemeProvider";
 
 const Providers = ({ children }: { children: ReactNode }) => {
   return (
-    <QueryProvider>
-      <TooltipProvider>
-        <AuthProvider>
+    <AuthProvider>
+      <QueryProvider>
+        <TooltipProvider>
           <SidebarProvider>
             <ThemeProvider
               attribute="class"
@@ -21,9 +21,9 @@ const Providers = ({ children }: { children: ReactNode }) => {
               {children}
             </ThemeProvider>
           </SidebarProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryProvider>
+        </TooltipProvider>
+      </QueryProvider>
+    </AuthProvider>
   );
 };
 
