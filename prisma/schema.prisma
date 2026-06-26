@@ -18,9 +18,10 @@ model IngredientCategory {
 }
 
 model RecipeCategory {
-  id      Int      @id @default(autoincrement())
-  title   String   @unique
-  recipes Recipe[] // A category can have many ingredients
+  id          Int      @id @default(autoincrement())
+  title       String   @unique
+  description String   @default("")
+  recipes     Recipe[] // A category can have many ingredients
 }
 
 model Ingredient {
@@ -56,6 +57,9 @@ model Recipe {
 
   imageKey     String?
   imageVersion Int     @default(0)
+
+  spicy     Int     @default(0)
+  isPremium Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
