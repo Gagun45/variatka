@@ -3,7 +3,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
-const options = [
+export const SpicyOptions = [
   { value: 0, label: "Not set" },
   { value: 1, label: "Not spicy" },
   { value: 2, label: "🌶️" },
@@ -27,7 +27,7 @@ const SpicyField = () => {
             onValueChange={(value) => field.onChange(Number(value))}
             className="flex flex-wrap gap-4"
           >
-            {options.map((option) => (
+            {SpicyOptions.map((option) => (
               <label
                 key={option.value}
                 className="flex items-center border px-2 py-1 rounded-sm gap-2 cursor-pointer"

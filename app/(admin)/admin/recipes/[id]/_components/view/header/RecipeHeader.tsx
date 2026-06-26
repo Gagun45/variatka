@@ -1,9 +1,11 @@
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import StockBadge from "@/components/stock-badge/StockBadge";
+import { Badge } from "@/components/ui/badge";
 import { CardHeader } from "@/components/ui/card";
 import ViewItemCategory from "@/components/view-item/ViewItemCategory";
 import ViewItemDescription from "@/components/view-item/ViewItemDescription";
 import { useToggleSavedRecipe } from "@/features/recipe/hooks/useToggleSavedRecipe";
+import { SpicyOptions } from "@/forms/recipe/fields/SpicyField";
 import { IRecipe } from "@/lib/prisma.args";
 
 interface Props {
@@ -16,7 +18,7 @@ const RecipeHeader = ({ recipe }: Props) => {
   const onToggleSaved = () => {
     mutate(id);
   };
-  const { recipeCategory, description, inStock } = recipe;
+  const { recipeCategory, description, inStock, isPremium, spicy } = recipe;
 
   return (
     <CardHeader className="view-item-card-header">
@@ -28,6 +30,14 @@ const RecipeHeader = ({ recipe }: Props) => {
         <ViewItemDescription description={description} />
 
         <SaveToggleButton isSaved={isSaved} onToggle={onToggleSaved} />
+      </div>
+      <div className="view-item-card-header-row">
+        <Badge variant={isPremium ? "default" : "outline"}>
+          {isPremium ? "Premium" : "Not premium"}
+        </Badge>
+        <Badge>
+          Spicy: {SpicyOptions.find((o) => o.value === spicy)?.label}
+        </Badge>
       </div>
     </CardHeader>
   );

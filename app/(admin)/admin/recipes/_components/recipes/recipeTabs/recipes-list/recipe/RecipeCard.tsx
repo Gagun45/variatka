@@ -15,7 +15,8 @@ type Props = {
 };
 
 const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
-  const { id, title, imageKey, isSaved, isConfirmed, imageVersion } = recipe;
+  const { id, title, imageKey, isSaved, isConfirmed, isPremium, imageVersion } =
+    recipe;
   const href = frontendUrls.recipes.view(id);
 
   const onToggle = () => {
@@ -29,7 +30,11 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
   const imageSrc = getImageUrl(imageKey, imageVersion);
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition">
+    <Card
+      className={`overflow-hidden hover:shadow-md transition ${
+        isPremium ? "border border-amber-400/40" : ""
+      }`}
+    >
       <div className="flex flex-col gap-2 px-2">
         <div className="flex justify-between gap-2 items-center">
           <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />

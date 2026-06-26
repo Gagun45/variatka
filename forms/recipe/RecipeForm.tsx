@@ -77,6 +77,10 @@ const RecipeForm = ({
         notes: values.notes ?? "",
         inStock: values.inStock ?? 0,
         recipeCategoryId: values.recipeCategoryId ?? 0,
+        confirmationNotes: values.confirmationNotes ?? "",
+        isConfirmed: values.isConfirmed ?? false,
+        isPremium: values.isPremium ?? false,
+        spicy: values.spicy ?? 0,
       });
     });
 
