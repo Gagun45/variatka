@@ -1,17 +1,17 @@
 "use client";
 
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import StockBadge from "@/components/stock-badge/StockBadge";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
-import { BookOpen, CheckCircle2, CircleAlert, ChefHat } from "lucide-react";
+import { BookOpen, ChefHat } from "lucide-react";
 import Image from "next/image";
-import StockBadge from "@/components/stock-badge/StockBadge";
 
 interface Props {
   recipe: IPublicRecipe;
@@ -31,7 +31,7 @@ export default function PublicRecipeView({ recipe }: Props) {
     <div className="mx-auto max-w-6xl py-8">
       <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
         {/* Image */}
-        <aside className="lg:sticky lg:top-6 h-fit">
+        <aside className="lg:sticky lg:top-36 h-fit">
           <div className="relative overflow-hidden rounded-2xl border bg-muted">
             <Image
               src={imageSrc}
@@ -41,7 +41,7 @@ export default function PublicRecipeView({ recipe }: Props) {
               className="aspect-square w-full object-cover transition duration-300 hover:scale-105"
             />
 
-            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/70 to-transparent" />
 
             <Badge className="absolute bottom-4 left-4">
               {recipe.recipeCategory.title}

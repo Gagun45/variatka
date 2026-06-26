@@ -17,7 +17,9 @@ import ConfirmationNotesField from "./fields/ConfirmationNotesField";
 import DescriptionField from "./fields/DescriptionField";
 import InStockField from "./fields/InStockField";
 import IsConfirmedField from "./fields/IsConfirmedField";
+import IsPremiumField from "./fields/IsPremiumField";
 import NotesField from "./fields/NotesField";
+import SpicyField from "./fields/SpicyField";
 import TitleField from "./fields/TitleField";
 
 interface Props {
@@ -52,6 +54,8 @@ const RecipeForm = ({
     inStock: initialValues?.inStock ?? 0,
     confirmationNotes: initialValues?.confirmationNotes ?? "",
     isConfirmed: initialValues?.isConfirmed ?? false,
+    isPremium: initialValues?.isPremium ?? false,
+    spicy: initialValues?.spicy ?? 0,
   };
   const form = useForm<IRecipeDto>({
     resolver: zodResolver(schema),
@@ -98,6 +102,8 @@ const RecipeForm = ({
           <DescriptionField />
           <NotesField />
           <InStockField />
+          <SpicyField />
+          <IsPremiumField />
           <IsConfirmedField />
           <ConfirmationNotesField />
           <Button

@@ -9,6 +9,8 @@ export const recipeSchema = z.object({
   recipeCategoryId: z.number().int("Category ID must be an integer."),
   confirmationNotes: z.string().optional(),
   isConfirmed: z.boolean(),
+  isPremium: z.boolean(),
+  spicy: z.number().min(0).max(4),
 });
 
 export const createRecipeCategorySchema = z.object({

@@ -28,6 +28,8 @@ const initialDraft: IRecipeDto = {
   recipeCategoryId: 0,
   confirmationNotes: "",
   isConfirmed: false,
+  isPremium: false,
+  spicy: 0,
 };
 
 export const useRecipeStore = create<IRecipeState>()(
