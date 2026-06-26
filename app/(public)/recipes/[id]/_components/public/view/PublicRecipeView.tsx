@@ -1,78 +1,127 @@
+"use client";
+
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
+import { BookOpen, CheckCircle2, CircleAlert, ChefHat } from "lucide-react";
 import Image from "next/image";
+import StockBadge from "@/components/stock-badge/StockBadge";
 
 interface Props {
   recipe: IPublicRecipe;
 }
 
 export default function PublicRecipeView({ recipe }: Props) {
-  const {
-    imageKey,
-    title,
-    recipeCategory,
-    ingredients,
-    id,
-    notes,
-    description,
-  } = recipe;
   const { isAuthenticated } = useAuth();
-  const imageSrc = getImageUrl(imageKey);
+
   const wishlistIdsSet = useWishlistIdsSet();
-  const isWished = wishlistIdsSet.has(id);
+  const isWished = wishlistIdsSet.has(recipe.id);
+
   const { mutate } = useToggleWishlist();
-  const onToggleWished = () => {
-    mutate(id);
-  };
+
+  const imageSrc = getImageUrl(recipe.imageKey);
+
   return (
-    <div className="mx-auto pt-6 space-y-6">
-      <h1 className="mt-2 text-3xl font-bold">{title}</h1>
-      <div className="grid gap-8 md:grid-cols-[1fr_1fr]">
-        <div className="relative">
-          <Image
-            src={imageSrc}
-            alt={title}
-            width={350}
-            height={350}
-            className="aspect-square w-full rounded-lg border object-cover"
-          />
-          {isAuthenticated && (
-            <WishedToggleButton
-              className="absolute right-3 top-3 bg-background/80 backdrop-blur"
-              isWished={isWished}
-              onToggle={onToggleWished}
+    <div className="mx-auto max-w-6xl py-8">
+      <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
+        {/* Image */}
+        <aside className="lg:sticky lg:top-6 h-fit">
+          <div className="relative overflow-hidden rounded-2xl border bg-muted">
+            <Image
+              src={imageSrc}
+              alt={recipe.title}
+              width={500}
+              height={500}
+              className="aspect-square w-full object-cover transition duration-300 hover:scale-105"
             />
+
+            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent" />
+
+            <Badge className="absolute bottom-4 left-4">
+              {recipe.recipeCategory.title}
+            </Badge>
+
+            {isAuthenticated && (
+              <WishedToggleButton
+                className="absolute right-4 top-4 bg-background/90 backdrop-blur"
+                isWished={isWished}
+                onToggle={() => mutate(recipe.id)}
+              />
+            )}
+          </div>
+        </aside>
+
+        {/* Content */}
+        <div className="space-y-8">
+          <section className="space-y-5">
+            <h1 className="text-4xl font-bold tracking-tight">
+              {recipe.title}
+            </h1>
+
+            <p className="text-lg leading-7 text-muted-foreground">
+              {recipe.description}
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <Badge variant="secondary" className="px-3 py-1">
+                <ChefHat className="mr-2 h-4 w-4" />
+                {recipe.recipeCategory.title}
+              </Badge>
+
+              <Badge variant="outline" className="px-3 py-1">
+                <BookOpen className="mr-2 h-4 w-4" />
+                {recipe.ingredients.length} ingredients
+              </Badge>
+
+              <StockBadge isInStock={recipe.isInStock} />
+            </div>
+          </section>
+
+          <Separator />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Ingredients ({recipe.ingredients.length})</CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <div className="grid gap-3 grid-cols-1 xl:grid-cols-2">
+                {recipe.ingredients.map((ingredient) => (
+                  <div
+                    key={ingredient.id}
+                    className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                      {ingredient.title[0].toUpperCase()}
+                    </div>
+
+                    <span className="font-medium">{ingredient.title}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {recipe.notes.trim() && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Additional notes</CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <p className="whitespace-pre-wrap leading-7 text-muted-foreground">
+                  {recipe.notes}
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
-
-        <section className="space-y-6">
-          <div>
-            <div className="flex items-center justify-between">
-              <Badge variant="secondary">{recipeCategory.title}</Badge>
-            </div>
-          </div>
-          <div>
-            <h2 className="mb-2 font-medium">
-              Ingredients ({ingredients.length})
-            </h2>
-
-            <div className="flex flex-wrap gap-2">
-              {ingredients.map((ingredient) => (
-                <Badge key={ingredient.id}>{ingredient.title}</Badge>
-              ))}
-            </div>
-          </div>
-
-          <p className="whitespace-pre-wrap text-muted-foreground">
-            {description}
-          </p>
-          <p className="whitespace-pre-wrap text-muted-foreground">{notes}</p>
-        </section>
       </div>
     </div>
   );
