@@ -11,7 +11,7 @@ const RecipeNotes = ({ recipe }: Props) => {
   const { confirmationNotes, notes, isConfirmed, id } = recipe;
   const { mutate } = useToggleConfirmedRecipe();
   const onToggleConfirm = () => {
-    mutate({ isConfirmed, recipeId: id });
+    mutate(id);
   };
   return (
     <div className="flex flex-col gap-2">

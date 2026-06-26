@@ -4,26 +4,20 @@ import { recipeService } from "../recipe.api";
 import { recipeKeys } from "../recipe.keys";
 import { toast } from "sonner";
 
-type TVariables = {
-  isSaved: boolean;
-  recipeId: number;
-};
-
 type TContext = {
   prevRecipes?: IRecipe[];
 };
 
 export const useToggleSavedRecipe = () => {
   const qclient = useQueryClient();
-  const mutation = useMutation<IRecipe, Error, TVariables, TContext>({
-    mutationFn: ({ isSaved, recipeId }) =>
-      recipeService.toggle(recipeId, !isSaved),
-    onMutate: async ({ recipeId, isSaved }) => {
+  const mutation = useMutation<IRecipe, Error, number, TContext>({
+    mutationFn: (recipeId) => recipeService.toggle(recipeId),
+    onMutate: async (recipeId) => {
       await qclient.cancelQueries({ queryKey: recipeKeys.recipes });
       const prevRecipes = qclient.getQueryData<IRecipe[]>(recipeKeys.recipes);
       qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
         old.map((rec) =>
-          rec.id === recipeId ? { ...rec, isSaved: !isSaved } : rec,
+          rec.id === recipeId ? { ...rec, isSaved: !rec.isSaved } : rec,
         ),
       );
       return { prevRecipes };

@@ -10,8 +10,8 @@ import ReadyToCookTooltip from "./tooltip/ReadyToCookTooltip";
 
 type Props = {
   recipe: IRecipe;
-  onSavedToggle?: (value: { recipeId: number; isSaved: boolean }) => void;
-  onConfirmToggle?: (value: { recipeId: number; isConfirmed: boolean }) => void;
+  onSavedToggle: (recipeId: number) => void;
+  onConfirmToggle: (recipeId: number) => void;
 };
 
 const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
@@ -19,15 +19,11 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
   const href = frontendUrls.recipes.view(id);
 
   const onToggle = () => {
-    if (onSavedToggle) {
-      onSavedToggle({ recipeId: id, isSaved });
-    } else return;
+    onSavedToggle(id);
   };
 
   const onToggleConfirm = () => {
-    if (onConfirmToggle) {
-      onConfirmToggle({ recipeId: id, isConfirmed });
-    } else return;
+    onConfirmToggle(id);
   };
 
   const imageSrc = getImageUrl(imageKey, imageVersion);
@@ -36,9 +32,8 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
     <Card className="overflow-hidden hover:shadow-md transition">
       <div className="flex flex-col gap-2 px-2">
         <div className="flex justify-between gap-2 items-center">
-          {onSavedToggle && (
-            <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
-          )}
+          <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
+
           <ConfirmToggleButton
             isConfirmed={isConfirmed}
             onToggle={onToggleConfirm}

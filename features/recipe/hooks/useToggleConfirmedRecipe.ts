@@ -4,32 +4,27 @@ import { recipeService } from "../recipe.api";
 import { recipeKeys } from "../recipe.keys";
 import { toast } from "sonner";
 
-type TVariables = {
-  isConfirmed: boolean;
-  recipeId: number;
-};
-
 type TContext = {
   prevRecipes?: IRecipe[];
 };
 
 export const useToggleConfirmedRecipe = () => {
   const qclient = useQueryClient();
-  const mutation = useMutation<IRecipe, Error, TVariables, TContext>({
-    mutationFn: ({ isConfirmed, recipeId }) =>
-      recipeService.toggleConfirmed(recipeId, isConfirmed),
-    onMutate: ({ recipeId, isConfirmed }) => {
+  const mutation = useMutation<IRecipe, Error, number, TContext>({
+    mutationFn: (recipeId) => recipeService.toggleConfirmed(recipeId),
+    onMutate: (recipeId) => {
       qclient.cancelQueries({ queryKey: recipeKeys.recipes });
       const prevRecipes = qclient.getQueryData<IRecipe[]>(recipeKeys.recipes);
       qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
         old.map((rec) =>
-          rec.id === recipeId ? { ...rec, isConfirmed: !isConfirmed } : rec,
+          rec.id === recipeId ? { ...rec, isConfirmed: !rec.isConfirmed } : rec,
         ),
       );
       return { prevRecipes };
     },
     onSettled: () => {
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      qclient.invalidateQueries({ queryKey: recipeKeys.public });
     },
     onError: (e, _variables, context) => {
       toast.error(e.message);

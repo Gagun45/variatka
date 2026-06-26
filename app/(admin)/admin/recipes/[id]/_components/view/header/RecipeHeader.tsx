@@ -14,7 +14,7 @@ const RecipeHeader = ({ recipe }: Props) => {
   const { mutate } = useToggleSavedRecipe();
   const { id, isSaved } = recipe;
   const onToggleSaved = () => {
-    mutate({ isSaved, recipeId: id });
+    mutate(id);
   };
   const { recipeCategory, description, inStock } = recipe;
 

@@ -264,13 +264,17 @@ export const deleteRecipe = async (
 
 export const toggleSavedRecipe = async (
   id: number,
-  isSaved: boolean,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
     await requireAdmin();
+    const recipe = await prisma.recipe.findUnique({
+      where: { id },
+      select: { isSaved: true },
+    });
+    if (!recipe) throw new AppError("Recipe not found");
     const updatedRecipe = await prisma.recipe.update({
       where: { id },
-      data: { isSaved },
+      data: { isSaved: !recipe.isSaved },
       ...recipeArgs,
     });
     return {
@@ -288,13 +292,17 @@ export const toggleSavedRecipe = async (
 
 export const toggleConfirmedRecipe = async (
   id: number,
-  isConfirmed: boolean,
 ): Promise<IActionResponse<IRecipe>> => {
   try {
     await requireAdmin();
+    const recipe = await prisma.recipe.findUnique({
+      where: { id },
+      select: { isConfirmed: true },
+    });
+    if (!recipe) throw new AppError("Recipe not found");
     const updatedRecipe = await prisma.recipe.update({
       where: { id },
-      data: { isConfirmed },
+      data: { isConfirmed: !recipe.isConfirmed },
       ...recipeArgs,
     });
     return {
