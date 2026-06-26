@@ -3,8 +3,8 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { usePublicRecipes } from "@/features/recipe/hooks/usePublicRecipes";
-import PublicRecipesList from "./list/PublicRecipesList";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
+import PublicRecipesTabs from "./tabs/PublicRecipesTabs";
 
 const PublicRecipesDashboard = () => {
   const { data: recipes, isLoading, isError } = usePublicRecipes();
@@ -16,7 +16,7 @@ const PublicRecipesDashboard = () => {
   if (isLoading || isCategoriesLoading) return <Loader />;
   if (isError || !recipes || !categories || isCategoriesError)
     return <StateScreen />;
-  return <PublicRecipesList recipes={recipes} />;
+  return <PublicRecipesTabs categories={categories} recipes={recipes} />;
 };
 
 export default PublicRecipesDashboard;

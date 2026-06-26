@@ -1,4 +1,5 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
+import StockBadge from "@/components/stock-badge/StockBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
@@ -19,16 +20,17 @@ const PublicRecipeCard = ({
   onToggleWished,
   isAuthenticated,
 }: Props) => {
-  const isWished = wishlistIdsSet.has(recipe.id);
-  const imageSrc = getImageUrl(recipe.imageKey);
+  const { id, imageKey, title, isInStock, description } = recipe;
+  const isWished = wishlistIdsSet.has(id);
+  const imageSrc = getImageUrl(imageKey);
   return (
     <Card className="overflow-hidden">
       {/* Image */}
-      <Link href={frontendUrls.public.view(recipe.id)}>
+      <Link href={frontendUrls.public.view(id)}>
         <div className="relative aspect-square w-full bg-muted">
           <Image
             src={imageSrc}
-            alt={recipe.title}
+            alt={title}
             sizes="384px"
             fill
             className="object-contain"
@@ -37,18 +39,19 @@ const PublicRecipeCard = ({
       </Link>
 
       {/* Content */}
-      <CardContent className="p-3 flex items-center justify-between gap-2">
-        <div className="flex flex-col gap-1 min-w-0">
+      <CardContent className="flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-2 min-w-0">
+          <StockBadge isInStock={isInStock} />
           <Link
-            href={frontendUrls.public.view(recipe.id)}
+            href={frontendUrls.public.view(id)}
             className="text-sm font-medium line-clamp-1 hover:underline"
           >
-            {recipe.title}
+            {title}
           </Link>
 
-          {recipe.description && (
+          {description && (
             <p className="text-xs text-muted-foreground line-clamp-2">
-              {recipe.description}
+              {description}
             </p>
           )}
         </div>
