@@ -27,6 +27,7 @@ export const useUpdateRecipeFields = () => {
       qclient.invalidateQueries({
         queryKey: recipeKeys.recipes,
       });
+      qclient.invalidateQueries({ queryKey: recipeKeys.public });
 
       toast.success("Recipe edited successfully!");
     },

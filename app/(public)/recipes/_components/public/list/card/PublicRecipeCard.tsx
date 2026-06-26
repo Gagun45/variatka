@@ -1,4 +1,5 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
+import SpicyLevel from "@/components/spicy/SpicyLevel";
 import StockBadge from "@/components/stock-badge/StockBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getImageUrl } from "@/lib/image.helper";
@@ -20,11 +21,14 @@ const PublicRecipeCard = ({
   onToggleWished,
   isAuthenticated,
 }: Props) => {
-  const { id, imageKey, title, isInStock, description } = recipe;
+  const { id, imageKey, title, isInStock, description, isPremium, spicy } =
+    recipe;
   const isWished = wishlistIdsSet.has(id);
   const imageSrc = getImageUrl(imageKey);
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className={`overflow-hidden ${isPremium ? "border border-amber-400/40" : ""}`}
+    >
       {/* Image */}
       <Link href={frontendUrls.public.view(id)}>
         <div className="relative aspect-square w-full">
@@ -40,8 +44,18 @@ const PublicRecipeCard = ({
 
       {/* Content */}
       <CardContent className="flex items-center justify-between gap-2">
-        <div className="flex flex-col gap-2 min-w-0">
-          <StockBadge isInStock={isInStock} />
+        <div className="flex flex-col gap-2 min-w-0 w-full">
+          <div className="flex w-full items-center justify-between">
+            <StockBadge isInStock={isInStock} />
+            <SpicyLevel level={spicy} />
+            {isAuthenticated && (
+              <WishedToggleButton
+                onToggle={onToggleWished}
+                isWished={isWished}
+              />
+            )}
+          </div>
+
           <Link
             href={frontendUrls.public.view(id)}
             className="text-sm font-medium line-clamp-1 hover:underline"
@@ -55,10 +69,6 @@ const PublicRecipeCard = ({
             </p>
           )}
         </div>
-
-        {isAuthenticated && (
-          <WishedToggleButton onToggle={onToggleWished} isWished={isWished} />
-        )}
       </CardContent>
     </Card>
   );

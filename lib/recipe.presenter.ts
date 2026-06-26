@@ -8,6 +8,8 @@ export const recipePresenter = {
     description: r.description,
     notes: r.notes,
     isInStock: !!r.inStock,
+    isPremium: r.isPremium,
+    spicy: r.spicy,
     imageKey: r.imageKey,
     recipeCategory: {
       id: r.recipeCategory.id,

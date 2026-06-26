@@ -53,6 +53,8 @@ export type IPublicRecipe = {
   title: string;
   description: string;
   isInStock: boolean;
+  isPremium: boolean;
+  spicy: number;
   notes: string;
   imageKey: string | null;
   recipeCategory: {
