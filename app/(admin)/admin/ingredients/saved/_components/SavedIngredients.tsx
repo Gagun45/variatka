@@ -12,10 +12,17 @@ const SavedIngredients = () => {
   const savedIngredients = ingredients.filter((i) => i.isSaved);
   if (savedIngredients.length === 0)
     return <p className="text-center">No ingredients added yet</p>;
+  const sortedIngredients = savedIngredients.sort((a, b) => {
+    const countDiff = b._count.recipeIngredients - a._count.recipeIngredients;
+
+    if (countDiff !== 0) return countDiff;
+
+    return a.title.localeCompare(b.title);
+  });
   return (
     <>
       <p>{savedIngredients.length} ingredients</p>
-      <IngredienstList ingredients={savedIngredients} />
+      <IngredienstList ingredients={sortedIngredients} />
     </>
   );
 };
