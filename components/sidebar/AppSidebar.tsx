@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { ADMIN_LINKS, MAIN_LINKS } from "@/lib/links";
 import { frontendUrls } from "@/lib/urls";
+import Image from "next/image";
 import Link from "next/link";
 import AuthSidebar from "../auth/AuthSidebar";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
@@ -28,12 +29,14 @@ export function AppSidebar() {
         <Link
           className={buttonVariants({
             className:
-              "size-full! flex justify-center text-4xl! rounded-none items-center",
+              "size-full! p-0! border-none flex justify-center text-4xl! rounded-none items-center",
             variant: "ghost",
           })}
           href={frontendUrls.index}
         >
-          Nomly
+          <div className="relative size-full">
+            <Image src={"/logo.png"} alt="Logo" fill className="object-cover" />
+          </div>
         </Link>
       </SidebarHeader>
       <SidebarContent>

@@ -27,7 +27,7 @@ const PublicRecipeCard = ({
     <Card className="overflow-hidden">
       {/* Image */}
       <Link href={frontendUrls.public.view(id)}>
-        <div className="relative aspect-square w-full bg-muted">
+        <div className="relative aspect-square w-full">
           <Image
             src={imageSrc}
             alt={title}
