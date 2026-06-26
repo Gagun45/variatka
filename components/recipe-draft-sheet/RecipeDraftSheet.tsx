@@ -3,11 +3,11 @@
 import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
 import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import RecipeForm from "@/forms/recipe/RecipeForm";
-import { useRecipeStore } from "@/zustand/recipe.store";
 import { IRecipeDto } from "@/zod/recipe.schema";
+import { useRecipeStore } from "@/zustand/recipe.store";
 import { List } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
-import Loader from "../loader/Loader";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import {
@@ -25,6 +25,7 @@ const RecipeDraftSheet = () => {
   const clear = useRecipeStore((s) => s.clear);
   const draft = useRecipeStore((s) => s.draft);
   const setDraft = useRecipeStore((s) => s.setDraft);
+  const [open, setOpen] = useState(false);
   const { data: categories, isLoading, isError } = useRecipeCategories();
   const { mutate, isPending } = useCreateRecipe();
   if (isLoading || isError || !categories) return null;
@@ -45,6 +46,7 @@ const RecipeDraftSheet = () => {
       {
         onSuccess: () => {
           clear();
+          setOpen(false);
         },
       },
     );
@@ -55,7 +57,7 @@ const RecipeDraftSheet = () => {
   };
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <List />
