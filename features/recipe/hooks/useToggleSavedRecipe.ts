@@ -20,12 +20,13 @@ export const useToggleSavedRecipe = () => {
           rec.id === recipeId ? { ...rec, isSaved: !rec.isSaved } : rec,
         ),
       );
+
       return { prevRecipes };
     },
     onSettled: () => {
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
     },
-    onError: (e, _variables, context) => {
+    onError: (e, recipeId, context) => {
       toast.error(e.message);
       if (context?.prevRecipes) {
         qclient.setQueryData(recipeKeys.recipes, context.prevRecipes);
