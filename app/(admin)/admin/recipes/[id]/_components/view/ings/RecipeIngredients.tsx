@@ -50,7 +50,9 @@ const RecipeIngredients = ({ recipe }: Props) => {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold">Ingredients</h3>
+        <h3 className="text-sm font-bold">
+          Ingredients ({recipe.ingredients.length})
+        </h3>
 
         <Button
           variant="ghost"

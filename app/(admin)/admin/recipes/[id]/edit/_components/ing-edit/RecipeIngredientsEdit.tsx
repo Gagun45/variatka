@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import IngredientCombobox from "./combobox/RecipeIngredientCombobox";
 import RecipeIngredientRow from "./ing-row/RecipeInredientRow";
 import { Separator } from "@/components/ui/separator";
+import { Copy } from "lucide-react";
 
 interface Props {
   recipe: IRecipe;
@@ -22,6 +23,18 @@ export type IRecipeItem = IRecipeIngredient & {
 const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
   const { items, updateAmount, removeItem, addItem, reset, isAmountNotSet } =
     useRecipeIngredientsEditor(recipe);
+
+  const handleCopyIngredients = async () => {
+    const text = items
+      .map(({ title, amount }) => `${title} - ${amount}`)
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied!");
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
 
   const { save, isPending } = useSaveRecipeIngredients(recipe.id);
 
@@ -46,7 +59,19 @@ const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
   return (
     <Card className={isPending ? "opacity-60 pointer-events-none" : ""}>
       <CardHeader>
-        <CardTitle className="text-center">Recipe ingredients</CardTitle>
+        <div className="flex justify-between items-center flex-wrap gap-2">
+          <CardTitle className="text-center">
+            Recipe ingredients ({items.length})
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCopyIngredients}
+            aria-label="Copy ingredients"
+          >
+            <Copy className="size-4" />
+          </Button>
+        </div>
       </CardHeader>
       <Separator />
 
