@@ -2,25 +2,23 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import { useRecipes } from "@/features/recipe/hooks/useRecipes";
+import { useRecipe } from "@/features/recipe/hooks/useRecipe";
 import RecipeView from "./view/RecipeView";
-import SimilarRecipes from "./similar/SimilarRecipes";
 
 interface Props {
   id: number;
 }
 
 const Recipe = ({ id }: Props) => {
-  const { data: recipes, isLoading, isError } = useRecipes();
+  const { data: recipe, isLoading, isError } = useRecipe(id);
 
   if (isLoading) {
     return <Loader />;
   }
 
-  if (isError || !recipes) {
+  if (isError || !recipe) {
     return <StateScreen />;
   }
-  const recipe = recipes.find((r) => r.id === id);
   if (!recipe) return <StateScreen title="Recipe not found" />;
   return (
     <div className="space-y-24">
@@ -28,7 +26,7 @@ const Recipe = ({ id }: Props) => {
         <h1>{recipe.title}</h1>
         <RecipeView recipe={recipe} />
       </div>
-      <SimilarRecipes allRecipes={recipes} recipe={recipe} />
+      {/* <SimilarRecipes allRecipes={recipes} recipe={recipe} /> */}
     </div>
   );
 };

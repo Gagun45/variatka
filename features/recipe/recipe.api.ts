@@ -7,6 +7,7 @@ import {
   editRecipeCategory,
   getAdminWishlists,
   getPublicRecipes,
+  getRecipe,
   getRecipeCategories,
   getRecipes,
   getWishlist,
@@ -28,6 +29,7 @@ import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
 
 export const recipeService = {
   get: (): Promise<IRecipe[]> => unwrapAction(() => getRecipes()),
+  getOne: (id: number): Promise<IRecipe> => unwrapAction(() => getRecipe(id)),
   create: (dto: ICreateRecipeDto): Promise<IRecipe> =>
     unwrapAction(() => createRecipe(dto)),
   getCategories: (): Promise<IRecipeCategory[]> =>

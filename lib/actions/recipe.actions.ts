@@ -42,6 +42,7 @@ export const getRecipeCategories = async (): Promise<
 
 export const getRecipes = async (): Promise<IActionResponse<IRecipe[]>> => {
   try {
+    await new Promise((res) => setTimeout(res, 10000));
     const recipes = await prisma.recipe.findMany(recipeArgs);
 
     return {
@@ -50,6 +51,28 @@ export const getRecipes = async (): Promise<IActionResponse<IRecipe[]>> => {
     };
   } catch (e) {
     console.error("Error in getRecipes:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const getRecipe = async (
+  id: number,
+): Promise<IActionResponse<IRecipe>> => {
+  try {
+    const recipe = await prisma.recipe.findUnique({
+      where: { id },
+      ...recipeArgs,
+    });
+    if (!recipe) throw new AppError("Recipe not found");
+    return {
+      ok: true,
+      data: recipe,
+    };
+  } catch (e) {
+    console.error("Error in getRecipe", e);
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }
