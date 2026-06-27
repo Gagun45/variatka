@@ -43,6 +43,11 @@ model Ingredient {
   recipeIngredients RecipeIngredient[]
 }
 
+enum RecipeSeries {
+  DEFAULT
+  NOMLYGOLD
+}
+
 model Recipe {
   id          Int    @id @default(autoincrement())
   title       String @unique
@@ -58,8 +63,8 @@ model Recipe {
   imageKey     String?
   imageVersion Int     @default(0)
 
-  spicy     Int     @default(0)
-  isPremium Boolean @default(false)
+  spicy  Int          @default(0)
+  series RecipeSeries @default(DEFAULT)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
