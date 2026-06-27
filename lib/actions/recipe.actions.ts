@@ -42,7 +42,6 @@ export const getRecipeCategories = async (): Promise<
 
 export const getRecipes = async (): Promise<IActionResponse<IRecipe[]>> => {
   try {
-    await new Promise((res) => setTimeout(res, 10000));
     const recipes = await prisma.recipe.findMany(recipeArgs);
 
     return {
