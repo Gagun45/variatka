@@ -1,5 +1,6 @@
 import ConfirmToggleButton from "@/components/confirmation-btn/ConfirmToggleButton";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
+import RecipeSeriesBadge from "@/components/series-badge/RecipeSeriesBadge";
 import { Card } from "@/components/ui/card";
 import { getImageUrl } from "@/lib/image.helper";
 import { IRecipe } from "@/lib/prisma.args";
@@ -15,7 +16,7 @@ type Props = {
 };
 
 const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
-  const { id, title, imageKey, isSaved, isConfirmed, isPremium, imageVersion } =
+  const { id, title, imageKey, isSaved, isConfirmed, imageVersion, series } =
     recipe;
   const href = frontendUrls.recipes.view(id);
 
@@ -30,11 +31,7 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
   const imageSrc = getImageUrl(imageKey, imageVersion);
 
   return (
-    <Card
-      className={`overflow-hidden hover:shadow-md transition ${
-        isPremium ? "border border-amber-400/40" : ""
-      }`}
-    >
+    <Card className="overflow-hidden hover:shadow-md transition">
       <div className="flex flex-col gap-2 px-2">
         <div className="flex justify-between gap-2 items-center">
           <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
@@ -64,6 +61,8 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
           {title}
         </Link>
       </div>
+
+      <RecipeSeriesBadge className="mx-auto" series={series} />
     </Card>
   );
 };

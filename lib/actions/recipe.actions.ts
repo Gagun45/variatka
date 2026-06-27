@@ -119,7 +119,7 @@ export const createRecipe = async (
       isConfirmed,
       recipeCategoryId,
       inStock,
-      isPremium,
+      series,
       spicy,
     } = dto;
     const existingCategory = await prisma.recipeCategory.findUnique({
@@ -142,7 +142,7 @@ export const createRecipe = async (
         inStock,
         confirmationNotes,
         isConfirmed,
-        isPremium,
+        series,
         spicy,
         ingredients: {
           create: items.map((item) => ({

@@ -1,4 +1,5 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
+import RecipeSeriesBadge from "@/components/series-badge/RecipeSeriesBadge";
 import SpicyLevel from "@/components/spicy/SpicyLevel";
 import StockBadge from "@/components/stock-badge/StockBadge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,15 +22,15 @@ const PublicRecipeCard = ({
   onToggleWished,
   isAuthenticated,
 }: Props) => {
-  const { id, imageKey, title, isInStock, description, isPremium, spicy } =
-    recipe;
+  const { id, imageKey, title, isInStock, description, series, spicy } = recipe;
   const isWished = wishlistIdsSet.has(id);
   const imageSrc = getImageUrl(imageKey);
   return (
-    <Card
-      className={`overflow-hidden ${isPremium ? "border border-amber-400/40" : ""}`}
-    >
+    <Card className="overflow-hidden">
       {/* Image */}
+
+      <RecipeSeriesBadge className="mx-auto" series={series} />
+
       <Link href={frontendUrls.public.view(id)}>
         <div className="relative aspect-square w-full">
           <Image

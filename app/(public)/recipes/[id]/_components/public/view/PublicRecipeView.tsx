@@ -1,6 +1,7 @@
 "use client";
 
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
+import RecipeSeriesBadge from "@/components/series-badge/RecipeSeriesBadge";
 import StockBadge from "@/components/stock-badge/StockBadge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,13 +20,24 @@ interface Props {
 
 export default function PublicRecipeView({ recipe }: Props) {
   const { isAuthenticated } = useAuth();
+  const {
+    title,
+    id,
+    imageKey,
+    recipeCategory,
+    series,
+    ingredients,
+    description,
+    isInStock,
+    notes,
+  } = recipe;
 
   const wishlistIdsSet = useWishlistIdsSet();
-  const isWished = wishlistIdsSet.has(recipe.id);
+  const isWished = wishlistIdsSet.has(id);
 
   const { mutate } = useToggleWishlist();
 
-  const imageSrc = getImageUrl(recipe.imageKey);
+  const imageSrc = getImageUrl(imageKey);
 
   return (
     <div className="mx-auto max-w-6xl py-8">
@@ -35,7 +47,7 @@ export default function PublicRecipeView({ recipe }: Props) {
           <div className="relative overflow-hidden rounded-2xl border bg-muted">
             <Image
               src={imageSrc}
-              alt={recipe.title}
+              alt={title}
               width={500}
               height={500}
               className="aspect-square w-full object-cover transition duration-300 hover:scale-105"
@@ -44,14 +56,14 @@ export default function PublicRecipeView({ recipe }: Props) {
             <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/70 to-transparent" />
 
             <Badge className="absolute bottom-4 left-4">
-              {recipe.recipeCategory.title}
+              {recipeCategory.title}
             </Badge>
 
             {isAuthenticated && (
               <WishedToggleButton
                 className="absolute right-4 top-4 bg-background/90 backdrop-blur"
                 isWished={isWished}
-                onToggle={() => mutate(recipe.id)}
+                onToggle={() => mutate(id)}
               />
             )}
           </div>
@@ -60,26 +72,25 @@ export default function PublicRecipeView({ recipe }: Props) {
         {/* Content */}
         <div className="space-y-8">
           <section className="space-y-5">
-            <h1 className="text-4xl font-bold tracking-tight">
-              {recipe.title}
-            </h1>
+            <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
 
             <p className="text-lg leading-7 text-muted-foreground">
-              {recipe.description}
+              {description}
             </p>
 
             <div className="flex flex-wrap gap-3">
               <Badge variant="secondary" className="px-3 py-1">
                 <ChefHat className="mr-2 h-4 w-4" />
-                {recipe.recipeCategory.title}
+                {recipeCategory.title}
               </Badge>
 
               <Badge variant="outline" className="px-3 py-1">
                 <BookOpen className="mr-2 h-4 w-4" />
-                {recipe.ingredients.length} ingredients
+                {ingredients.length} ingredients
               </Badge>
 
-              <StockBadge isInStock={recipe.isInStock} />
+              <RecipeSeriesBadge variant={"default"} series={series} />
+              <StockBadge isInStock={isInStock} />
             </div>
           </section>
 
@@ -87,12 +98,12 @@ export default function PublicRecipeView({ recipe }: Props) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Ingredients ({recipe.ingredients.length})</CardTitle>
+              <CardTitle>Ingredients ({ingredients.length})</CardTitle>
             </CardHeader>
 
             <CardContent>
               <div className="grid gap-3 grid-cols-1 xl:grid-cols-2">
-                {recipe.ingredients.map((ingredient) => (
+                {ingredients.map((ingredient) => (
                   <div
                     key={ingredient.id}
                     className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
@@ -101,14 +112,14 @@ export default function PublicRecipeView({ recipe }: Props) {
                       {ingredient.title[0].toUpperCase()}
                     </div>
 
-                    <span className="font-medium">{ingredient.title}</span>
+                    <span className="font-medium">{title}</span>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {recipe.notes.trim() && (
+          {notes.trim() && (
             <Card>
               <CardHeader>
                 <CardTitle>Additional notes</CardTitle>
@@ -116,7 +127,7 @@ export default function PublicRecipeView({ recipe }: Props) {
 
               <CardContent>
                 <p className="whitespace-pre-wrap leading-7 text-muted-foreground">
-                  {recipe.notes}
+                  {notes}
                 </p>
               </CardContent>
             </Card>

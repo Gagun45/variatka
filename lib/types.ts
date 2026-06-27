@@ -1,4 +1,5 @@
 import { IRecipeDto } from "@/zod/recipe.schema";
+import { IRecipeSeries } from "./constants";
 
 export interface IResponse {
   success: boolean;
@@ -48,13 +49,14 @@ export interface IPublicRecipeIngredient {
   id: number;
   title: string;
 }
+
 export type IPublicRecipe = {
   id: number;
   title: string;
   description: string;
   isInStock: boolean;
-  isPremium: boolean;
   spicy: number;
+  series: IRecipeSeries;
   notes: string;
   imageKey: string | null;
   recipeCategory: {

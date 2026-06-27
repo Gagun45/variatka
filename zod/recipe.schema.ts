@@ -1,4 +1,5 @@
 // src/zod/ingredient.schema.ts
+import { RECIPE_SERIES } from "@/lib/constants";
 import z from "zod";
 
 export const recipeSchema = z.object({
@@ -9,8 +10,8 @@ export const recipeSchema = z.object({
   recipeCategoryId: z.number().int("Category ID must be an integer."),
   confirmationNotes: z.string().optional(),
   isConfirmed: z.boolean(),
-  isPremium: z.boolean(),
   spicy: z.number().min(0).max(4),
+  series: z.enum(RECIPE_SERIES),
 });
 
 export const createRecipeCategorySchema = z.object({

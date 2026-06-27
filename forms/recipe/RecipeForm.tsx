@@ -17,8 +17,8 @@ import ConfirmationNotesField from "./fields/ConfirmationNotesField";
 import DescriptionField from "./fields/DescriptionField";
 import InStockField from "./fields/InStockField";
 import IsConfirmedField from "./fields/IsConfirmedField";
-import IsPremiumField from "./fields/IsPremiumField";
 import NotesField from "./fields/NotesField";
+import SeriesField from "./fields/SeriesField";
 import SpicyField from "./fields/SpicyField";
 import TitleField from "./fields/TitleField";
 
@@ -54,8 +54,8 @@ const RecipeForm = ({
     inStock: initialValues?.inStock ?? 0,
     confirmationNotes: initialValues?.confirmationNotes ?? "",
     isConfirmed: initialValues?.isConfirmed ?? false,
-    isPremium: initialValues?.isPremium ?? false,
     spicy: initialValues?.spicy ?? 0,
+    series: initialValues?.series ?? "DEFAULT",
   };
   const form = useForm<IRecipeDto>({
     resolver: zodResolver(schema),
@@ -79,18 +79,14 @@ const RecipeForm = ({
         recipeCategoryId: values.recipeCategoryId ?? 0,
         confirmationNotes: values.confirmationNotes ?? "",
         isConfirmed: values.isConfirmed ?? false,
-        isPremium: values.isPremium ?? false,
         spicy: values.spicy ?? 0,
+        series: values.series ?? "DEFAULT",
       });
     });
 
     return () => subscription.unsubscribe();
   }, [form, setDraftDebounced]);
-  const {
-    handleSubmit,
-    reset,
-    formState: { isDirty },
-  } = form;
+  const { handleSubmit, reset } = form;
   const handleReset = () => {
     reset();
     if (onReset) {
@@ -107,7 +103,7 @@ const RecipeForm = ({
           <NotesField />
           <InStockField />
           <SpicyField />
-          <IsPremiumField />
+          <SeriesField />
           <IsConfirmedField />
           <ConfirmationNotesField />
           <Button
@@ -120,7 +116,7 @@ const RecipeForm = ({
           </Button>
           <LoadingButton
             isPending={isPending}
-            disabled={!isDirty || isDisabled}
+            disabled={isDisabled}
             type="submit"
           >
             {isDisabled ? "Set amounts!" : initialValues ? "Save" : "Add"}
