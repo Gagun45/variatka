@@ -24,14 +24,13 @@ const RecipeView = ({ recipe }: Props) => {
         <Separator />
 
         <RecipeImageViewAdmin recipe={recipe} />
+        <ViewItemEditLink href={frontendUrls.recipes.edit(id)} />
 
         <RecipeIngredients recipe={recipe} />
 
         <Separator />
 
         <RecipeNotes recipe={recipe} />
-
-        <ViewItemEditLink href={frontendUrls.recipes.edit(id)} />
       </CardContent>
     </Card>
   );

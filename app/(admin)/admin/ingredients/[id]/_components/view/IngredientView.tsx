@@ -24,13 +24,11 @@ const IngredientView = ({ ingredient }: Props) => {
   const { mutate: stockMutate } = useToggleIngredientStock();
   const {
     description,
-    title,
+
     category,
     isInStock,
     id,
     isSaved,
-    imageKey,
-    imageVersion,
   } = ingredient;
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
@@ -69,10 +67,9 @@ const IngredientView = ({ ingredient }: Props) => {
 
       <CardContent className="view-item-card-content">
         <IngredientImageViewAdmin ingredient={ingredient} />
+        <ViewItemEditLink href={frontendUrls.ingredients.edit(id)} />
 
         <Separator />
-
-        <ViewItemEditLink href={frontendUrls.ingredients.edit(id)} />
 
         <Button
           onClick={() =>
