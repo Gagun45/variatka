@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import { Input } from "@/components/ui/input";
 
-const PublicSearchBar = () => {
+type PublicSearchBarProps = {
+  initialQuery: string;
+};
+
+const PublicSearchBar = ({ initialQuery }: PublicSearchBarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const initialQuery = searchParams.get("query") || "";
   const [query, setQuery] = useState(initialQuery);
 
   const updateURL = useDebouncedCallback((value: string) => {
@@ -25,6 +28,7 @@ const PublicSearchBar = () => {
     router.replace(`${pathname}?${params.toString()}`);
   }, 250);
 
+  // Update URL when user types
   useEffect(() => {
     updateURL(query);
   }, [query, updateURL]);

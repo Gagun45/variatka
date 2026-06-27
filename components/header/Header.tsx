@@ -5,7 +5,6 @@ import Loader from "../loader/Loader";
 import Draft from "../recipe-draft-sheet/Draft";
 import { SidebarTrigger } from "../ui/sidebar";
 import Search from "./search/Search";
-import PublicSearchBar from "./search/public-bar/PublicSearchBar";
 
 const Header = () => {
   return (
@@ -22,7 +21,7 @@ const Header = () => {
         {/* Center */}
         <Suspense fallback={<Loader />}>
           <div className="flex w-full justify-center">
-            <PublicSearchBar />
+            <Search />
           </div>
         </Suspense>
 
