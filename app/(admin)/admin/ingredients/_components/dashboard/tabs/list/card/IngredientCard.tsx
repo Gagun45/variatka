@@ -1,5 +1,6 @@
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import StockBadge from "@/components/stock-badge/StockBadge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IIngredient } from "@/lib/prisma.args";
@@ -40,12 +41,15 @@ const IngredientCard = ({
       <CardContent className="flex justify-between gap-4 px-4  h-full">
         <div className="min-w-0 flex-1 flex-col flex justify-between">
           <div className="flex items-start justify-between gap-2">
-            <Link
-              href={frontendUrls.ingredients.view(id)}
-              className="break-all text-base font-medium hover:underline"
-            >
-              {title}
-            </Link>
+            <div className="flex flex-col gap-2">
+              <Link
+                href={frontendUrls.ingredients.view(id)}
+                className="break-all text-base font-medium hover:underline"
+              >
+                {title}
+              </Link>
+              <Badge variant={"secondary"}>{ingredient.category.title}</Badge>
+            </div>
 
             <Button
               onClick={() =>
