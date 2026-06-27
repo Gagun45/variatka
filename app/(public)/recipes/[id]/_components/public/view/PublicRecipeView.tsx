@@ -112,7 +112,7 @@ export default function PublicRecipeView({ recipe }: Props) {
                       {ingredient.title[0].toUpperCase()}
                     </div>
 
-                    <span className="font-medium">{title}</span>
+                    <span className="font-medium">{ingredient.title}</span>
                   </div>
                 ))}
               </div>
