@@ -1,10 +1,13 @@
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import StockBadge from "@/components/stock-badge/StockBadge";
+import { Button } from "@/components/ui/button";
 import { useToggleIngredientStock } from "@/features/ingredient/hooks/useToggleIngredientStock";
 import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleSavedIngredient";
 import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
+import { Copy } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface Props {
   recipe: IRecipe;
@@ -13,6 +16,17 @@ interface Props {
 const RecipeIngredients = ({ recipe }: Props) => {
   const { mutate } = useToggleIngredientStock();
   const { mutate: savedMutate } = useToggleSavedIngredient();
+  const handleCopyIngredients = async () => {
+    const text = recipe.ingredients
+      .map(({ ingredient: { title }, amount }) => `${title} - ${amount}`)
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied!");
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
   const handleStockToggle = ({
     ingredientId,
     isInStock,
@@ -35,7 +49,18 @@ const RecipeIngredients = ({ recipe }: Props) => {
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-bold">Ingredients</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold">Ingredients</h3>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleCopyIngredients}
+          aria-label="Copy ingredients"
+        >
+          <Copy className="size-4" />
+        </Button>
+      </div>
 
       <div className="flex flex-col gap-2">
         {recipe.ingredients.map((ing) => {
