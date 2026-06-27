@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+import { IRecipeCategoryFilter } from "@/lib/constants/category.options";
+import { IConfirmedType } from "@/lib/constants/confirmed.optionts";
+import { IReadyToMakeType } from "@/lib/constants/ready-to-make.options";
+import { IRecipeSeriesFilter } from "@/lib/constants/series.options";
+import { IStockType } from "@/lib/constants/stock.options";
 import { IRecipe } from "@/lib/prisma.args";
 import { IRecipeSortType, RECIPE_SORTERS } from "@/lib/sorting.recipes";
-import { IStockType } from "@/lib/constants/stock.options";
-import { IReadyToMakeType } from "@/lib/constants/ready-to-make.options";
-import { IConfirmedType } from "@/lib/constants/confirmed.optionts";
+import { useMemo } from "react";
 
 export function useRecipesFilter({
   recipes,
@@ -13,50 +15,72 @@ export function useRecipesFilter({
   readyToMake,
   confirmed,
   sort,
+  series,
 }: {
   recipes: IRecipe[];
   searchQuery: string;
-  categoryId?: number;
+  categoryId?: IRecipeCategoryFilter;
   stock: IStockType;
   readyToMake: IReadyToMakeType;
   confirmed: IConfirmedType;
   sort: IRecipeSortType;
+  series: IRecipeSeriesFilter;
 }) {
   return useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const isSearching = query.length > 0;
 
-    const base = isSearching
-      ? recipes.filter((r) => r.title.toLowerCase().includes(query))
-      : categoryId
-        ? recipes.filter((r) => r.recipeCategoryId === categoryId)
-        : recipes;
+    let result = recipes;
 
-    const stockFiltered =
-      stock === "in"
-        ? base.filter((r) => r.inStock)
-        : stock === "out"
-          ? base.filter((r) => !r.inStock)
-          : base;
+    // 1. CATEGORY (base scope)
+    if (categoryId !== "all") {
+      result = result.filter((r) => r.recipeCategoryId === categoryId);
+    }
 
-    const readyFiltered = stockFiltered.filter((recipe) => {
+    // 2. SEARCH (inside category scope)
+    if (query.length > 0) {
+      result = result.filter((r) => r.title.toLowerCase().includes(query));
+    }
+
+    // 3. STOCK
+    if (stock === "in") {
+      result = result.filter((r) => r.inStock);
+    } else if (stock === "out") {
+      result = result.filter((r) => !r.inStock);
+    }
+
+    // 4. READY
+    result = result.filter((recipe) => {
       if (readyToMake === "all") return true;
 
-      const isReadyToMake = !recipe.ingredients.some(
-        (i) => !i.ingredient.isInStock,
-      );
+      const isReady = !recipe.ingredients.some((i) => !i.ingredient.isInStock);
 
-      return readyToMake === "ready" ? isReadyToMake : !isReadyToMake;
+      return readyToMake === "ready" ? isReady : !isReady;
     });
 
-    const confirmedFiltered = readyFiltered.filter((recipe) => {
+    // 5. CONFIRMED
+    result = result.filter((recipe) => {
       if (confirmed === "all") return true;
-
       return confirmed === "confirmed"
         ? recipe.isConfirmed
         : !recipe.isConfirmed;
     });
 
-    return [...confirmedFiltered].sort(RECIPE_SORTERS[sort]);
-  }, [recipes, searchQuery, categoryId, stock, readyToMake, sort, confirmed]);
+    // 6. SERIES
+    result = result.filter((recipe) => {
+      if (series === "all") return true;
+      return recipe.series === series;
+    });
+
+    // 7. SORT
+    return [...result].sort(RECIPE_SORTERS[sort]);
+  }, [
+    recipes,
+    searchQuery,
+    categoryId,
+    stock,
+    readyToMake,
+    confirmed,
+    series,
+    sort,
+  ]);
 }

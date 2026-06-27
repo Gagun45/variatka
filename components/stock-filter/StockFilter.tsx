@@ -15,7 +15,7 @@ export function FilterButtons<T extends string>({
   options,
 }: Props<T>) {
   return (
-    <>
+    <div className="flex flex-wrap gap-2">
       {options.map((opt) => (
         <Button
           key={opt.value}
@@ -25,6 +25,6 @@ export function FilterButtons<T extends string>({
           {opt.label}
         </Button>
       ))}
-    </>
+    </div>
   );
 }
