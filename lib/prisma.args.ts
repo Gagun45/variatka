@@ -7,7 +7,6 @@ export const recipeArgs = {
         ingredient: true,
       },
     },
-    recipeCategory: true,
   },
 } satisfies Omit<Prisma.RecipeFindManyArgs, "where">;
 
@@ -18,7 +17,6 @@ export const ingredientArgs = {
         recipeIngredients: true,
       },
     },
-    category: true,
   },
 } satisfies Omit<Prisma.IngredientFindManyArgs, "where">;
 
@@ -37,10 +35,8 @@ export const userWithWishlistArgs = {
 } satisfies Omit<Prisma.UserFindManyArgs, "where">;
 
 export type IRecipe = Prisma.RecipeGetPayload<typeof recipeArgs>;
-export type IRecipeCategory = Prisma.RecipeCategoryGetPayload<object>;
 
 export type IIngredient = Prisma.IngredientGetPayload<typeof ingredientArgs>;
-export type IIngredientCategory = Prisma.IngredientCategoryGetPayload<object>;
 
 export type IStuff = Prisma.StuffGetPayload<typeof stuffArgs>;
 

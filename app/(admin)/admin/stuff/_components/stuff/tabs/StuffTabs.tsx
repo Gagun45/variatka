@@ -15,6 +15,7 @@ import {
 import { IStuff } from "@/lib/prisma.args";
 import { useSearchParams } from "next/navigation";
 import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
+import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 
 interface Props {
   stuff: IStuff[];
@@ -59,10 +60,10 @@ const StuffTabs = ({ stuff }: Props) => {
         value={activeCategory}
       />
 
-      <p className="text-sm text-muted-foreground">
-        {filteredStuff.length} results found
-        {isSearching && <span> including &quot;{searchQuery}&quot;</span>}
-      </p>
+      <ResultsFoundText
+        amount={filteredStuff.length}
+        searchQuery={searchQuery}
+      />
 
       <StuffList stuff={filteredStuff} />
     </div>

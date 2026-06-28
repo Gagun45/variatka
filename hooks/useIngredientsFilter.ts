@@ -1,21 +1,22 @@
-import { useMemo } from "react";
+import { IStockType } from "@/lib/constants/stock.options";
+import { IIngredientCategoryFilter } from "@/lib/enumslist/ingredient.constants";
 import { IIngredient } from "@/lib/prisma.args";
 import {
   IIngredientSortType,
   INGREDIENT_SORTERS,
 } from "@/lib/sorting.ingredients";
-import { IStockType } from "@/lib/constants/stock.options";
+import { useMemo } from "react";
 
 export function useIngredientsFilter({
   ingredients,
   searchQuery,
-  categoryId,
+  category,
   stock,
   sort,
 }: {
   ingredients: IIngredient[];
   searchQuery: string;
-  categoryId?: number;
+  category: IIngredientCategoryFilter;
   stock: IStockType;
   sort: IIngredientSortType;
 }) {
@@ -26,9 +27,9 @@ export function useIngredientsFilter({
     // Search globally across all ingredients
     const base = isSearching
       ? ingredients.filter((i) => i.title.toLowerCase().includes(query))
-      : categoryId
-        ? ingredients.filter((i) => i.categoryId === categoryId)
-        : ingredients;
+      : category === "all"
+        ? ingredients
+        : ingredients.filter((i) => i.categoryNew === category);
 
     const stockFiltered =
       stock === "in"
@@ -38,5 +39,5 @@ export function useIngredientsFilter({
           : base;
 
     return [...stockFiltered].sort(INGREDIENT_SORTERS[sort]);
-  }, [ingredients, searchQuery, categoryId, stock, sort]);
+  }, [ingredients, searchQuery, category, stock, sort]);
 }

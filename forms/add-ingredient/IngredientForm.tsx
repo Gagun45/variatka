@@ -2,7 +2,7 @@
 
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { FieldSet } from "@/components/ui/field";
-import { IIngredient, IIngredientCategory } from "@/lib/prisma.args";
+import { IIngredient } from "@/lib/prisma.args";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
@@ -13,29 +13,28 @@ import TitleField from "./fields/TitleField";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
+import { IIngredientCategory } from "@/lib/enumslist/ingredient.constants";
 
 interface Props {
-  categories: IIngredientCategory[];
   onCreate: (dto: IIngredientFormValues) => void;
   ingredient?: IIngredient;
   isPending: boolean;
-  initialCategoryId?: number;
+  initialCategory?: IIngredientCategory;
 }
 
 const IngredientForm = ({
-  categories,
   onCreate,
   ingredient,
   isPending,
-  initialCategoryId,
+  initialCategory,
 }: Props) => {
-  const id = initialCategoryId ?? categories[0].id;
+  const defaultCategory: IIngredientCategory = initialCategory ?? "SPICES";
 
   const schema = zodSchemas.ingredient.create;
   const defaultValues: IIngredientFormValues = {
     title: ingredient?.title ?? "",
     description: ingredient?.description ?? "",
-    categoryId: ingredient?.categoryId ?? id,
+    categoryNew: ingredient?.categoryNew ?? defaultCategory,
     isInStock: ingredient?.isInStock ?? false,
   };
   const form = useForm<IIngredientFormValues>({
@@ -47,10 +46,10 @@ const IngredientForm = ({
     form.reset({
       title: ingredient?.title ?? "",
       description: ingredient?.description ?? "",
-      categoryId: ingredient?.categoryId ?? id,
+      categoryNew: ingredient?.categoryNew ?? defaultCategory,
       isInStock: ingredient?.isInStock ?? false,
     });
-  }, [ingredient, categories, form, id]);
+  }, [ingredient, form, defaultCategory]);
 
   const {
     handleSubmit,
@@ -66,7 +65,7 @@ const IngredientForm = ({
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 border p-2">
         <FieldSet disabled={isPending} className="space-y-4">
-          <CategorySelectField categories={categories} />
+          <CategorySelectField />
           <TitleField />
           <DescriptionField />
           <IsInStockField />

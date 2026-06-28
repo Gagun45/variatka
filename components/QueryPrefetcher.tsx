@@ -28,10 +28,7 @@ const QueryPrefetcher = () => {
       queryFn: recipeService.getWishlist,
     });
     if (!isAdmin) return;
-    qclient.prefetchQuery({
-      queryKey: ingredientKeys.categories,
-      queryFn: ingredientService.getCategories,
-    });
+
     qclient.prefetchQuery({
       queryKey: ingredientKeys.ingredients,
       queryFn: ingredientService.get,

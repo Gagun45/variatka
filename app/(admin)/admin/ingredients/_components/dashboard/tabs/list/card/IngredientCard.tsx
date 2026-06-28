@@ -3,6 +3,7 @@ import StockBadge from "@/components/stock-badge/StockBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { INGREDIENT_CATEGORIES_DATA } from "@/lib/enumslist/ingredient.constants";
 import { IIngredient } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/zustand/recipe.store";
@@ -20,7 +21,9 @@ const IngredientCard = ({
   onSavedToggle,
   onStockToggle,
 }: Props) => {
-  const { title, isInStock, id, isSaved } = ingredient;
+  const { title, isInStock, id, isSaved, categoryNew } = ingredient;
+
+  const categoryLabel = INGREDIENT_CATEGORIES_DATA[categoryNew].label;
 
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
@@ -48,7 +51,7 @@ const IngredientCard = ({
               >
                 {title}
               </Link>
-              <Badge variant={"secondary"}>{ingredient.category.title}</Badge>
+              <Badge variant={"secondary"}>{categoryLabel}</Badge>
             </div>
 
             <Button
