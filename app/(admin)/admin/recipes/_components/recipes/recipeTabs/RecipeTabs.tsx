@@ -28,7 +28,7 @@ const RecipeTabs = ({ recipes }: Props) => {
 
   // ✅ category is now id-based + supports "all"
   const [categoryFilter, setCategoryFilter] =
-    useState<IRecipeCategoryFilter>("all");
+    useState<IRecipeCategoryFilter>("SPICES");
 
   const [stockFilter, setStockFilter] = useState<IStockType>("all");
   const [readyFilter, setReadyFilter] = useState<IReadyToMakeType>("all");

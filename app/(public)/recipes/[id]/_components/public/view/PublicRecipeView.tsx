@@ -44,6 +44,8 @@ export default function PublicRecipeView({ recipe }: Props) {
 
   const imageSrc = getImageUrl(imageKey);
 
+  const spicyOption = SpicyOptions.find((s) => s.value === spicy);
+
   return (
     <div className="mx-auto max-w-6xl py-8">
       <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
@@ -87,7 +89,9 @@ export default function PublicRecipeView({ recipe }: Props) {
 
               <RecipeSeriesBadge series={series} />
               <StockBadge isInStock={isInStock} />
-              {spicy && <Badge>{SpicyOptions[spicy].tooltip}</Badge>}
+              {spicyOption && spicyOption.value > 0 && (
+                <Badge>{spicyOption.tooltip}</Badge>
+              )}
             </div>
           </section>
 

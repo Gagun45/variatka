@@ -31,7 +31,7 @@ const IngredientsTabs = ({ ingredients }: Props) => {
   const searchQuery = searchParams.get("query") ?? "";
 
   const [activeCategory, setActiveCategory] =
-    useState<IIngredientCategoryFilter>("all");
+    useState<IIngredientCategoryFilter>("SPICES");
 
   const [stockFilter, setStockFilter] = useState<IStockType>("all");
 
