@@ -24,6 +24,11 @@ model RecipeCategory {
   recipes     Recipe[] // A category can have many ingredients
 }
 
+enum IngredientCategories {
+  SPICES
+  OTHER
+}
+
 model Ingredient {
   id          Int     @id @default(autoincrement())
   title       String  @unique
@@ -31,6 +36,8 @@ model Ingredient {
 
   imageKey     String?
   imageVersion Int     @default(0)
+
+  categoryNew IngredientCategories @default(SPICES)
 
   isSaved   Boolean  @default(false)
   isInStock Boolean  @default(false)
@@ -48,11 +55,19 @@ enum RecipeSeries {
   NOMLYGOLD
 }
 
+enum RecipeCategories {
+  SPICES
+  SAUCES
+  JAMS
+}
+
 model Recipe {
   id          Int    @id @default(autoincrement())
   title       String @unique
   description String
   notes       String
+
+  category RecipeCategories @default(SPICES)
 
   inStock Int     @default(0)
   isSaved Boolean @default(false)
