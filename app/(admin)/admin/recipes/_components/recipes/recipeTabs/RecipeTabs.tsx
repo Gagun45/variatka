@@ -7,6 +7,7 @@ import { SortSelect } from "@/components/sort-select/SortSelect";
 import { Separator } from "@/components/ui/separator";
 import { useRecipesFilter } from "@/hooks/useRecipesFilter";
 
+import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 import { RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
 import { useRecipeFiltersStore } from "@/zustand/recipe.filter.store";
@@ -97,24 +98,13 @@ const RecipeTabs = ({ recipes }: Props) => {
       </div>
 
       {/* RESULTS */}
-      {filteredRecipes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {searchQuery.trim()
-            ? `No recipes found for "${searchQuery}"`
-            : "Found 0 recipes"}
-        </p>
-      ) : (
-        <>
-          {searchQuery.trim() && (
-            <p className="text-sm text-muted-foreground">
-              {filteredRecipes.length} recipes include{" "}
-              <span className="italic">&quot;{searchQuery}&quot;</span>
-            </p>
-          )}
 
-          <RecipesList recipes={filteredRecipes} />
-        </>
-      )}
+      <ResultsFoundText
+        amount={filteredRecipes.length}
+        searchQuery={searchQuery}
+      />
+
+      <RecipesList recipes={filteredRecipes} />
     </div>
   );
 };

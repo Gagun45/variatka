@@ -7,16 +7,15 @@ import { Separator } from "@/components/ui/separator";
 import StuffList from "../list/StuffList";
 
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
+import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
+import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 import {
   IStuffCategory,
   IStuffCategoryFilter,
-  STUFF_CATEGORY_FILTER_OPTIONS,
 } from "@/lib/enumslist/stuff.constants";
 import { IStuff } from "@/lib/prisma.args";
 import { useSearchParams } from "next/navigation";
 import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
-import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
-import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 
 interface Props {
   stuff: IStuff[];
