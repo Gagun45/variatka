@@ -1,5 +1,4 @@
 import StockBadge from "@/components/stock-badge/StockBadge";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { IStuff } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";

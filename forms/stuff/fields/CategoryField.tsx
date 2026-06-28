@@ -7,37 +7,30 @@ import {
 } from "@/components/ui/select";
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { IStuffCategory } from "@/lib/prisma.args";
 import { ICreateStuffDto } from "@/zod/stuff.schema";
 import { Controller, useFormContext } from "react-hook-form";
+import { STUFF_CATEGORY_ONLY_OPTIONS } from "@/lib/enumslist/stuff.constants";
 
-type Props = {
-  categories: IStuffCategory[];
-};
-
-const CategorySelectField = ({ categories }: Props) => {
+const CategorySelectField = () => {
   const { control } = useFormContext<ICreateStuffDto>();
 
   return (
     <Controller
-      name="stuffCategoryId"
+      name="category"
       control={control}
       render={({ field, fieldState }) => (
         <Field>
           <FieldLabel>Category</FieldLabel>
 
-          <Select
-            value={field.value?.toString()}
-            onValueChange={(value) => field.onChange(Number(value))}
-          >
+          <Select value={field.value} onValueChange={field.onChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
 
             <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id.toString()}>
-                  {cat.title}
+              {STUFF_CATEGORY_ONLY_OPTIONS.map((opt) => (
+                <SelectItem key={opt.label} value={opt.value}>
+                  {opt.label}
                 </SelectItem>
               ))}
             </SelectContent>

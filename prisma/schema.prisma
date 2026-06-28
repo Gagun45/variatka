@@ -92,12 +92,6 @@ enum StuffCategories {
   JARS
 }
 
-model StuffCategory {
-  id    Int     @id @default(autoincrement())
-  title String  @unique
-  stuff Stuff[]
-}
-
 model Stuff {
   id          Int     @id @default(autoincrement())
   title       String  @unique
@@ -108,9 +102,6 @@ model Stuff {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  stuffCategory   StuffCategory @relation(fields: [stuffCategoryId], references: [id], onDelete: Restrict)
-  stuffCategoryId Int
 }
 
 enum Role {

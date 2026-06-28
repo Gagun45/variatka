@@ -5,7 +5,6 @@ import StateScreen from "@/components/state-screen/StateScreen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useEditStuff } from "@/features/stuff/hooks/useEditStuff";
-import { useStuffCategories } from "@/features/stuff/hooks/useGetCategories";
 import { useStuff } from "@/features/stuff/hooks/useStuff";
 import StuffForm from "@/forms/stuff/StuffForm";
 import { frontendUrls } from "@/lib/urls";
@@ -19,20 +18,15 @@ interface Props {
 
 const StuffEdit = ({ id }: Props) => {
   const router = useRouter();
-  const {
-    data: categories,
-    isLoading: isCategoriesLoading,
-    isError: isCategoriesError,
-  } = useStuffCategories();
+
   const {
     data: stuff,
     isLoading: isStuffLoading,
     isError: isStuffError,
   } = useStuff();
   const { mutate, isPending } = useEditStuff();
-  if (isCategoriesLoading || isStuffLoading) return <Loader />;
-  if (isCategoriesError || !categories || isStuffError || !stuff)
-    return <StateScreen />;
+  if (isStuffLoading) return <Loader />;
+  if (isStuffError || !stuff) return <StateScreen />;
   const singleStuff = stuff.find((s) => s.id === id);
   if (!singleStuff) return <StateScreen title="Stuff not found" />;
   const onSubmit = (dto: ICreateStuffDto) => {
@@ -59,7 +53,6 @@ const StuffEdit = ({ id }: Props) => {
 
         <CardContent>
           <StuffForm
-            categories={categories}
             isPending={isPending}
             onClick={onSubmit}
             stuff={singleStuff}

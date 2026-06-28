@@ -2,7 +2,7 @@
 
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { FieldSet } from "@/components/ui/field";
-import { IStuff, IStuffCategory } from "@/lib/prisma.args";
+import { IStuff } from "@/lib/prisma.args";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
@@ -14,32 +14,30 @@ import CategorySelectField from "./fields/CategoryField";
 import DescriptionField from "./fields/DescriptionField";
 import InStockField from "./fields/InStockField";
 import TitleField from "./fields/TitleField";
+import { IStuffCategory } from "@/lib/enumslist/stuff.constants";
 
 interface Props {
-  categories: IStuffCategory[];
   onClick: (dto: ICreateStuffDto) => void;
+  initialCategory?: IStuffCategory;
   stuff?: IStuff;
   isPending: boolean;
-  initialCategoryId?: number;
   onReset?: () => void;
 }
 
 const StuffForm = ({
-  categories,
   onClick,
   stuff,
   isPending,
-  initialCategoryId,
+  initialCategory = "DECOR",
   onReset,
 }: Props) => {
-  const id = initialCategoryId ?? categories[0].id;
-
+  const defaultCategory = stuff?.category ?? initialCategory;
   const schema = zodSchemas.stuff.create;
   const defaultValues: ICreateStuffDto = {
     title: stuff?.title ?? "",
     description: stuff?.description ?? "",
-    stuffCategoryId: stuff?.stuffCategoryId ?? id,
     inStock: stuff?.inStock ?? 0,
+    category: defaultCategory,
   };
   const form = useForm<ICreateStuffDto>({
     resolver: zodResolver(schema),
@@ -50,10 +48,10 @@ const StuffForm = ({
     form.reset({
       title: stuff?.title ?? "",
       description: stuff?.description ?? "",
-      stuffCategoryId: stuff?.stuffCategoryId ?? id,
       inStock: stuff?.inStock ?? 0,
+      category: stuff?.category ?? initialCategory,
     });
-  }, [stuff, categories, form, id]);
+  }, [form, stuff, initialCategory]);
 
   const {
     handleSubmit,
@@ -71,9 +69,9 @@ const StuffForm = ({
     if (!stuff) {
       reset({
         description: "",
-        stuffCategoryId: dto.stuffCategoryId,
         inStock: 0,
         title: "",
+        category: initialCategory,
       });
     }
   };
@@ -82,7 +80,7 @@ const StuffForm = ({
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 border p-2">
         <FieldSet disabled={isPending} className="space-y-4">
-          <CategorySelectField categories={categories} />
+          <CategorySelectField />
           <TitleField />
           <DescriptionField />
           <InStockField />

@@ -41,10 +41,7 @@ const QueryPrefetcher = () => {
       queryKey: recipeKeys.recipes,
       queryFn: recipeService.get,
     });
-    qclient.prefetchQuery({
-      queryKey: stuffKeys.categories,
-      queryFn: stuffService.getCategories,
-    });
+
     qclient.prefetchQuery({
       queryKey: stuffKeys.stuff,
       queryFn: stuffService.get,

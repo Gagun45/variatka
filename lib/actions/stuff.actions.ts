@@ -1,62 +1,17 @@
 "use server";
 
-import { ICreateStuffCategoryDto, ICreateStuffDto } from "@/zod/stuff.schema";
+import { ICreateStuffDto } from "@/zod/stuff.schema";
 
 import { AppError } from "../error";
 import { prisma } from "../prisma";
-import { IStuff, IStuffCategory, stuffArgs } from "../prisma.args";
+import { IStuff, stuffArgs } from "../prisma.args";
 import { IActionResponse } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
-import { Prisma } from "@prisma/client";
 import { requireAdmin } from "./user.actions";
-
-export const createStuffCategory = async (
-  dto: ICreateStuffCategoryDto,
-): Promise<IActionResponse<IStuffCategory>> => {
-  try {
-    await requireAdmin();
-    const existingCategory = await prisma.stuffCategory.findUnique({
-      where: { title: dto.title },
-    });
-    if (existingCategory)
-      throw new AppError("A category with this title already exists.");
-
-    const newCategory = await prisma.stuffCategory.create({ data: dto });
-
-    return {
-      data: newCategory,
-      ok: true,
-    };
-  } catch (e) {
-    console.error("Error in createStuffCategory:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
-};
-
-export const getStuffCategories = async (): Promise<
-  IActionResponse<IStuffCategory[]>
-> => {
-  try {
-    const categories = await prisma.stuffCategory.findMany();
-    return {
-      ok: true,
-      data: categories,
-    };
-  } catch (e) {
-    console.error("Error in getStuffCategories:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
-};
 
 export const getStuff = async (): Promise<IActionResponse<IStuff[]>> => {
   try {
-    const stuff = await prisma.stuff.findMany(stuffArgs);
+    const stuff = await prisma.stuff.findMany();
     return {
       ok: true,
       data: stuff,
@@ -75,11 +30,7 @@ export const createStuff = async (
 ): Promise<IActionResponse<IStuff>> => {
   try {
     await requireAdmin();
-    const { stuffCategoryId, title } = dto;
-    const existingCategory = await prisma.stuffCategory.findUnique({
-      where: { id: stuffCategoryId },
-    });
-    if (!existingCategory) throw new AppError("Category not found");
+    const { title } = dto;
 
     const existingStuff = await prisma.stuff.findUnique({
       where: { title },
@@ -158,83 +109,6 @@ export const deleteStuff = async (
     };
   } catch (e) {
     console.error("Error in deleteStuff:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
-};
-
-export const editStuffCategory = async (
-  id: number,
-  dto: ICreateStuffCategoryDto,
-): Promise<IActionResponse<IStuffCategory>> => {
-  try {
-    await requireAdmin();
-
-    const updatedCategory = await prisma.stuffCategory.update({
-      where: { id },
-      data: dto,
-    });
-    return {
-      ok: true,
-      data: updatedCategory,
-    };
-  } catch (e) {
-    console.error("Error in editStuffCategory:", e);
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2025") {
-        return ACTION_ERROR("Category not found");
-      }
-      if (e.code === "P2002") {
-        return ACTION_ERROR("Category with the same title already exists");
-      }
-    }
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
-};
-
-export const deleteStuffCategory = async (
-  id: number,
-): Promise<IActionResponse<number>> => {
-  try {
-    await requireAdmin();
-    const existingCategory = await prisma.stuffCategory.findUnique({
-      where: { id },
-      select: {
-        _count: {
-          select: {
-            stuff: true,
-          },
-        },
-      },
-    });
-    if (!existingCategory) throw new AppError("Category not found");
-    const totalItems = existingCategory._count.stuff;
-    if (totalItems > 0)
-      throw new AppError(
-        `Cannot delete category because it contains ${totalItems} stuff`,
-      );
-    await prisma.stuffCategory.delete({
-      where: { id },
-    });
-    return {
-      ok: true,
-      data: id,
-    };
-  } catch (e) {
-    console.error("Error in deleteStuffCategory:", e);
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2025") {
-        return ACTION_ERROR("Category not found");
-      }
-      if (e.code === "P2003") {
-        return ACTION_ERROR("Cannot delete category because it is in use");
-      }
-    }
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }

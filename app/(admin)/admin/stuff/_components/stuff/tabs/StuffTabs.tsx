@@ -2,83 +2,69 @@
 
 import { useState } from "react";
 
-import CategoryButton from "@/components/cat-button/CategoryButton";
 import { Separator } from "@/components/ui/separator";
 
 import StuffList from "../list/StuffList";
+
+import { FilterButtons } from "@/components/stock-filter/StockFilter";
+import {
+  IStuffCategory,
+  IStuffCategoryFilter,
+  STUFF_CATEGORY_FILTER_OPTIONS,
+} from "@/lib/enumslist/stuff.constants";
+import { IStuff } from "@/lib/prisma.args";
+import { useSearchParams } from "next/navigation";
 import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
 
-import { IStuff, IStuffCategory } from "@/lib/prisma.args";
-import { useSearchParams } from "next/navigation";
-
 interface Props {
-  categories: IStuffCategory[];
   stuff: IStuff[];
 }
 
-const StuffTabs = ({ categories, stuff }: Props) => {
+const StuffTabs = ({ stuff }: Props) => {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("query") ?? "";
 
-  const [activeCategory, setActiveCategory] = useState(categories[0].title);
-
-  const active = categories.find((c) => c.title === activeCategory);
+  const [activeCategory, setActiveCategory] =
+    useState<IStuffCategoryFilter>("all");
 
   const isSearching = searchQuery.trim().length > 0;
   const query = searchQuery.toLowerCase().trim();
 
+  const base =
+    activeCategory === "all"
+      ? stuff
+      : stuff.filter((s) => s.category === activeCategory);
+
   // 1. BASE: search overrides category
   const baseStuff = isSearching
-    ? stuff.filter((s) => s.title.toLowerCase().includes(query))
-    : stuff.filter((s) => s.stuffCategoryId === active?.id);
+    ? base.filter((s) => s.title.toLowerCase().includes(query))
+    : base;
 
   // 2. RESULT
   const filteredStuff = baseStuff;
 
+  const initialCategory: IStuffCategory =
+    activeCategory === "all" ? "DECOR" : activeCategory;
+
   return (
     <div className="flex flex-col gap-4 w-full mx-auto">
       {/* CATEGORY BAR */}
-      <div className="flex flex-wrap gap-4 justify-center">
-        {categories.map((cat) => {
-          const isActive = cat.title === activeCategory;
 
-          const totalItems = stuff.filter(
-            (s) => s.stuffCategoryId === cat.id,
-          ).length;
-
-          return (
-            <CategoryButton
-              key={cat.id}
-              title={`${cat.title} (${totalItems})`}
-              isActive={isActive}
-              onClick={() => setActiveCategory(cat.title)}
-            />
-          );
-        })}
-
-        <StuffFormsDialog activeCategoryId={active?.id} />
-      </div>
+      <StuffFormsDialog activeCategory={initialCategory} />
 
       <Separator />
+      <FilterButtons
+        onChange={setActiveCategory}
+        options={STUFF_CATEGORY_FILTER_OPTIONS}
+        value={activeCategory}
+      />
 
-      {filteredStuff.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {isSearching
-            ? `No items found for "${searchQuery}"`
-            : "Found 0 items"}
-        </p>
-      ) : (
-        <>
-          {isSearching && (
-            <p className="text-sm text-muted-foreground">
-              {filteredStuff.length} items found for{" "}
-              <span className="italic">&quot;{searchQuery}&quot;</span>
-            </p>
-          )}
+      <p className="text-sm text-muted-foreground">
+        {filteredStuff.length} results found
+        {isSearching && <span> including &quot;{searchQuery}&quot;</span>}
+      </p>
 
-          <StuffList stuff={filteredStuff} />
-        </>
-      )}
+      <StuffList stuff={filteredStuff} />
     </div>
   );
 };

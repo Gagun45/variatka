@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ViewItemCategory from "@/components/view-item/ViewItemCategory";
 import ViewItemDescription from "@/components/view-item/ViewItemDescription";
 import ViewItemEditLink from "@/components/view-item/ViewItemEditLink";
+import { STUFF_CATEGORIES_DATA } from "@/lib/enumslist/stuff.constants";
 import { IStuff } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 
@@ -11,12 +12,13 @@ interface Props {
 }
 
 const StuffView = ({ stuff }: Props) => {
-  const { description, inStock, stuffCategory, id } = stuff;
+  const { description, inStock, id, category } = stuff;
+  const categoryTitle = STUFF_CATEGORIES_DATA[category].label;
   return (
     <Card>
       <CardHeader className="view-item-card-header">
         <div className="view-item-card-header-row">
-          <ViewItemCategory categoryTitle={stuffCategory.title} />
+          <ViewItemCategory categoryTitle={categoryTitle} />
           <StockBadge isInStock={!!inStock} quantity={inStock} />
         </div>
         <div className="view-item-card-header-row">
