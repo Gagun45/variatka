@@ -52,7 +52,7 @@ const StuffTabs = ({ stuff }: Props) => {
     <div className="flex flex-col gap-4 w-full mx-auto">
       {/* CATEGORY BAR */}
 
-      <StuffFormsDialog activeCategory={initialCategory} />
+      <StuffFormsDialog initialCategory={initialCategory} />
 
       <Separator />
       <FilterButtons

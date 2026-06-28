@@ -14,10 +14,10 @@ import { PlusCircle } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
-  activeCategory: IStuffCategory;
+  initialCategory: IStuffCategory;
 }
 
-const StuffFormsDialog = ({ activeCategory }: Props) => {
+const StuffFormsDialog = ({ initialCategory }: Props) => {
   const { mutate, isPending } = useCreateStuff();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -44,7 +44,7 @@ const StuffFormsDialog = ({ activeCategory }: Props) => {
         </DialogHeader>
 
         <StuffForm
-          initialCategory={activeCategory}
+          initialCategory={initialCategory}
           isPending={isPending}
           onClick={onStuffCreate}
         />
