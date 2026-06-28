@@ -7,12 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
+import { SpicyOptions } from "@/forms/recipe/fields/SpicyField";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
 import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
-import { BookOpen, ChefHat } from "lucide-react";
+import { ChefHat } from "lucide-react";
 import Image from "next/image";
 
 interface Props {
@@ -31,6 +32,7 @@ export default function PublicRecipeView({ recipe }: Props) {
     description,
     isInStock,
     notes,
+    spicy,
   } = recipe;
 
   const wishlistIdsSet = useWishlistIdsSet();
@@ -58,11 +60,9 @@ export default function PublicRecipeView({ recipe }: Props) {
 
             <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/70 to-transparent" />
 
-            <Badge className="absolute bottom-4 left-4">{categoryLabel}</Badge>
-
             {isAuthenticated && (
               <WishedToggleButton
-                className="absolute right-4 top-4 bg-background/90 backdrop-blur"
+                className="absolute right-4 bottom-4 size-10 border-muted-foreground backdrop-blur"
                 isWished={isWished}
                 onToggle={() => mutate(id)}
               />
@@ -80,18 +80,14 @@ export default function PublicRecipeView({ recipe }: Props) {
             </p>
 
             <div className="flex flex-wrap gap-3">
-              <Badge variant="secondary" className="px-3 py-1">
+              <Badge variant={"outline"} className="px-3 py-1">
                 <ChefHat className="mr-2 h-4 w-4" />
                 {categoryLabel}
               </Badge>
 
-              <Badge variant="outline" className="px-3 py-1">
-                <BookOpen className="mr-2 h-4 w-4" />
-                {ingredients.length} ingredients
-              </Badge>
-
-              <RecipeSeriesBadge variant={"default"} series={series} />
+              <RecipeSeriesBadge series={series} />
               <StockBadge isInStock={isInStock} />
+              {spicy && <Badge>{SpicyOptions[spicy].tooltip}</Badge>}
             </div>
           </section>
 

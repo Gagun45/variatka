@@ -13,7 +13,7 @@ interface Props {
 
 const RecipeSeriesBadge = ({ series, className, variant }: Props) => {
   return (
-    <Badge className={`${className}`} variant={variant ?? "outline"}>
+    <Badge className={`${className}`} variant={variant ?? "default"}>
       {RECIPE_SERIES_DATA[series].label}
     </Badge>
   );

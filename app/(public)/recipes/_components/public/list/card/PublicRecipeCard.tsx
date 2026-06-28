@@ -1,13 +1,13 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
-import RecipeSeriesBadge from "@/components/series-badge/RecipeSeriesBadge";
-import SpicyLevel from "@/components/spicy/SpicyLevel";
+import SpicyLevelTooltip from "@/components/spicy-tooltip/SpicyLevelTooltip";
 import StockBadge from "@/components/stock-badge/StockBadge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 import { RECIPE_SERIES_DATA } from "@/lib/enumslist/series.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
@@ -28,29 +28,61 @@ const PublicRecipeCard = ({
   onToggleWished,
   isAuthenticated,
 }: Props) => {
-  const { id, imageKey, title, isInStock, description, series, spicy } = recipe;
+  const {
+    id,
+    imageKey,
+    title,
+    isInStock,
+    description,
+    category,
+    series,
+    spicy,
+  } = recipe;
   const isWished = wishlistIdsSet.has(id);
   const imageSrc = getImageUrl(imageKey);
   const { icon, iconClassName, label } = RECIPE_SERIES_DATA[series];
   const Icon = icon;
+  const {
+    icon: categoryIcon,
+    label: categoryLabel,
+    iconClassName: categoryIconClassName,
+  } = RECIPE_CATEGORIES_DATA[category];
+  const CategoryIcon = categoryIcon;
 
   return (
     <Card className="overflow-hidden">
       {/* Image */}
-
-      {Icon && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Icon
-              size={24}
-              className={`${iconClassName} mx-auto cursor-help`}
-            />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{label}</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      <CardHeader className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {CategoryIcon && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CategoryIcon
+                  size={24}
+                  className={`${categoryIconClassName}`}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{categoryLabel}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {Icon && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Icon size={24} className={`${iconClassName}`} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{label}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <SpicyLevelTooltip level={spicy} />
+        </div>
+        {isAuthenticated && (
+          <WishedToggleButton onToggle={onToggleWished} isWished={isWished} />
+        )}
+      </CardHeader>
 
       <Link href={frontendUrls.public.view(id)}>
         <div className="relative aspect-square w-full">
@@ -69,13 +101,6 @@ const PublicRecipeCard = ({
         <div className="flex flex-col gap-2 min-w-0 w-full">
           <div className="flex w-full items-center justify-between">
             <StockBadge isInStock={isInStock} />
-            <SpicyLevel level={spicy} />
-            {isAuthenticated && (
-              <WishedToggleButton
-                onToggle={onToggleWished}
-                isWished={isWished}
-              />
-            )}
           </div>
 
           <Link

@@ -4,12 +4,32 @@ import { IRecipeDto } from "@/zod/recipe.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
 export const SpicyOptions = [
-  { value: 0, label: "Not set" },
-  { value: 1, label: "Not spicy" },
-  { value: 2, label: "🌶️" },
-  { value: 3, label: "🌶️🌶️" },
-  { value: 4, label: "🌶️🌶️🌶️" },
-];
+  {
+    value: 0,
+    label: "Not set",
+    tooltip: "Spiciness not specified",
+  },
+  {
+    value: 1,
+    label: "Not spicy",
+    tooltip: "Not spicy",
+  },
+  {
+    value: 2,
+    label: "🌶️",
+    tooltip: "Mild",
+  },
+  {
+    value: 3,
+    label: "🌶️🌶️",
+    tooltip: "Medium",
+  },
+  {
+    value: 4,
+    label: "🌶️🌶️🌶️",
+    tooltip: "Hot",
+  },
+] as const;
 
 const SpicyField = () => {
   const { control } = useFormContext<IRecipeDto>();

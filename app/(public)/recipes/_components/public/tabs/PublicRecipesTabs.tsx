@@ -18,6 +18,7 @@ import {
 import { IPublicRecipe } from "@/lib/types";
 import { useSearchParams } from "next/navigation";
 import PublicRecipesList from "../list/PublicRecipesList";
+import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 
 interface Props {
   recipes: IPublicRecipe[];
@@ -74,24 +75,13 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
           />
         </div>
       </div>
-      {filteredRecipes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {searchQuery.trim()
-            ? `No recipes found for "${searchQuery}"`
-            : "Found 0 ingredients"}
-        </p>
-      ) : (
-        <>
-          {searchQuery.trim() && (
-            <p className="text-sm text-muted-foreground">
-              {filteredRecipes.length} recipes include{" "}
-              <span className="italic">&quot;{searchQuery}&quot;</span> in title
-            </p>
-          )}
 
-          <PublicRecipesList recipes={filteredRecipes} />
-        </>
-      )}
+      <ResultsFoundText
+        amount={filteredRecipes.length}
+        searchQuery={searchQuery}
+      />
+
+      <PublicRecipesList recipes={filteredRecipes} />
     </div>
   );
 };
