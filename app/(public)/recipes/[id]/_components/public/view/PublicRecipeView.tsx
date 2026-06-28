@@ -4,6 +4,7 @@ import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggle
 import RecipeSeriesBadge from "@/components/series-badge/RecipeSeriesBadge";
 import StockBadge from "@/components/stock-badge/StockBadge";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
@@ -13,15 +14,17 @@ import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
 import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
+import { frontendUrls } from "@/lib/urls";
 import { ChefHat } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Props {
   recipe: IPublicRecipe;
 }
 
 export default function PublicRecipeView({ recipe }: Props) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const {
     title,
     id,
@@ -30,7 +33,7 @@ export default function PublicRecipeView({ recipe }: Props) {
     series,
     ingredients,
     description,
-    isInStock,
+    inStock,
     notes,
     spicy,
   } = recipe;
@@ -59,6 +62,14 @@ export default function PublicRecipeView({ recipe }: Props) {
               height={500}
               className="aspect-square w-full object-cover transition duration-300 hover:scale-105"
             />
+            {isAdmin && (
+              <Link
+                className={`${buttonVariants()} absolute top-4 right-4`}
+                href={frontendUrls.recipes.edit(id)}
+              >
+                Edit
+              </Link>
+            )}
 
             <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/70 to-transparent" />
 
@@ -88,7 +99,7 @@ export default function PublicRecipeView({ recipe }: Props) {
               </Badge>
 
               <RecipeSeriesBadge series={series} />
-              <StockBadge isInStock={isInStock} />
+              <StockBadge isInStock={!!inStock} quantity={inStock} />
               {spicyOption && spicyOption.value > 0 && (
                 <Badge>{spicyOption.tooltip}</Badge>
               )}

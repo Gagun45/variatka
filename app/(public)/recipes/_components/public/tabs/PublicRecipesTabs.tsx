@@ -50,9 +50,10 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
       <Separator />
 
       <div className="flex justify-between flex-wrap gap-4">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <FilterButtons
             value={categoryFilter}
+            variant="bigger"
             onChange={setCategoryFilter}
             config={FILTER_CONFIGS.recipes.category}
           />

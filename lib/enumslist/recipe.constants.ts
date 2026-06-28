@@ -8,8 +8,8 @@ import { IOptionListType } from "./types";
 // 1. Create a browser-safe pseudo-enum
 export const RECIPE_CATEGORIES = {
   SPICES: "SPICES",
-  JAMS: "JAMS",
   SAUCES: "SAUCES",
+  JAMS: "JAMS",
 } as const;
 
 // 2. Derive the type from the object

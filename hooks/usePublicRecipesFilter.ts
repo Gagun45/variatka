@@ -43,9 +43,9 @@ export function usePublicRecipesFilter({
 
     // 3. STOCK
     if (stock === "in") {
-      result = result.filter((recipe) => recipe.isInStock);
+      result = result.filter((recipe) => recipe.inStock > 0);
     } else if (stock === "out") {
-      result = result.filter((recipe) => !recipe.isInStock);
+      result = result.filter((recipe) => recipe.inStock === 0);
     }
 
     if (series !== "all") {

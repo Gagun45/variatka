@@ -61,7 +61,7 @@ export type IPublicRecipe = {
   id: number;
   title: string;
   description: string;
-  isInStock: boolean;
+  inStock: number;
   spicy: number;
   series: IRecipeSeries;
   notes: string;

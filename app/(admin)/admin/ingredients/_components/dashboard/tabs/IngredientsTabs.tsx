@@ -44,8 +44,9 @@ const IngredientsTabs = ({ ingredients }: Props) => {
       </div>
       <Separator />
       <div className="flex justify-between flex-wrap gap-4">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <FilterButtons
+            variant="bigger"
             value={category}
             onChange={setCategory}
             config={FILTER_CONFIGS.ingredients.category}

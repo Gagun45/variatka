@@ -7,14 +7,23 @@ interface Props<T extends string> {
   value: T;
   onChange: (value: T) => void;
   config: IFilterConfig<T>;
+  variant?: "bigger";
 }
 
 export function FilterButtons<T extends string>({
   value,
   onChange,
   config,
+  variant,
 }: Props<T>) {
   const { label, options } = config;
+  let styles = "";
+  switch (variant) {
+    case "bigger":
+      styles = "text-lg p-6 font-bold";
+      break;
+    default:
+  }
   return (
     <div className="space-y-1.5">
       {label && (
@@ -30,11 +39,18 @@ export function FilterButtons<T extends string>({
           return (
             <Button
               key={opt.value}
-              size="sm" // Makes buttons slightly more compact and elegant
+              size="sm"
               variant={isSelected ? "default" : "outline"}
               onClick={() => onChange(opt.value)}
-              className={`h-8 px-3 text-xs font-medium gap-1.5 transition-all rounded-md
-            ${!isSelected ? "text-neutral-600 bg-neutral-50/50 hover:bg-neutral-100 dark:text-neutral-400 dark:bg-transparent" : ""}`}
+              className={`
+    h-8 px-3 text-xs font-medium gap-1.5 transition-all rounded-md
+    ${
+      !isSelected
+        ? "text-neutral-600 bg-neutral-50/50 hover:bg-neutral-100 dark:text-neutral-400 dark:bg-transparent"
+        : ""
+    }
+    ${variant && styles}
+  `}
             >
               {Icon && (
                 <Icon

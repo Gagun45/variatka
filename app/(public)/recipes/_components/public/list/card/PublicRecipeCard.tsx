@@ -28,16 +28,8 @@ const PublicRecipeCard = ({
   onToggleWished,
   isAuthenticated,
 }: Props) => {
-  const {
-    id,
-    imageKey,
-    title,
-    isInStock,
-    description,
-    category,
-    series,
-    spicy,
-  } = recipe;
+  const { id, imageKey, title, inStock, description, category, series, spicy } =
+    recipe;
   const isWished = wishlistIdsSet.has(id);
   const imageSrc = getImageUrl(imageKey);
   const { icon, iconClassName, label } = RECIPE_SERIES_DATA[series];
@@ -100,7 +92,7 @@ const PublicRecipeCard = ({
       <CardContent className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-2 min-w-0 w-full">
           <div className="flex w-full items-center justify-between">
-            <StockBadge isInStock={isInStock} />
+            <StockBadge isInStock={!!inStock} quantity={inStock} />
           </div>
 
           <Link
