@@ -14,6 +14,7 @@ import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleS
 import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/zustand/recipe.store";
 import IngredientImageViewAdmin from "./img-admin/IngredientImageViewAdmin";
+import { INGREDIENT_CATEGORIES_DATA } from "@/lib/enumslist/ingredient.constants";
 
 interface Props {
   ingredient: IIngredient;
@@ -22,17 +23,12 @@ interface Props {
 const IngredientView = ({ ingredient }: Props) => {
   const { mutate } = useToggleSavedIngredient();
   const { mutate: stockMutate } = useToggleIngredientStock();
-  const {
-    description,
-
-    category,
-    isInStock,
-    id,
-    isSaved,
-  } = ingredient;
+  const { description, categoryNew, isInStock, id, isSaved } = ingredient;
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
   );
+
+  const categoryLabel = INGREDIENT_CATEGORIES_DATA[categoryNew].label;
 
   const onToggleSaved = () => {
     mutate({ ingredientId: id, isSaved });
@@ -52,7 +48,7 @@ const IngredientView = ({ ingredient }: Props) => {
     <Card>
       <CardHeader className="view-item-card-header">
         <div className="view-item-card-header-row">
-          <ViewItemCategory categoryTitle={category.title} />
+          <ViewItemCategory categoryTitle={categoryLabel} />
           <StockBadge isInStock={isInStock} onClick={onToggleStock} />
         </div>
         <div className="view-item-card-header-row">

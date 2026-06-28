@@ -25,7 +25,7 @@ const initialDraft: IRecipeDto = {
   description: "",
   notes: "",
   inStock: 0,
-  recipeCategoryId: 0,
+  category: "SPICES",
   confirmationNotes: "",
   isConfirmed: false,
   spicy: 0,

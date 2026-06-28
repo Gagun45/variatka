@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
+import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
 import { BookOpen, ChefHat } from "lucide-react";
@@ -24,7 +25,7 @@ export default function PublicRecipeView({ recipe }: Props) {
     title,
     id,
     imageKey,
-    recipeCategory,
+    category,
     series,
     ingredients,
     description,
@@ -34,6 +35,8 @@ export default function PublicRecipeView({ recipe }: Props) {
 
   const wishlistIdsSet = useWishlistIdsSet();
   const isWished = wishlistIdsSet.has(id);
+
+  const categoryLabel = RECIPE_CATEGORIES_DATA[category].label;
 
   const { mutate } = useToggleWishlist();
 
@@ -55,9 +58,7 @@ export default function PublicRecipeView({ recipe }: Props) {
 
             <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/70 to-transparent" />
 
-            <Badge className="absolute bottom-4 left-4">
-              {recipeCategory.title}
-            </Badge>
+            <Badge className="absolute bottom-4 left-4">{categoryLabel}</Badge>
 
             {isAuthenticated && (
               <WishedToggleButton
@@ -81,7 +82,7 @@ export default function PublicRecipeView({ recipe }: Props) {
             <div className="flex flex-wrap gap-3">
               <Badge variant="secondary" className="px-3 py-1">
                 <ChefHat className="mr-2 h-4 w-4" />
-                {recipeCategory.title}
+                {categoryLabel}
               </Badge>
 
               <Badge variant="outline" className="px-3 py-1">

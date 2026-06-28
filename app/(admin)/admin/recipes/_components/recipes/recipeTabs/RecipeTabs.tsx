@@ -1,9 +1,8 @@
 "use client";
 
-import { IRecipe, IRecipeCategory } from "@/lib/prisma.args";
+import { IRecipe } from "@/lib/prisma.args";
 import { useState } from "react";
 
-import CategoryButton from "@/components/cat-button/CategoryButton";
 import { SortSelect } from "@/components/sort-select/SortSelect";
 import { FilterButtons } from "@/components/stock-filter/StockFilter";
 import { Separator } from "@/components/ui/separator";
@@ -16,29 +15,30 @@ import {
   IReadyToMakeType,
   READY_TO_MAKE_OPTIONS,
 } from "@/lib/constants/ready-to-make.options";
-import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
-import { IRecipeSortType, RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
-import { useSearchParams } from "next/navigation";
-import RecipeFormsDialog from "./forms-dialog/RecipeFormsDialog";
-import RecipesList from "./recipes-list/RecipesList";
 import {
   IRecipeSeriesFilter,
   RECIPE_SERIES_OPTIONS,
 } from "@/lib/constants/series.options";
-
-type CategoryFilter = "all" | number;
+import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
+import {
+  IRecipeCategoryFilter,
+  RECIPE_CATEGORY_FILTER_OPTIONS,
+} from "@/lib/enumslist/recipe.constants";
+import { IRecipeSortType, RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
+import { useSearchParams } from "next/navigation";
+import RecipesList from "./recipes-list/RecipesList";
 
 interface Props {
-  categories: IRecipeCategory[];
   recipes: IRecipe[];
 }
 
-const RecipeTabs = ({ categories, recipes }: Props) => {
+const RecipeTabs = ({ recipes }: Props) => {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("query") ?? "";
 
   // ✅ category is now id-based + supports "all"
-  const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
+  const [categoryFilter, setCategoryFilter] =
+    useState<IRecipeCategoryFilter>("all");
 
   const [stockFilter, setStockFilter] = useState<IStockType>("all");
   const [readyFilter, setReadyFilter] = useState<IReadyToMakeType>("all");
@@ -50,7 +50,7 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
   const filteredRecipes = useRecipesFilter({
     recipes,
     searchQuery,
-    categoryId: activeCategory,
+    category: categoryFilter,
     stock: stockFilter,
     sort,
     readyToMake: readyFilter,
@@ -61,33 +61,18 @@ const RecipeTabs = ({ categories, recipes }: Props) => {
   return (
     <div className="flex flex-col gap-4 w-full mx-auto">
       {/* CATEGORY ROW */}
-      <div className="flex flex-wrap gap-4 justify-center">
-        {[{ id: "all" as const, title: "All" }, ...categories].map((cat) => {
-          const isActive = cat.id === activeCategory;
-
-          const totalItems =
-            cat.id === "all"
-              ? recipes.length
-              : recipes.filter((r) => r.recipeCategoryId === cat.id).length;
-
-          return (
-            <CategoryButton
-              key={cat.id}
-              title={`${cat.title} (${totalItems})`}
-              isActive={isActive}
-              onClick={() => setActiveCategory(cat.id)}
-            />
-          );
-        })}
-
-        <RecipeFormsDialog />
-      </div>
 
       <Separator />
 
       {/* FILTERS */}
       <div className="flex justify-between flex-wrap gap-4">
         <div className="flex flex-col gap-2">
+          <FilterButtons
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={RECIPE_CATEGORY_FILTER_OPTIONS}
+          />
+
           <FilterButtons
             value={stockFilter}
             onChange={setStockFilter}

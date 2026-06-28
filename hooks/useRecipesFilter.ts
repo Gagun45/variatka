@@ -1,8 +1,8 @@
-import { IRecipeCategoryFilter } from "@/lib/constants/category.options";
 import { IConfirmedType } from "@/lib/constants/confirmed.optionts";
 import { IReadyToMakeType } from "@/lib/constants/ready-to-make.options";
 import { IRecipeSeriesFilter } from "@/lib/constants/series.options";
 import { IStockType } from "@/lib/constants/stock.options";
+import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
 import { IRecipe } from "@/lib/prisma.args";
 import { IRecipeSortType, RECIPE_SORTERS } from "@/lib/sorting.recipes";
 import { useMemo } from "react";
@@ -10,7 +10,7 @@ import { useMemo } from "react";
 export function useRecipesFilter({
   recipes,
   searchQuery,
-  categoryId,
+  category,
   stock,
   readyToMake,
   confirmed,
@@ -19,7 +19,7 @@ export function useRecipesFilter({
 }: {
   recipes: IRecipe[];
   searchQuery: string;
-  categoryId?: IRecipeCategoryFilter;
+  category: IRecipeCategoryFilter;
   stock: IStockType;
   readyToMake: IReadyToMakeType;
   confirmed: IConfirmedType;
@@ -32,8 +32,8 @@ export function useRecipesFilter({
     let result = recipes;
 
     // 1. CATEGORY (base scope)
-    if (categoryId !== "all") {
-      result = result.filter((r) => r.recipeCategoryId === categoryId);
+    if (category !== "all") {
+      result = result.filter((r) => r.category === category);
     }
 
     // 2. SEARCH (inside category scope)
@@ -76,7 +76,7 @@ export function useRecipesFilter({
   }, [
     recipes,
     searchQuery,
-    categoryId,
+    category,
     stock,
     readyToMake,
     confirmed,

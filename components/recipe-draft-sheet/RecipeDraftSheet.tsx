@@ -1,7 +1,6 @@
 "use client";
 
 import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
-import { useRecipeCategories } from "@/features/recipe/hooks/useRecipeCategories";
 import RecipeForm from "@/forms/recipe/RecipeForm";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useRecipeStore } from "@/zustand/recipe.store";
@@ -26,9 +25,7 @@ const RecipeDraftSheet = () => {
   const draft = useRecipeStore((s) => s.draft);
   const setDraft = useRecipeStore((s) => s.setDraft);
   const [open, setOpen] = useState(false);
-  const { data: categories, isLoading, isError } = useRecipeCategories();
   const { mutate, isPending } = useCreateRecipe();
-  if (isLoading || isError || !categories) return null;
   const isAmountNotSet = items.some((i) => !i.amount);
   const onSubmit = (values: IRecipeDto) => {
     if (isAmountNotSet) {
@@ -82,8 +79,6 @@ const RecipeDraftSheet = () => {
             <p className="text-sm text-muted-foreground">
               No ingredients added yet
             </p>
-          ) : categories.length === 0 ? (
-            <p>Add recipe category!</p>
           ) : (
             <>
               <p className="text-center text-2xl">New recipe</p>
@@ -92,7 +87,6 @@ const RecipeDraftSheet = () => {
               <RecipeForm
                 isPending={isPending}
                 onSubmit={onSubmit}
-                categories={categories}
                 isDisabled={isAmountNotSet}
                 initialValues={draft}
                 onDraftChange={setDraft}

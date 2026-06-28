@@ -9,7 +9,6 @@ import { useDebouncedCallback } from "use-debounce";
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { Button } from "@/components/ui/button";
 import { FieldSet } from "@/components/ui/field";
-import { IRecipeCategory } from "@/lib/prisma.args";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useEffect } from "react";
 import CategorySelectField from "./fields/CategorySelectField";
@@ -21,9 +20,9 @@ import NotesField from "./fields/NotesField";
 import SeriesField from "./fields/SeriesField";
 import SpicyField from "./fields/SpicyField";
 import TitleField from "./fields/TitleField";
+import { IRecipeCategory } from "@/lib/enumslist/recipe.constants";
 
 interface Props {
-  categories: IRecipeCategory[];
   onSubmit: (dto: IRecipeDto) => void;
   initialValues?: IRecipeDto;
   isDisabled?: boolean;
@@ -33,7 +32,6 @@ interface Props {
 }
 
 const RecipeForm = ({
-  categories,
   onSubmit,
   initialValues,
   isPending,
@@ -42,12 +40,8 @@ const RecipeForm = ({
   onReset,
 }: Props) => {
   const schema = zodSchemas.recipe.create;
-  const initialRecipeCategoryId =
-    initialValues?.recipeCategoryId && initialValues.recipeCategoryId !== 0
-      ? initialValues.recipeCategoryId
-      : categories[0].id;
+  const initialCategory: IRecipeCategory = initialValues?.category ?? "SPICES";
   const defaultValues: IRecipeDto = {
-    recipeCategoryId: initialRecipeCategoryId,
     description: initialValues?.description ?? "",
     notes: initialValues?.notes ?? "",
     title: initialValues?.title ?? "",
@@ -56,6 +50,7 @@ const RecipeForm = ({
     isConfirmed: initialValues?.isConfirmed ?? false,
     spicy: initialValues?.spicy ?? 0,
     series: initialValues?.series ?? "DEFAULT",
+    category: initialCategory,
   };
   const form = useForm<IRecipeDto>({
     resolver: zodResolver(schema),
@@ -76,7 +71,7 @@ const RecipeForm = ({
         description: values.description ?? "",
         notes: values.notes ?? "",
         inStock: values.inStock ?? 0,
-        recipeCategoryId: values.recipeCategoryId ?? 0,
+        category: values.category ?? initialCategory,
         confirmationNotes: values.confirmationNotes ?? "",
         isConfirmed: values.isConfirmed ?? false,
         spicy: values.spicy ?? 0,
@@ -85,7 +80,7 @@ const RecipeForm = ({
     });
 
     return () => subscription.unsubscribe();
-  }, [form, setDraftDebounced]);
+  }, [form, setDraftDebounced, initialCategory]);
   const { handleSubmit, reset } = form;
   const handleReset = () => {
     reset();
@@ -97,7 +92,7 @@ const RecipeForm = ({
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet disabled={isPending} className="space-y-4">
-          <CategorySelectField categories={categories} />
+          <CategorySelectField />
           <TitleField />
           <DescriptionField />
           <NotesField />

@@ -1,12 +1,10 @@
 "use server";
 
-import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
-import { Prisma } from "@prisma/client";
+import { IRecipeDto } from "@/zod/recipe.schema";
 import { AppError } from "../error";
 import { prisma } from "../prisma";
 import {
   IRecipe,
-  IRecipeCategory,
   IUserWithWishlist,
   recipeArgs,
   userWithWishlistArgs,
@@ -21,24 +19,6 @@ import {
 } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
 import { getCurrentUser, requireAdmin } from "./user.actions";
-
-export const getRecipeCategories = async (): Promise<
-  IActionResponse<IRecipeCategory[]>
-> => {
-  try {
-    const categories = await prisma.recipeCategory.findMany();
-    return {
-      ok: true,
-      data: categories,
-    };
-  } catch (e) {
-    console.error("Erro in getRecipeCategories:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
-};
 
 export const getRecipes = async (): Promise<IActionResponse<IRecipe[]>> => {
   try {
@@ -79,32 +59,6 @@ export const getRecipe = async (
   }
 };
 
-export const createRecipeCategory = async (
-  dto: ICreateRecipeCategoryDto,
-): Promise<IActionResponse<IRecipeCategory>> => {
-  try {
-    await requireAdmin();
-    const existingCategory = await prisma.recipeCategory.findUnique({
-      where: { title: dto.title },
-    });
-    if (existingCategory)
-      throw new AppError("A category with this title already exists.");
-
-    const newCategory = await prisma.recipeCategory.create({ data: dto });
-
-    return {
-      ok: true,
-      data: newCategory,
-    };
-  } catch (e) {
-    console.error("Error in createRecipeCategory:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
-};
-
 export const createRecipe = async (
   dto: ICreateRecipeDto,
 ): Promise<IActionResponse<IRecipe>> => {
@@ -117,15 +71,11 @@ export const createRecipe = async (
       items,
       confirmationNotes,
       isConfirmed,
-      recipeCategoryId,
+      category,
       inStock,
       series,
       spicy,
     } = dto;
-    const existingCategory = await prisma.recipeCategory.findUnique({
-      where: { id: recipeCategoryId },
-    });
-    if (!existingCategory) throw new AppError("Category not found");
 
     const existingRecipe = await prisma.recipe.findFirst({
       where: { title },
@@ -138,7 +88,7 @@ export const createRecipe = async (
         description,
         notes,
         title,
-        recipeCategoryId,
+        category,
         inStock,
         confirmationNotes,
         isConfirmed,
@@ -395,75 +345,6 @@ export const removeRecipeImage = async (
     };
   } catch (e) {
     console.error("Error in removeRecipeImage:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
-};
-
-export const editRecipeCategory = async (
-  id: number,
-  dto: ICreateRecipeCategoryDto,
-): Promise<IActionResponse<IRecipeCategory>> => {
-  try {
-    await requireAdmin();
-
-    const updatedCategory = await prisma.recipeCategory.update({
-      where: { id },
-      data: dto,
-    });
-    return {
-      ok: true,
-      data: updatedCategory,
-    };
-  } catch (e) {
-    console.error("Error in editRecipeCategory:", e);
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2025") {
-        return ACTION_ERROR("Category not found");
-      }
-      if (e.code === "P2002") {
-        return ACTION_ERROR("Category with the same title already exists");
-      }
-    }
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
-};
-
-export const deleteRecipeCategory = async (
-  id: number,
-): Promise<IActionResponse<number>> => {
-  try {
-    await requireAdmin();
-    const existingCategory = await prisma.recipeCategory.findUnique({
-      where: { id },
-      select: {
-        _count: {
-          select: {
-            recipes: true,
-          },
-        },
-      },
-    });
-    if (!existingCategory) throw new AppError("Category not found");
-    const totalItems = existingCategory._count.recipes;
-    if (totalItems > 0)
-      throw new AppError(
-        `Cannot delete category because it contains ${totalItems} recipes`,
-      );
-    await prisma.recipeCategory.delete({
-      where: { id },
-    });
-    return {
-      ok: true,
-      data: id,
-    };
-  } catch (e) {
-    console.error("Error in deleteRecipeCategory:", e);
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }

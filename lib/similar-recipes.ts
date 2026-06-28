@@ -12,7 +12,7 @@ const jaccardSimilarity = (a: Set<number>, b: Set<number>) => {
 };
 
 const categoryBoost = (a: IRecipe, b: IRecipe) => {
-  return a.recipeCategoryId === b.recipeCategoryId ? 0.2 : 0;
+  return a.category === b.category ? 0.2 : 0;
 };
 
 const scoreRecipe = (base: IRecipe, candidate: IRecipe) => {

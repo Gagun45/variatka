@@ -11,10 +11,7 @@ export const recipePresenter = {
     series: r.series,
     spicy: r.spicy,
     imageKey: r.imageKey,
-    recipeCategory: {
-      id: r.recipeCategory.id,
-      title: r.recipeCategory.title,
-    },
+    category: r.category,
     ingredients: r.ingredients.map((ri) => ({
       id: ri.ingredientId,
       title: ri.ingredient.title,

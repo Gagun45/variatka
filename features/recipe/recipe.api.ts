@@ -1,14 +1,10 @@
 import { unwrapAction } from "@/lib/actions/action.unwrapper";
 import {
   createRecipe,
-  createRecipeCategory,
   deleteRecipe,
-  deleteRecipeCategory,
-  editRecipeCategory,
   getAdminWishlists,
   getPublicRecipes,
   getRecipe,
-  getRecipeCategories,
   getRecipes,
   getWishlist,
   removeRecipeImage,
@@ -19,23 +15,20 @@ import {
   updateRecipeIngredients,
   uploadRecipeImage,
 } from "@/lib/actions/recipe.actions";
-import { IRecipe, IRecipeCategory, IUserWithWishlist } from "@/lib/prisma.args";
+import { IRecipe, IUserWithWishlist } from "@/lib/prisma.args";
 import {
   ICreateRecipeDto,
   IPublicRecipe,
   IRecipeIngredient,
 } from "@/lib/types";
-import { ICreateRecipeCategoryDto, IRecipeDto } from "@/zod/recipe.schema";
+import { IRecipeDto } from "@/zod/recipe.schema";
 
 export const recipeService = {
   get: (): Promise<IRecipe[]> => unwrapAction(() => getRecipes()),
   getOne: (id: number): Promise<IRecipe> => unwrapAction(() => getRecipe(id)),
   create: (dto: ICreateRecipeDto): Promise<IRecipe> =>
     unwrapAction(() => createRecipe(dto)),
-  getCategories: (): Promise<IRecipeCategory[]> =>
-    unwrapAction(() => getRecipeCategories()),
-  createCategory: (dto: ICreateRecipeCategoryDto): Promise<IRecipeCategory> =>
-    unwrapAction(() => createRecipeCategory(dto)),
+
   toggle: (id: number): Promise<IRecipe> =>
     unwrapAction(() => toggleSavedRecipe(id)),
   uploadImage: (ingredientId: number, file: File): Promise<IRecipe> =>
@@ -50,13 +43,7 @@ export const recipeService = {
     items: IRecipeIngredient[],
   ): Promise<IRecipe> => unwrapAction(() => updateRecipeIngredients(id, items)),
   delete: (id: number): Promise<number> => unwrapAction(() => deleteRecipe(id)),
-  deleteCategory: (id: number): Promise<number> =>
-    unwrapAction(() => deleteRecipeCategory(id)),
-  editCategory: (
-    id: number,
-    dto: ICreateRecipeCategoryDto,
-  ): Promise<IRecipeCategory> =>
-    unwrapAction(() => editRecipeCategory(id, dto)),
+
   toggleConfirmed: (id: number): Promise<IRecipe> =>
     unwrapAction(() => toggleConfirmedRecipe(id)),
   getPublicRecipes: (): Promise<IPublicRecipe[]> =>

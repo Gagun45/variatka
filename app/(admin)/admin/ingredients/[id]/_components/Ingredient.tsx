@@ -3,7 +3,6 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { Separator } from "@/components/ui/separator";
-import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import IngredientRecipes from "./recipes/IngredientRecipes";
 import IngredientView from "./view/IngredientView";
@@ -13,14 +12,13 @@ interface Props {
 }
 
 const Ingredient = ({ id }: Props) => {
-  const { data: categories } = useIngredientCategories();
   const { data: ingredients, isLoading, isError } = useIngredients();
 
   if (isLoading) {
     return <Loader />;
   }
 
-  if (isError || !ingredients || !categories) {
+  if (isError || !ingredients) {
     return <StateScreen />;
   }
   const ingredient = ingredients.find((ing) => ing.id === id);

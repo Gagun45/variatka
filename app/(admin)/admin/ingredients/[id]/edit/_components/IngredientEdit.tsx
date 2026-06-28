@@ -3,7 +3,6 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useEditIngredient } from "@/features/ingredient/hooks/useEditIngredient";
-import { useIngredientCategories } from "@/features/ingredient/hooks/useIngredientCategories";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import IngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { frontendUrls } from "@/lib/urls";
@@ -17,20 +16,11 @@ interface Props {
 
 const IngredientEdit = ({ id }: Props) => {
   const router = useRouter();
-  const {
-    data: categories,
-    isLoading: isCategoriesLoading,
-    isError: isCategoriesError,
-  } = useIngredientCategories();
-  const {
-    data: ingredients,
-    isLoading: isIngredientsLoading,
-    isError: isIngredientsError,
-  } = useIngredients();
+
+  const { data: ingredients, isLoading, isError } = useIngredients();
   const { mutate, isPending } = useEditIngredient();
-  if (isCategoriesLoading || isIngredientsLoading) return <Loader />;
-  if (isCategoriesError || !categories || isIngredientsError || !ingredients)
-    return <StateScreen />;
+  if (isLoading) return <Loader />;
+  if (isError || !ingredients) return <StateScreen />;
   const ingredient = ingredients.find((ing) => ing.id === id);
   if (!ingredient) return <StateScreen title="Ingredient not found" />;
   const onSubmit = (dto: IIngredientFormValues) => {
@@ -53,7 +43,6 @@ const IngredientEdit = ({ id }: Props) => {
         <p className="text-center text-4xl py-4">Edit ingredient</p>
         <IngredientForm
           isPending={isPending}
-          categories={categories}
           onCreate={onSubmit}
           ingredient={ingredient}
         />

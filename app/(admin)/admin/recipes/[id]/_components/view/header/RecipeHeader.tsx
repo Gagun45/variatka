@@ -7,6 +7,7 @@ import ViewItemCategory from "@/components/view-item/ViewItemCategory";
 import ViewItemDescription from "@/components/view-item/ViewItemDescription";
 import { useToggleSavedRecipe } from "@/features/recipe/hooks/useToggleSavedRecipe";
 import { SpicyOptions } from "@/forms/recipe/fields/SpicyField";
+import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 import { IRecipe } from "@/lib/prisma.args";
 
 interface Props {
@@ -19,12 +20,13 @@ const RecipeHeader = ({ recipe }: Props) => {
   const onToggleSaved = () => {
     mutate(id);
   };
-  const { recipeCategory, description, inStock, spicy, series } = recipe;
+  const { description, inStock, spicy, series, category } = recipe;
+  const categoryLabel = RECIPE_CATEGORIES_DATA[category].label;
 
   return (
     <CardHeader className="view-item-card-header">
       <div className="view-item-card-header-row">
-        <ViewItemCategory categoryTitle={recipeCategory.title} />
+        <ViewItemCategory categoryTitle={categoryLabel} />
         <StockBadge isInStock={!!inStock} quantity={inStock} />
       </div>
       <div className="view-item-card-header-row">

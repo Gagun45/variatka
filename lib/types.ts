@@ -1,5 +1,6 @@
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { IRecipeSeries } from "./constants";
+import { IRecipeCategory } from "./enumslist/recipe.constants";
 
 export interface IResponse {
   success: boolean;
@@ -59,9 +60,6 @@ export type IPublicRecipe = {
   series: IRecipeSeries;
   notes: string;
   imageKey: string | null;
-  recipeCategory: {
-    id: number;
-    title: string;
-  };
+  category: IRecipeCategory;
   ingredients: IPublicRecipeIngredient[];
 };

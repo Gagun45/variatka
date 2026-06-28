@@ -3,7 +3,6 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useAdminWishlists } from "@/features/recipe/hooks/useAdminWishlists";
-import React from "react";
 import AdminWishlistsList from "./list/AdminWishlistsList";
 
 const Wishlists = () => {

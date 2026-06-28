@@ -15,10 +15,6 @@ const QueryPrefetcher = () => {
   const qclient = useQueryClient();
   useEffect(() => {
     qclient.prefetchQuery({
-      queryKey: recipeKeys.categories,
-      queryFn: recipeService.getCategories,
-    });
-    qclient.prefetchQuery({
       queryKey: recipeKeys.public,
       queryFn: recipeService.getPublicRecipes,
     });

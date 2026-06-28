@@ -1,42 +1,58 @@
-import { useMemo } from "react";
-
+import { IRecipeSeriesFilter } from "@/lib/constants/series.options";
 import { IStockType } from "@/lib/constants/stock.options";
+import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
 import {
   IPublicRecipeSortType,
   PUBLIC_RECIPE_SORTERS,
 } from "@/lib/public.sorting.recipes";
 import { IPublicRecipe } from "@/lib/types";
 
+import { useMemo } from "react";
+
 export function usePublicRecipesFilter({
   recipes,
   searchQuery,
-  categoryId,
+  category,
   stock,
   sort,
+  series,
 }: {
   recipes: IPublicRecipe[];
   searchQuery: string;
-  categoryId?: number;
+  category: IRecipeCategoryFilter;
   stock: IStockType;
   sort: IPublicRecipeSortType;
+  series: IRecipeSeriesFilter;
 }) {
   return useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const isSearching = query.length > 0;
 
-    const base = isSearching
-      ? recipes.filter((r) => r.title.toLowerCase().includes(query))
-      : categoryId
-        ? recipes.filter((r) => r.recipeCategory.id === categoryId)
-        : recipes;
+    let result = recipes;
 
-    const stockFiltered =
-      stock === "in"
-        ? base.filter((r) => r.isInStock)
-        : stock === "out"
-          ? base.filter((r) => !r.isInStock)
-          : base;
+    // 1. CATEGORY
+    if (category !== "all") {
+      result = result.filter((recipe) => recipe.category === category);
+    }
 
-    return [...stockFiltered].sort(PUBLIC_RECIPE_SORTERS[sort]);
-  }, [recipes, searchQuery, categoryId, stock, sort]);
+    // 2. SEARCH
+    if (query.length > 0) {
+      result = result.filter((recipe) =>
+        recipe.title.toLowerCase().includes(query),
+      );
+    }
+
+    // 3. STOCK
+    if (stock === "in") {
+      result = result.filter((recipe) => recipe.isInStock);
+    } else if (stock === "out") {
+      result = result.filter((recipe) => !recipe.isInStock);
+    }
+
+    if (series !== "all") {
+      result = result.filter((r) => r.series === series);
+    }
+
+    // 4. SORT
+    return [...result].sort(PUBLIC_RECIPE_SORTERS[sort]);
+  }, [recipes, searchQuery, category, stock, sort, series]);
 }

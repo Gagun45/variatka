@@ -7,38 +7,31 @@ import {
 } from "@/components/ui/select";
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { IRecipeCategory } from "@/lib/prisma.args";
 
-import { Controller, useFormContext } from "react-hook-form";
+import { RECIPE_CATEGORY_ONLY_OPTIONS } from "@/lib/enumslist/recipe.constants";
 import { IRecipeDto } from "@/zod/recipe.schema";
+import { Controller, useFormContext } from "react-hook-form";
 
-type Props = {
-  categories: IRecipeCategory[];
-};
-
-const CategorySelectField = ({ categories }: Props) => {
+const CategorySelectField = () => {
   const { control } = useFormContext<IRecipeDto>();
 
   return (
     <Controller
-      name="recipeCategoryId"
+      name="category"
       control={control}
       render={({ field, fieldState }) => (
         <Field>
           <FieldLabel>Category</FieldLabel>
 
-          <Select
-            value={field.value?.toString()}
-            onValueChange={(value) => field.onChange(Number(value))}
-          >
+          <Select value={field.value} onValueChange={field.onChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
 
             <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id.toString()}>
-                  {cat.title}
+              {RECIPE_CATEGORY_ONLY_OPTIONS.map((opt) => (
+                <SelectItem key={opt.label} value={opt.value}>
+                  {opt.label}
                 </SelectItem>
               ))}
             </SelectContent>

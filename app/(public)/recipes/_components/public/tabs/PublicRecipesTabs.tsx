@@ -1,14 +1,20 @@
 "use client";
 
-import { IRecipeCategory } from "@/lib/prisma.args";
 import { useState } from "react";
 
-import CategoryButton from "@/components/cat-button/CategoryButton";
 import { SortSelect } from "@/components/sort-select/SortSelect";
 import { FilterButtons } from "@/components/stock-filter/StockFilter";
 import { Separator } from "@/components/ui/separator";
 import { usePublicRecipesFilter } from "@/hooks/usePublicRecipesFilter";
+import {
+  IRecipeSeriesFilter,
+  RECIPE_SERIES_OPTIONS,
+} from "@/lib/constants/series.options";
 import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
+import {
+  IRecipeCategoryFilter,
+  RECIPE_CATEGORY_FILTER_OPTIONS,
+} from "@/lib/enumslist/recipe.constants";
 import {
   IPublicRecipeSortType,
   PUBLIC_RECIPE_SORT_OPTIONS,
@@ -18,61 +24,51 @@ import { useSearchParams } from "next/navigation";
 import PublicRecipesList from "../list/PublicRecipesList";
 
 interface Props {
-  categories: IRecipeCategory[];
   recipes: IPublicRecipe[];
 }
 
-const PublicRecipesTabs = ({ categories, recipes }: Props) => {
+const PublicRecipesTabs = ({ recipes }: Props) => {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("query") ?? "";
 
-  const [activeCategory, setActiveCategory] = useState(categories[0].title);
+  const [categoryFilter, setCategoryFilter] =
+    useState<IRecipeCategoryFilter>("all");
 
   const [stockFilter, setStockFilter] = useState<IStockType>("all");
+  const [seriesFilter, setSeriesFilter] = useState<IRecipeSeriesFilter>("all");
 
   const [sort, setSort] = useState<IPublicRecipeSortType>("name-asc");
-
-  const active = categories.find((c) => c.title === activeCategory);
 
   const filteredRecipes = usePublicRecipesFilter({
     recipes,
     searchQuery,
-    categoryId: active?.id,
+    category: categoryFilter,
     stock: stockFilter,
     sort,
+    series: seriesFilter,
   });
 
   return (
     <div className="flex flex-col gap-4 w-full mx-auto">
-      <div className="flex flex-wrap gap-4 justify-center">
-        {categories.map((cat) => {
-          const isActive = cat.title === activeCategory;
-          const totalItems = recipes.filter(
-            (r) => r.recipeCategory.id === cat.id,
-          ).length;
-
-          return (
-            <CategoryButton
-              key={cat.id}
-              title={`${cat.title} (${totalItems})`}
-              isActive={isActive}
-              onClick={() => setActiveCategory(cat.title)}
-            />
-          );
-        })}
-      </div>
-
       <Separator />
 
       <div className="flex justify-between flex-wrap gap-4">
         <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <FilterButtons
-              value={stockFilter}
-              onChange={setStockFilter}
-              options={STOCK_OPTIONS}
-            />
-          </div>
+          <FilterButtons
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={RECIPE_CATEGORY_FILTER_OPTIONS}
+          />
+          <FilterButtons
+            value={seriesFilter}
+            onChange={setSeriesFilter}
+            options={RECIPE_SERIES_OPTIONS}
+          />
+          <FilterButtons
+            value={stockFilter}
+            onChange={setStockFilter}
+            options={STOCK_OPTIONS}
+          />
         </div>
         <div className="mt-auto ml-auto">
           <SortSelect
