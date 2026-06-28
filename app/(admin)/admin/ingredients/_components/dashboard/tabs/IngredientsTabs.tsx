@@ -57,14 +57,14 @@ const IngredientsTabs = ({ ingredients }: Props) => {
       <div className="flex justify-between flex-wrap gap-4">
         <div className="flex flex-col gap-2">
           <FilterButtons
-            value={stockFilter}
-            onChange={setStockFilter}
-            options={STOCK_OPTIONS}
-          />
-          <FilterButtons
             value={activeCategory}
             onChange={setActiveCategory}
             options={INGREDIENT_CATEGORY_FILTER_OPTIONS}
+          />
+          <FilterButtons
+            value={stockFilter}
+            onChange={setStockFilter}
+            options={STOCK_OPTIONS}
           />
         </div>
         <div className="mt-auto">

@@ -9,7 +9,7 @@ import {
   SidebarMenu,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
-import { ADMIN_LINKS, MAIN_LINKS } from "@/lib/links";
+import { MAIN_LINKS } from "@/lib/links";
 import { frontendUrls } from "@/lib/urls";
 import Image from "next/image";
 import Link from "next/link";
@@ -51,13 +51,13 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroup>
             <SavedLinks />
-            <SidebarGroup>
+            {/* <SidebarGroup>
               <SidebarMenu>
                 {ADMIN_LINKS.map(({ href, label }) => (
                   <SidebarLink key={href} href={href} label={label} />
                 ))}
               </SidebarMenu>
-            </SidebarGroup>
+            </SidebarGroup> */}
           </>
         )}
       </SidebarContent>

@@ -11,10 +11,10 @@ export const MAIN_LINKS: ILink[] = [
   { href: frontendUrls.stuff.index, label: "Stuff" },
 ];
 
-export const ADMIN_LINKS: ILink[] = [
-  { href: frontendUrls.admin.wishlists, label: "Wishlists" },
-  { href: frontendUrls.admin.admin, label: "Admin" },
-];
+// export const ADMIN_LINKS: ILink[] = [
+//   { href: frontendUrls.admin.wishlists, label: "Wishlists" },
+//   { href: frontendUrls.admin.admin, label: "Admin" },
+// ];
 export const PUBLIC_LINKS: ILink[] = [
   { href: frontendUrls.public.recipes, label: "Рецепти" },
   { href: frontendUrls.public.wishlist, label: "Wishlist" },
