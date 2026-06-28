@@ -1,5 +1,5 @@
 // src/zod/ingredient.schema.ts
-import { RECIPE_SERIES } from "@/lib/constants";
+import { RECIPE_SERIES } from "@/lib/enumslist/series.constants";
 import { RECIPE_CATEGORIES } from "@/lib/enumslist/recipe.constants";
 import z from "zod";
 

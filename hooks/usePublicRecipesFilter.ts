@@ -1,6 +1,6 @@
-import { IRecipeSeriesFilter } from "@/lib/constants/series.options";
 import { IStockType } from "@/lib/constants/stock.options";
 import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
+import { IRecipeSeriesFilter } from "@/lib/enumslist/series.constants";
 import {
   IPublicRecipeSortType,
   PUBLIC_RECIPE_SORTERS,

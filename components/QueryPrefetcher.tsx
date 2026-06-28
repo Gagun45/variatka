@@ -39,10 +39,10 @@ const QueryPrefetcher = () => {
       queryKey: stuffKeys.stuff,
       queryFn: stuffService.get,
     });
-    qclient.prefetchQuery({
-      queryKey: recipeKeys.adminWishlists,
-      queryFn: recipeService.getAdminWishlists,
-    });
+    // qclient.prefetchQuery({
+    //   queryKey: recipeKeys.adminWishlists,
+    //   queryFn: recipeService.getAdminWishlists,
+    // });
   }, [qclient, isAdmin, isAuthenticated]);
   return null;
 };

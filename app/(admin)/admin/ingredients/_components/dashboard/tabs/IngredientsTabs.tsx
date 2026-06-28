@@ -8,19 +8,19 @@ import {
 } from "@/lib/sorting.ingredients";
 import { useState } from "react";
 
+import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
+import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 import { SortSelect } from "@/components/sort-select/SortSelect";
-import { FilterButtons } from "@/components/stock-filter/StockFilter";
 import { useIngredientsFilter } from "@/hooks/useIngredientsFilter";
-import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
+import { IStockType } from "@/lib/constants/stock.options";
+import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 import {
   IIngredientCategory,
   IIngredientCategoryFilter,
-  INGREDIENT_CATEGORY_FILTER_OPTIONS,
 } from "@/lib/enumslist/ingredient.constants";
 import { useSearchParams } from "next/navigation";
 import IngredientFormsDialog from "./forms-dialog/IngredientFormsDialog";
 import IngredienstList from "./list/IngredienstList";
-import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 
 interface Props {
   ingredients: IIngredient[];
@@ -59,12 +59,12 @@ const IngredientsTabs = ({ ingredients }: Props) => {
           <FilterButtons
             value={activeCategory}
             onChange={setActiveCategory}
-            options={INGREDIENT_CATEGORY_FILTER_OPTIONS}
+            config={FILTER_CONFIGS.ingredients.category}
           />
           <FilterButtons
             value={stockFilter}
             onChange={setStockFilter}
-            options={STOCK_OPTIONS}
+            config={FILTER_CONFIGS.ingredients.stock}
           />
         </div>
         <div className="mt-auto">

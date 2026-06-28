@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 
 import StuffList from "../list/StuffList";
 
-import { FilterButtons } from "@/components/stock-filter/StockFilter";
+import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
 import {
   IStuffCategory,
   IStuffCategoryFilter,
@@ -16,6 +16,7 @@ import { IStuff } from "@/lib/prisma.args";
 import { useSearchParams } from "next/navigation";
 import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
+import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 
 interface Props {
   stuff: IStuff[];
@@ -55,9 +56,9 @@ const StuffTabs = ({ stuff }: Props) => {
 
       <Separator />
       <FilterButtons
-        onChange={setActiveCategory}
-        options={STUFF_CATEGORY_FILTER_OPTIONS}
         value={activeCategory}
+        onChange={setActiveCategory}
+        config={FILTER_CONFIGS.stuff.category}
       />
 
       <ResultsFoundText

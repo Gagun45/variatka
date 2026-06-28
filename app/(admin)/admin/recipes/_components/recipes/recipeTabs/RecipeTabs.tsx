@@ -3,27 +3,17 @@
 import { IRecipe } from "@/lib/prisma.args";
 import { useState } from "react";
 
+import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
 import { SortSelect } from "@/components/sort-select/SortSelect";
-import { FilterButtons } from "@/components/stock-filter/StockFilter";
 import { Separator } from "@/components/ui/separator";
 import { useRecipesFilter } from "@/hooks/useRecipesFilter";
-import {
-  CONFIRMED_OPTIONS,
-  IConfirmedType,
-} from "@/lib/constants/confirmed.optionts";
-import {
-  IReadyToMakeType,
-  READY_TO_MAKE_OPTIONS,
-} from "@/lib/constants/ready-to-make.options";
-import {
-  IRecipeSeriesFilter,
-  RECIPE_SERIES_OPTIONS,
-} from "@/lib/constants/series.options";
-import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
-import {
-  IRecipeCategoryFilter,
-  RECIPE_CATEGORY_FILTER_OPTIONS,
-} from "@/lib/enumslist/recipe.constants";
+import { IConfirmedType } from "@/lib/constants/confirmed.optionts";
+import { IReadyToMakeType } from "@/lib/constants/ready-to-make.options";
+
+import { IStockType } from "@/lib/constants/stock.options";
+import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
+import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
+import { IRecipeSeriesFilter } from "@/lib/enumslist/series.constants";
 import { IRecipeSortType, RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
 import { useSearchParams } from "next/navigation";
 import RecipesList from "./recipes-list/RecipesList";
@@ -66,35 +56,35 @@ const RecipeTabs = ({ recipes }: Props) => {
 
       {/* FILTERS */}
       <div className="flex justify-between flex-wrap gap-4">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <FilterButtons
             value={categoryFilter}
             onChange={setCategoryFilter}
-            options={RECIPE_CATEGORY_FILTER_OPTIONS}
+            config={FILTER_CONFIGS.recipes.category}
           />
 
           <FilterButtons
             value={stockFilter}
             onChange={setStockFilter}
-            options={STOCK_OPTIONS}
+            config={FILTER_CONFIGS.recipes.stock}
           />
 
           <FilterButtons
             value={readyFilter}
             onChange={setReadyFilter}
-            options={READY_TO_MAKE_OPTIONS}
+            config={FILTER_CONFIGS.recipes.ready}
           />
 
           <FilterButtons
             value={series}
             onChange={setSeries}
-            options={RECIPE_SERIES_OPTIONS}
+            config={FILTER_CONFIGS.recipes.series}
           />
 
           <FilterButtons
             value={confirmedFilter}
             onChange={setConfirmedFilter}
-            options={CONFIRMED_OPTIONS}
+            config={FILTER_CONFIGS.recipes.confirmed}
           />
         </div>
 

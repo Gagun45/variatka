@@ -1,8 +1,8 @@
 import { IConfirmedType } from "@/lib/constants/confirmed.optionts";
 import { IReadyToMakeType } from "@/lib/constants/ready-to-make.options";
-import { IRecipeSeriesFilter } from "@/lib/constants/series.options";
 import { IStockType } from "@/lib/constants/stock.options";
 import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
+import { IRecipeSeriesFilter } from "@/lib/enumslist/series.constants";
 import { IRecipe } from "@/lib/prisma.args";
 import { IRecipeSortType, RECIPE_SORTERS } from "@/lib/sorting.recipes";
 import { useMemo } from "react";

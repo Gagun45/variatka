@@ -23,7 +23,9 @@ const IngredientCard = ({
 }: Props) => {
   const { title, isInStock, id, isSaved, categoryNew } = ingredient;
 
-  const categoryLabel = INGREDIENT_CATEGORIES_DATA[categoryNew].label;
+  const { label, icon, iconClassName } =
+    INGREDIENT_CATEGORIES_DATA[categoryNew];
+  const Icon = icon;
 
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
@@ -44,14 +46,13 @@ const IngredientCard = ({
       <CardContent className="flex justify-between gap-4 px-4  h-full">
         <div className="min-w-0 flex-1 flex-col flex justify-between">
           <div className="flex items-start justify-between gap-2">
-            <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center">
               <Link
                 href={frontendUrls.ingredients.view(id)}
                 className="break-all text-base font-medium hover:underline"
               >
                 {title}
               </Link>
-              <Badge variant={"secondary"}>{categoryLabel}</Badge>
             </div>
 
             <Button
@@ -69,11 +70,14 @@ const IngredientCard = ({
             </Button>
           </div>
 
-          <div className="mt-2 flex flex-wrap justify-between items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-1">
             <SaveToggleButton isSaved={isSaved} onToggle={onToggleSaved} />
 
             <StockBadge isInStock={isInStock} onClick={onToggleStock} />
 
+            <Badge variant={"secondary"}>
+              {Icon && <Icon className={iconClassName} />}
+            </Badge>
             <span className="text-xs text-muted-foreground">
               Used in {ingredient._count.recipeIngredients} recipes
             </span>

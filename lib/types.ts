@@ -1,6 +1,9 @@
 import { IRecipeDto } from "@/zod/recipe.schema";
-import { IRecipeSeries } from "./constants";
+import { ComponentType } from "react";
+import { IRecipeSeries } from "./enumslist/series.constants";
 import { IRecipeCategory } from "./enumslist/recipe.constants";
+import { LucideIcon } from "lucide-react";
+import { IconType } from "react-icons/lib";
 
 export interface IResponse {
   success: boolean;
@@ -24,6 +27,9 @@ export interface IBreadcrumbItem {
 export type IOption<T extends string> = {
   value: T;
   label: string;
+  className?: string;
+  icon?: LucideIcon | IconType;
+  iconClassName?: string;
 };
 
 export type IActionResponse<T> = IActionSuccess<T> | IActionError;

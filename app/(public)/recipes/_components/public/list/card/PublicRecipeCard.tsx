@@ -3,6 +3,12 @@ import RecipeSeriesBadge from "@/components/series-badge/RecipeSeriesBadge";
 import SpicyLevel from "@/components/spicy/SpicyLevel";
 import StockBadge from "@/components/stock-badge/StockBadge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { RECIPE_SERIES_DATA } from "@/lib/enumslist/series.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
 import { frontendUrls } from "@/lib/urls";
@@ -25,11 +31,26 @@ const PublicRecipeCard = ({
   const { id, imageKey, title, isInStock, description, series, spicy } = recipe;
   const isWished = wishlistIdsSet.has(id);
   const imageSrc = getImageUrl(imageKey);
+  const { icon, iconClassName, label } = RECIPE_SERIES_DATA[series];
+  const Icon = icon;
+
   return (
     <Card className="overflow-hidden">
       {/* Image */}
 
-      <RecipeSeriesBadge className="mx-auto" series={series} />
+      {Icon && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Icon
+              size={24}
+              className={`${iconClassName} mx-auto cursor-help`}
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{label}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       <Link href={frontendUrls.public.view(id)}>
         <div className="relative aspect-square w-full">
@@ -59,7 +80,7 @@ const PublicRecipeCard = ({
 
           <Link
             href={frontendUrls.public.view(id)}
-            className="text-sm font-medium line-clamp-1 hover:underline"
+            className="text-sm font-medium text-center line-clamp-1 hover:underline"
           >
             {title}
           </Link>

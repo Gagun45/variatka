@@ -1,14 +1,10 @@
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { RECIPE_SERIES, RECIPE_SERIES_LABELS } from "@/lib/constants";
+import { RECIPE_SERIES_OPTIONS } from "@/lib/enumslist/series.constants";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
 // Dynamically generate the options from your constants
-export const SeriesOptions = Object.values(RECIPE_SERIES).map((value) => ({
-  value,
-  label: RECIPE_SERIES_LABELS[value],
-}));
 
 const SeriesField = () => {
   const { control } = useFormContext<IRecipeDto>();
@@ -26,7 +22,7 @@ const SeriesField = () => {
             onValueChange={field.onChange}
             className="flex flex-wrap gap-4"
           >
-            {SeriesOptions.map((option) => (
+            {RECIPE_SERIES_OPTIONS.map((option) => (
               <label
                 key={option.value}
                 className="flex items-center border px-3 py-1.5 rounded-sm gap-2 cursor-pointer hover:bg-accent/50 transition-colors"

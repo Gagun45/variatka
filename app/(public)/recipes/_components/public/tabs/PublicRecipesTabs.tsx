@@ -2,19 +2,15 @@
 
 import { useState } from "react";
 
+import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
 import { SortSelect } from "@/components/sort-select/SortSelect";
-import { FilterButtons } from "@/components/stock-filter/StockFilter";
 import { Separator } from "@/components/ui/separator";
 import { usePublicRecipesFilter } from "@/hooks/usePublicRecipesFilter";
-import {
-  IRecipeSeriesFilter,
-  RECIPE_SERIES_OPTIONS,
-} from "@/lib/constants/series.options";
-import { IStockType, STOCK_OPTIONS } from "@/lib/constants/stock.options";
-import {
-  IRecipeCategoryFilter,
-  RECIPE_CATEGORY_FILTER_OPTIONS,
-} from "@/lib/enumslist/recipe.constants";
+
+import { IStockType } from "@/lib/constants/stock.options";
+import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
+import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
+import { IRecipeSeriesFilter } from "@/lib/enumslist/series.constants";
 import {
   IPublicRecipeSortType,
   PUBLIC_RECIPE_SORT_OPTIONS,
@@ -57,17 +53,17 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
           <FilterButtons
             value={categoryFilter}
             onChange={setCategoryFilter}
-            options={RECIPE_CATEGORY_FILTER_OPTIONS}
+            config={FILTER_CONFIGS.recipes.category}
           />
           <FilterButtons
             value={seriesFilter}
             onChange={setSeriesFilter}
-            options={RECIPE_SERIES_OPTIONS}
+            config={FILTER_CONFIGS.recipes.series}
           />
           <FilterButtons
             value={stockFilter}
             onChange={setStockFilter}
-            options={STOCK_OPTIONS}
+            config={FILTER_CONFIGS.recipes.stock}
           />
         </div>
         <div className="mt-auto ml-auto">

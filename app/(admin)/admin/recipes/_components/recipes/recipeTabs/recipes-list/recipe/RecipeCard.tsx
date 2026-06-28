@@ -1,13 +1,18 @@
 import ConfirmToggleButton from "@/components/confirmation-btn/ConfirmToggleButton";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
-import RecipeSeriesBadge from "@/components/series-badge/RecipeSeriesBadge";
 import { Card } from "@/components/ui/card";
+import { RECIPE_SERIES_DATA } from "@/lib/enumslist/series.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IRecipe } from "@/lib/prisma.args";
 import { frontendUrls } from "@/lib/urls";
 import Image from "next/image";
 import Link from "next/link";
 import ReadyToCookTooltip from "./tooltip/ReadyToCookTooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Props = {
   recipe: IRecipe;
@@ -29,6 +34,8 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
   };
 
   const imageSrc = getImageUrl(imageKey, imageVersion);
+  const { icon, iconClassName, label } = RECIPE_SERIES_DATA[series];
+  const Icon = icon;
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition">
@@ -56,13 +63,27 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
           />
         </Link>
       </div>
-      <div className="flex justify-center mx-2">
+      <div className="flex justify-center">
         <Link className="hover:underline break-all" href={href}>
           {title}
         </Link>
       </div>
 
-      <RecipeSeriesBadge className="mx-auto" series={series} />
+      {Icon && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Icon
+              size={24}
+              className={`${iconClassName} mx-auto cursor-help`}
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{label}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      {/* <RecipeSeriesBadge className="mx-auto" series={series} /> */}
     </Card>
   );
 };

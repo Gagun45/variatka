@@ -1,4 +1,7 @@
-import { IRecipeSeries, RECIPE_SERIES_LABELS } from "@/lib/constants";
+import {
+  IRecipeSeries,
+  RECIPE_SERIES_DATA,
+} from "@/lib/enumslist/series.constants";
 import { Badge, badgeVariants } from "../ui/badge";
 import { VariantProps } from "class-variance-authority";
 
@@ -11,7 +14,7 @@ interface Props {
 const RecipeSeriesBadge = ({ series, className, variant }: Props) => {
   return (
     <Badge className={`${className}`} variant={variant ?? "outline"}>
-      {RECIPE_SERIES_LABELS[series]}
+      {RECIPE_SERIES_DATA[series].label}
     </Badge>
   );
 };
