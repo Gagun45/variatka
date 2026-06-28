@@ -87,6 +87,11 @@ model RecipeIngredient {
   @@id([recipeId, ingredientId])
 }
 
+enum StuffCategories {
+  DECOR
+  JARS
+}
+
 model StuffCategory {
   id    Int     @id @default(autoincrement())
   title String  @unique
@@ -98,6 +103,8 @@ model Stuff {
   title       String  @unique
   description String?
   inStock     Int
+
+  category StuffCategories @default(JARS)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
