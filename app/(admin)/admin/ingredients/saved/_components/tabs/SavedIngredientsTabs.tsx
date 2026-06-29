@@ -1,40 +1,38 @@
 // @/app/ingredients/IngredientsTabs.tsx
 "use client";
 
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import { Separator } from "@/components/ui/separator";
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
-import { SortSelect } from "@/components/sort-select/SortSelect";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
-import IngredientFormsDialog from "./forms-dialog/IngredientFormsDialog";
-import IngredienstList from "./list/IngredienstList";
+import { SortSelect } from "@/components/sort-select/SortSelect";
+import { Separator } from "@/components/ui/separator";
+import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
 import { useIngredientsFilter } from "@/hooks/useIngredientsFilter";
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
-import { IIngredientCategory } from "@/lib/enumslist/ingredient.constants";
-import { INGREDIENT_SORT_OPTIONS } from "@/lib/sorting.ingredients";
 import { IIngredient } from "@/lib/prisma.args";
-import { useIngredientFiltersStore } from "@/zustand/ingredient.filter.store";
+import { INGREDIENT_SORT_OPTIONS } from "@/lib/sorting.ingredients";
 
 // Reusable Layout and Badge Elements
-import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import {
   ActiveFilterBadges,
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
+import { FilterLayout } from "@/components/filter-layout/FilterLayout";
+import { useSavedIngredientFiltersStore } from "@/zustand/ingredient.saved.filter.store";
+import IngredienstList from "../../../_components/dashboard/tabs/list/IngredienstList";
 
 interface Props {
   ingredients: IIngredient[];
 }
 
-const IngredientsTabs = ({ ingredients }: Props) => {
+const SavedIngredientsTabs = ({ ingredients }: Props) => {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("query") ?? "";
 
   // Extract Zustand state management fields
   const { category, stock, sort, setCategory, setStock, setSort, reset } =
-    useIngredientFiltersStore();
+    useSavedIngredientFiltersStore();
 
   const filteredIngredients = useIngredientsFilter({
     ingredients,
@@ -43,9 +41,6 @@ const IngredientsTabs = ({ ingredients }: Props) => {
     stock,
     category,
   });
-
-  const initialCategory: IIngredientCategory =
-    category === "all" ? "SPICES" : category;
 
   // Build the array of active badges matching your exact configuration structural schemas
   const activeBadges = useMemo(() => {
@@ -93,8 +88,7 @@ const IngredientsTabs = ({ ingredients }: Props) => {
   return (
     <>
       <div className="flex items-center justify-center gap-2">
-        <h1>Ingredients</h1>
-        <IngredientFormsDialog initialCategory={initialCategory} />
+        <h1>Saved ingredients</h1>
       </div>
       <div className="flex flex-col gap-4 w-full mx-auto">
         <Separator className="mb-2" />
@@ -140,4 +134,4 @@ const IngredientsTabs = ({ ingredients }: Props) => {
   );
 };
 
-export default IngredientsTabs;
+export default SavedIngredientsTabs;

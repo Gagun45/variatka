@@ -17,23 +17,22 @@ export function FilterButtons<T extends string>({
   variant,
 }: Props<T>) {
   const { label, options } = config;
-  let styles = "";
-  let iconStyles = "";
-  switch (variant) {
-    case "bigger":
-      styles = "text-lg p-6 font-bold";
-      iconStyles = "size-5";
-      break;
-    default:
-  }
+  const isBigger = variant === "bigger";
+
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {label && (
-        <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block">
+        <span className="text-[11px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block ml-0.5">
           {label}
         </span>
       )}
-      <div className="flex flex-wrap gap-1.5">
+
+      <div
+        className={`
+  grid gap-2 w-full
+  ${isBigger ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-2"}
+`}
+      >
         {options.map((opt) => {
           const Icon = opt.icon;
           const isSelected = value === opt.value;
@@ -41,26 +40,35 @@ export function FilterButtons<T extends string>({
           return (
             <Button
               key={opt.value}
-              size="sm"
+              // Dynamically adjust button size variant
+              size={isBigger ? "default" : "sm"}
               variant={isSelected ? "default" : "outline"}
               onClick={() => onChange(opt.value)}
               className={`
-    h-8 px-3 text-xs font-medium gap-1.5 transition-all rounded-md
-    ${
-      !isSelected
-        ? "text-neutral-600 bg-neutral-50/50 hover:bg-neutral-100 dark:text-neutral-400 dark:bg-transparent"
-        : ""
-    }
-    ${styles}
-  `}
+                relative font-medium gap-2 transition-all duration-200 active:scale-95 select-none rounded-lg border
+                ${
+                  isBigger
+                    ? "h-11 px-5 text-sm sm:text-base font-semibold shadow-sm"
+                    : "h-9 px-3.5 text-xs shadow-xs"
+                }
+                ${
+                  isSelected
+                    ? "bg-neutral-900 text-white border-transparent shadow-md shadow-neutral-900/10 dark:bg-neutral-50 dark:text-neutral-900"
+                    : "bg-white border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 dark:bg-neutral-950 dark:border-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-neutral-100"
+                }
+              `}
             >
               {Icon && (
                 <Icon
-                  className={`size-3.5 shrink-0 transition-transform ${opt.iconClassName} 
-              ${isSelected ? "text-current" : ""} ${iconStyles}`}
+                  className={`
+                    shrink-0 transition-all duration-200
+                    ${isBigger ? "size-5" : "size-4"}
+                    ${opt.iconClassName || ""} 
+                    ${isSelected ? "brightness-125 dark:brightness-90 scale-105" : "opacity-80"} 
+                  `}
                 />
               )}
-              {opt.label}
+              <span className="truncate text-left w-full">{opt.label}</span>
             </Button>
           );
         })}

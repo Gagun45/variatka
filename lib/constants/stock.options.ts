@@ -22,3 +22,5 @@ export const STOCK_OPTIONS: IOption<IStockType>[] = [
     iconClassName: "text-red-500",
   },
 ];
+
+export const STOCK_OPTIONS_VALUES = STOCK_OPTIONS.map((o) => o.value);

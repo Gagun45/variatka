@@ -43,3 +43,6 @@ export const RECIPE_SERIES_FILTER_OPTIONS: IOption<IRecipeSeriesFilter>[] = [
   { value: "all", label: "All", icon: UtensilsCrossed },
   ...RECIPE_SERIES_ONLY_OPTIONS,
 ];
+
+export const RECIPES_SERIES_FILTER_OPTIONS_VALUES =
+  RECIPE_SERIES_FILTER_OPTIONS.map((o) => o.value);

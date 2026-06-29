@@ -21,3 +21,7 @@ export const PUBLIC_RECIPE_SORT_OPTIONS = Object.keys(
   value: key as IPublicRecipeSortType,
   label: PUBLIC_RECIPE_SORT_LABELS[key as IPublicRecipeSortType],
 }));
+
+export const PUBLIC_RECIPE_SORT_OPTIONS_VALUES = PUBLIC_RECIPE_SORT_OPTIONS.map(
+  (o) => o.value,
+);

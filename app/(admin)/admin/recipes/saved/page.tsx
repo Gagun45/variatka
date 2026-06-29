@@ -7,7 +7,6 @@ export const metadata = {
 const SavedRecipesPage = () => {
   return (
     <main>
-      <h1>Saved recipes</h1>
       <SavedRecipes />
     </main>
   );

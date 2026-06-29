@@ -67,3 +67,9 @@ export const RECIPE_CATEGORY_PUBLIC_FILTER_OPTIONS: IOption<IRecipeCategoryFilte
     { value: "all", label: "All", icon: Boxes },
     ...RECIPE_CATEGORY_ONLY_OPTIONS.filter((o) => o.value !== "SEASONEDSALT"),
   ];
+
+export const RECIPE_CATEGORY_FILTER_OPTIONS_VALUES =
+  RECIPE_CATEGORY_FILTER_OPTIONS.map((o) => o.value);
+
+export const RECIPE_CATEGORY_PUBLIC_FILTER_OPTIONS_VALUES =
+  RECIPE_CATEGORY_PUBLIC_FILTER_OPTIONS.map((o) => o.value);

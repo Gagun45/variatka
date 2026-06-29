@@ -7,7 +7,6 @@ export const metadata = {
 const RecipesPage = () => {
   return (
     <main>
-      <h1>Recipes</h1>
       <RecipeDashboard />
     </main>
   );

@@ -1,88 +1,137 @@
+// @/app/public-recipes/PublicRecipesTabs.tsx
 "use client";
 
-import { useState } from "react";
-
+import { Separator } from "@/components/ui/separator";
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
 import { SortSelect } from "@/components/sort-select/SortSelect";
-import { Separator } from "@/components/ui/separator";
-import { usePublicRecipesFilter } from "@/hooks/usePublicRecipesFilter";
-
-import { IStockType } from "@/lib/constants/stock.options";
-import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
-import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
-import { IRecipeSeriesFilter } from "@/lib/enumslist/series.constants";
-import {
-  IPublicRecipeSortType,
-  PUBLIC_RECIPE_SORT_OPTIONS,
-} from "@/lib/public.sorting.recipes";
-import { IPublicRecipe } from "@/lib/types";
-import { useSearchParams } from "next/navigation";
-import PublicRecipesList from "../list/PublicRecipesList";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
+import PublicRecipesList from "../list/PublicRecipesList";
+
+import { usePublicRecipesFilter } from "@/hooks/usePublicRecipesFilter";
+import { usePublicRecipeFilters } from "@/hooks/filtering/public-recipes/usePublicRecipeFilters";
+import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
+import { PUBLIC_RECIPE_SORT_OPTIONS } from "@/lib/public.sorting.recipes";
+import { IPublicRecipe } from "@/lib/types";
+
+// Import your brand new reusable framework layout
+import { FilterLayout } from "@/components/filter-layout/FilterLayout";
+import {
+  ActiveFilterBadges,
+  IActiveBadge,
+} from "@/components/filter-layout/ActiveFilterBadges";
+import { useMemo } from "react";
 
 interface Props {
   recipes: IPublicRecipe[];
 }
 
 const PublicRecipesTabs = ({ recipes }: Props) => {
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("query") ?? "";
+  const { query, setCategory, setSeries, setSort, setStock, resetQuery } =
+    usePublicRecipeFilters();
+  const { category, searchQuery, series, sort, stock } = query;
 
-  const [categoryFilter, setCategoryFilter] =
-    useState<IRecipeCategoryFilter>("all");
+  const activeBadges = useMemo(() => {
+    const list: IActiveBadge[] = [];
 
-  const [stockFilter, setStockFilter] = useState<IStockType>("all");
-  const [seriesFilter, setSeriesFilter] = useState<IRecipeSeriesFilter>("all");
+    if (category && category !== "all") {
+      const option = FILTER_CONFIGS.publicRecipes.category.options.find(
+        (o) => o.value === category,
+      );
+      if (option) {
+        list.push({
+          id: "category",
+          label: option.label,
+          icon: option.icon,
+          iconClassName: option.iconClassName,
+          onClear: () => setCategory("all"),
+        });
+      }
+    }
 
-  const [sort, setSort] = useState<IPublicRecipeSortType>("name-asc");
+    if (series && series !== "all") {
+      const option = FILTER_CONFIGS.recipes.series.options.find(
+        (o) => o.value === series,
+      );
+      if (option) {
+        list.push({
+          id: "series",
+          label: option.label,
+          icon: option.icon,
+          iconClassName: option.iconClassName,
+          onClear: () => setSeries("all"),
+        });
+      }
+    }
+
+    if (stock && stock !== "all") {
+      const option = FILTER_CONFIGS.recipes.stock.options.find(
+        (o) => o.value === stock,
+      );
+      if (option) {
+        list.push({
+          id: "stock",
+          label: option.label,
+          icon: option.icon,
+          iconClassName: option.iconClassName,
+          onClear: () => setStock("all"),
+        });
+      }
+    }
+
+    return list;
+  }, [category, series, stock, setCategory, setSeries, setStock]);
 
   const filteredRecipes = usePublicRecipesFilter({
     recipes,
     searchQuery,
-    category: categoryFilter,
-    stock: stockFilter,
+    category,
+    stock,
     sort,
-    series: seriesFilter,
+    series,
   });
 
   return (
-    <div className="flex flex-col gap-4 w-full mx-auto">
-      <Separator />
+    <div className="w-full">
+      <Separator className="mb-4" />
 
-      <div className="flex justify-between flex-wrap gap-4">
-        <div className="flex flex-col gap-4">
-          <FilterButtons
-            value={categoryFilter}
-            variant="bigger"
-            onChange={setCategoryFilter}
-            config={FILTER_CONFIGS.publicRecipes.category}
-          />
-          <FilterButtons
-            value={seriesFilter}
-            onChange={setSeriesFilter}
-            config={FILTER_CONFIGS.recipes.series}
-          />
-          <FilterButtons
-            value={stockFilter}
-            onChange={setStockFilter}
-            config={FILTER_CONFIGS.recipes.stock}
-          />
-        </div>
-        <div className="mt-auto ml-auto">
+      <FilterLayout
+        onReset={resetQuery}
+        badgesSlot={
+          <ActiveFilterBadges badges={activeBadges} onClearAll={resetQuery} />
+        }
+        sortSlot={
           <SortSelect
             value={sort}
             onChange={setSort}
             options={PUBLIC_RECIPE_SORT_OPTIONS}
           />
-        </div>
-      </div>
-
-      <ResultsFoundText
-        amount={filteredRecipes.length}
-        searchQuery={searchQuery}
-      />
-
-      <PublicRecipesList recipes={filteredRecipes} />
+        }
+        resultsSlot={
+          <ResultsFoundText
+            amount={filteredRecipes.length}
+            searchQuery={searchQuery}
+          />
+        }
+        listSlot={<PublicRecipesList recipes={filteredRecipes} />}
+      >
+        {/* Pass your filter rows directly as standard React children */}
+        <FilterButtons
+          value={category}
+          variant="bigger"
+          onChange={setCategory}
+          config={FILTER_CONFIGS.publicRecipes.category}
+        />
+        <FilterButtons
+          value={series}
+          onChange={setSeries}
+          config={FILTER_CONFIGS.recipes.series}
+        />
+        <FilterButtons
+          value={stock}
+          onChange={setStock}
+          config={FILTER_CONFIGS.recipes.stock}
+        />
+      </FilterLayout>
     </div>
   );
 };

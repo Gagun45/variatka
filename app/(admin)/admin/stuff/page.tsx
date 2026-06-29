@@ -7,7 +7,6 @@ export const metadata = {
 const StuffPage = () => {
   return (
     <main>
-      <h1>Stuff</h1>
       <StuffDashboard />
     </main>
   );

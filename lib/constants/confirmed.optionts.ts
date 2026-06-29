@@ -23,3 +23,5 @@ export const CONFIRMED_OPTIONS: IOption<IConfirmedType>[] = [
     iconClassName: "text-red-500",
   },
 ];
+
+export const CONFIRMED_OPTIONS_VALUES = CONFIRMED_OPTIONS.map((o) => o.value);

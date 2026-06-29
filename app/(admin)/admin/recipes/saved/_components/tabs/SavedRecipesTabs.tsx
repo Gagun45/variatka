@@ -1,32 +1,32 @@
 // @/app/recipes/RecipeTabs.tsx
 "use client";
 
-import { useMemo } from "react";
-import { Separator } from "@/components/ui/separator";
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
-import { SortSelect } from "@/components/sort-select/SortSelect";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
-import RecipesList from "./recipes-list/RecipesList";
+import { SortSelect } from "@/components/sort-select/SortSelect";
+import { Separator } from "@/components/ui/separator";
+import { useMemo } from "react";
 
 import { useRecipesFilter } from "@/hooks/useRecipesFilter";
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
-import { RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
 import { IRecipe } from "@/lib/prisma.args";
+import { RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
 
 // Reusable Components
-import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import {
   ActiveFilterBadges,
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
-import { useRecipeFiltersStore } from "@/zustand/recipe.filters.store";
+import { FilterLayout } from "@/components/filter-layout/FilterLayout";
+import { useSavedRecipeFiltersStore } from "@/zustand/recipe.saved.filters.store";
 import { useSearchParams } from "next/navigation";
+import RecipesList from "../../../_components/recipes/recipeTabs/recipes-list/RecipesList";
 
 interface Props {
   recipes: IRecipe[];
 }
 
-const RecipeTabs = ({ recipes }: Props) => {
+const SavedRecipesTabs = ({ recipes }: Props) => {
   const searchParams = useSearchParams();
 
   const searchQuery = searchParams.get("query") ?? "";
@@ -45,7 +45,7 @@ const RecipeTabs = ({ recipes }: Props) => {
     setSeries,
     setSort,
     reset,
-  } = useRecipeFiltersStore();
+  } = useSavedRecipeFiltersStore();
 
   // Build the array of active badges including matching configuration structural properties
   const activeBadges = useMemo(() => {
@@ -154,7 +154,7 @@ const RecipeTabs = ({ recipes }: Props) => {
   return (
     <>
       <div className="flex justify-center items-center gap-2">
-        <h1>Recipes</h1>
+        <h1>Saved recipes</h1>
       </div>
       <div className="flex flex-col gap-4 w-full mx-auto">
         <Separator className="mb-2" />
@@ -215,4 +215,4 @@ const RecipeTabs = ({ recipes }: Props) => {
   );
 };
 
-export default RecipeTabs;
+export default SavedRecipesTabs;

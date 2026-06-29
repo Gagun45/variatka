@@ -23,3 +23,7 @@ export const READY_TO_MAKE_OPTIONS: IOption<IReadyToMakeType>[] = [
     iconClassName: "text-orange-500",
   },
 ];
+
+export const READY_TO_MAKE_OPTIONS_VALUES = READY_TO_MAKE_OPTIONS.map(
+  (o) => o.value,
+);

@@ -34,3 +34,7 @@ export const RECIPE_SORT_OPTIONS = Object.keys(RECIPE_SORTERS).map((key) => ({
   value: key as IRecipeSortType,
   label: RECIPE_SORT_LABELS[key as IRecipeSortType],
 }));
+
+export const RECIPE_SORT_OPTIONS_VALUES = RECIPE_SORT_OPTIONS.map(
+  (o) => o.value,
+);
