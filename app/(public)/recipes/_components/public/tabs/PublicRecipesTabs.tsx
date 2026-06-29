@@ -1,24 +1,25 @@
 // @/app/public-recipes/PublicRecipesTabs.tsx
 "use client";
 
-import { Separator } from "@/components/ui/separator";
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
-import { SortSelect } from "@/components/sort-select/SortSelect";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
+import { SortSelect } from "@/components/sort-select/SortSelect";
+import { Separator } from "@/components/ui/separator";
 import PublicRecipesList from "../list/PublicRecipesList";
 
-import { usePublicRecipesFilter } from "@/hooks/usePublicRecipesFilter";
 import { usePublicRecipeFilters } from "@/hooks/filtering/public-recipes/usePublicRecipeFilters";
+import { usePublicRecipesFilter } from "@/hooks/usePublicRecipesFilter";
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 import { PUBLIC_RECIPE_SORT_OPTIONS } from "@/lib/public.sorting.recipes";
 import { IPublicRecipe } from "@/lib/types";
 
 // Import your brand new reusable framework layout
-import { FilterLayout } from "@/components/filter-layout/FilterLayout";
+import { CategoryNavigation } from "@/components/cat-navigation/CategoryNavigation";
 import {
   ActiveFilterBadges,
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
+import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { useMemo } from "react";
 
 interface Props {
@@ -91,7 +92,12 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
   });
 
   return (
-    <div className="w-full">
+    <div className="w-full pt-18">
+      <CategoryNavigation
+        value={category}
+        onChange={setCategory}
+        config={FILTER_CONFIGS.publicRecipes.category}
+      />
       <Separator className="mb-4" />
 
       <FilterLayout
