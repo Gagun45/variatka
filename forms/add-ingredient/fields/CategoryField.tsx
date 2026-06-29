@@ -16,7 +16,7 @@ const CategorySelectField = () => {
 
   return (
     <Controller
-      name="categoryNew"
+      name="category"
       control={control}
       render={({ field, fieldState }) => (
         <Field>

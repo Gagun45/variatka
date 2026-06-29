@@ -34,7 +34,7 @@ const IngredientForm = ({
   const defaultValues: IIngredientFormValues = {
     title: ingredient?.title ?? "",
     description: ingredient?.description ?? "",
-    categoryNew: ingredient?.categoryNew ?? defaultCategory,
+    category: ingredient?.category ?? defaultCategory,
     isInStock: ingredient?.isInStock ?? false,
   };
   const form = useForm<IIngredientFormValues>({
@@ -46,7 +46,7 @@ const IngredientForm = ({
     form.reset({
       title: ingredient?.title ?? "",
       description: ingredient?.description ?? "",
-      categoryNew: ingredient?.categoryNew ?? defaultCategory,
+      category: ingredient?.category ?? defaultCategory,
       isInStock: ingredient?.isInStock ?? false,
     });
   }, [ingredient, form, defaultCategory]);

@@ -55,6 +55,7 @@ const StuffTabs = ({ stuff }: Props) => {
 
       <Separator />
       <FilterButtons
+        variant="bigger"
         value={activeCategory}
         onChange={setActiveCategory}
         config={FILTER_CONFIGS.stuff.category}

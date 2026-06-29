@@ -24,7 +24,7 @@ model Ingredient {
   imageKey     String?
   imageVersion Int     @default(0)
 
-  categoryNew IngredientCategories
+  category IngredientCategories
 
   isSaved   Boolean  @default(false)
   isInStock Boolean  @default(false)

@@ -9,7 +9,7 @@ export const ingredientSchema = z.object({
 
   isInStock: z.boolean(),
 
-  categoryNew: z.enum(INGREDIENT_CATEGORIES),
+  category: z.enum(INGREDIENT_CATEGORIES),
 });
 
 export const ingredientSchemas = {

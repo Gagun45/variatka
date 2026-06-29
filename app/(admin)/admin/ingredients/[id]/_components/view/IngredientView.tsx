@@ -23,12 +23,12 @@ interface Props {
 const IngredientView = ({ ingredient }: Props) => {
   const { mutate } = useToggleSavedIngredient();
   const { mutate: stockMutate } = useToggleIngredientStock();
-  const { description, categoryNew, isInStock, id, isSaved } = ingredient;
+  const { description, category, isInStock, id, isSaved } = ingredient;
   const isAdded = useRecipeStore((state) =>
     state.items.some((i) => i.id === id),
   );
 
-  const categoryLabel = INGREDIENT_CATEGORIES_DATA[categoryNew].label;
+  const categoryLabel = INGREDIENT_CATEGORIES_DATA[category].label;
 
   const onToggleSaved = () => {
     mutate({ ingredientId: id, isSaved });

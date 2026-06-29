@@ -29,7 +29,7 @@ export function useIngredientsFilter({
       ? ingredients.filter((i) => i.title.toLowerCase().includes(query))
       : category === "all"
         ? ingredients
-        : ingredients.filter((i) => i.categoryNew === category);
+        : ingredients.filter((i) => i.category === category);
 
     const stockFiltered =
       stock === "in"

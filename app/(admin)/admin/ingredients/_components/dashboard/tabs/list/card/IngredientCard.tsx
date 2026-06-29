@@ -21,10 +21,9 @@ const IngredientCard = ({
   onSavedToggle,
   onStockToggle,
 }: Props) => {
-  const { title, isInStock, id, isSaved, categoryNew } = ingredient;
+  const { title, isInStock, id, isSaved, category } = ingredient;
 
-  const { label, icon, iconClassName } =
-    INGREDIENT_CATEGORIES_DATA[categoryNew];
+  const { label, icon, iconClassName } = INGREDIENT_CATEGORIES_DATA[category];
   const Icon = icon;
 
   const isAdded = useRecipeStore((state) =>
