@@ -18,9 +18,11 @@ export function FilterButtons<T extends string>({
 }: Props<T>) {
   const { label, options } = config;
   let styles = "";
+  let iconStyles = "";
   switch (variant) {
     case "bigger":
       styles = "text-lg p-6 font-bold";
+      iconStyles = "size-5";
       break;
     default:
   }
@@ -49,13 +51,13 @@ export function FilterButtons<T extends string>({
         ? "text-neutral-600 bg-neutral-50/50 hover:bg-neutral-100 dark:text-neutral-400 dark:bg-transparent"
         : ""
     }
-    ${variant && styles}
+    ${styles}
   `}
             >
               {Icon && (
                 <Icon
                   className={`size-3.5 shrink-0 transition-transform ${opt.iconClassName} 
-              ${isSelected ? "text-current" : ""}`}
+              ${isSelected ? "text-current" : ""} ${iconStyles}`}
                 />
               )}
               {opt.label}

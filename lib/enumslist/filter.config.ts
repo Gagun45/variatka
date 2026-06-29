@@ -5,7 +5,7 @@ import { READY_TO_MAKE_OPTIONS } from "../constants/ready-to-make.options";
 import { STOCK_OPTIONS } from "../constants/stock.options";
 import { INGREDIENT_CATEGORY_FILTER_OPTIONS } from "./ingredient.constants";
 import { RECIPE_CATEGORY_FILTER_OPTIONS } from "./recipe.constants";
-import { RECIPE_SERIES_OPTIONS } from "./series.constants";
+import { RECIPE_SERIES_FILTER_OPTIONS } from "./series.constants";
 import { STUFF_CATEGORY_FILTER_OPTIONS } from "./stuff.constants";
 
 export const FILTER_CONFIGS = {
@@ -23,8 +23,8 @@ export const FILTER_CONFIGS = {
       options: READY_TO_MAKE_OPTIONS,
     },
     series: {
-      label: "Recipe Tier",
-      options: RECIPE_SERIES_OPTIONS,
+      label: "Series",
+      options: RECIPE_SERIES_FILTER_OPTIONS,
     },
     confirmed: {
       label: "Status",

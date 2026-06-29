@@ -34,17 +34,15 @@ export const INGREDIENT_CATEGORIES_DATA: Record<
 export type IIngredientCategoryFilter = "all" | IIngredientCategory;
 
 export const INGREDIENT_CATEGORY_ONLY_OPTIONS: IOption<IIngredientCategory>[] =
-  [
-    ...Object.values(INGREDIENT_CATEGORIES).map(
-      (category): IOption<IIngredientCategory> => ({
-        value: category,
-        label: INGREDIENT_CATEGORIES_DATA[category].label,
-        icon: INGREDIENT_CATEGORIES_DATA[category].icon,
-        className: INGREDIENT_CATEGORIES_DATA[category].className,
-        iconClassName: INGREDIENT_CATEGORIES_DATA[category].iconClassName,
-      }),
-    ),
-  ];
+  Object.values(INGREDIENT_CATEGORIES).map(
+    (category): IOption<IIngredientCategory> => ({
+      value: category,
+      label: INGREDIENT_CATEGORIES_DATA[category].label,
+      icon: INGREDIENT_CATEGORIES_DATA[category].icon,
+      className: INGREDIENT_CATEGORIES_DATA[category].className,
+      iconClassName: INGREDIENT_CATEGORIES_DATA[category].iconClassName,
+    }),
+  );
 
 export const INGREDIENT_CATEGORY_FILTER_OPTIONS: IOption<IIngredientCategoryFilter>[] =
   [

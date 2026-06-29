@@ -1,6 +1,6 @@
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { RECIPE_SERIES_OPTIONS } from "@/lib/enumslist/series.constants";
+import { RECIPE_SERIES_ONLY_OPTIONS } from "@/lib/enumslist/series.constants";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { Controller, useFormContext } from "react-hook-form";
 
@@ -22,7 +22,7 @@ const SeriesField = () => {
             onValueChange={field.onChange}
             className="flex flex-wrap gap-4"
           >
-            {RECIPE_SERIES_OPTIONS.map((option) => (
+            {RECIPE_SERIES_ONLY_OPTIONS.map((option) => (
               <label
                 key={option.value}
                 className="flex items-center border px-3 py-1.5 rounded-sm gap-2 cursor-pointer hover:bg-accent/50 transition-colors"

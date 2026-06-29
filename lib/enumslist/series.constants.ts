@@ -28,9 +28,8 @@ export const RECIPE_SERIES_DATA: Record<IRecipeSeries, IOptionListType> = {
 
 export type IRecipeSeriesFilter = "all" | IRecipeSeries;
 
-export const RECIPE_SERIES_OPTIONS: IOption<IRecipeSeriesFilter>[] = [
-  { value: "all", label: "All", icon: UtensilsCrossed },
-  ...Object.values(RECIPE_SERIES).map(
+export const RECIPE_SERIES_ONLY_OPTIONS: IOption<IRecipeSeries>[] =
+  Object.values(RECIPE_SERIES).map(
     (category): IOption<IRecipeSeries> => ({
       value: category,
       label: RECIPE_SERIES_DATA[category].label,
@@ -38,5 +37,9 @@ export const RECIPE_SERIES_OPTIONS: IOption<IRecipeSeriesFilter>[] = [
       className: RECIPE_SERIES_DATA[category].className,
       iconClassName: RECIPE_SERIES_DATA[category].iconClassName,
     }),
-  ),
+  );
+
+export const RECIPE_SERIES_FILTER_OPTIONS: IOption<IRecipeSeriesFilter>[] = [
+  { value: "all", label: "All", icon: UtensilsCrossed },
+  ...RECIPE_SERIES_ONLY_OPTIONS,
 ];

@@ -1,7 +1,7 @@
 import { Boxes, Gift } from "lucide-react";
+import { FaJar } from "react-icons/fa6";
 import { IOption } from "../types";
 import { IOptionListType } from "./types";
-import { FaJar } from "react-icons/fa6";
 // frontend/constants.ts
 
 // 1. Create a browser-safe pseudo-enum
@@ -30,8 +30,8 @@ export const STUFF_CATEGORIES_DATA: Record<IStuffCategory, IOptionListType> = {
 
 export type IStuffCategoryFilter = "all" | IStuffCategory;
 
-export const STUFF_CATEGORY_ONLY_OPTIONS: IOption<IStuffCategory>[] = [
-  ...Object.values(STUFF_CATEGORIES).map(
+export const STUFF_CATEGORY_ONLY_OPTIONS: IOption<IStuffCategory>[] =
+  Object.values(STUFF_CATEGORIES).map(
     (category): IOption<IStuffCategory> => ({
       value: category,
       label: STUFF_CATEGORIES_DATA[category].label,
@@ -39,8 +39,7 @@ export const STUFF_CATEGORY_ONLY_OPTIONS: IOption<IStuffCategory>[] = [
       iconClassName: STUFF_CATEGORIES_DATA[category].iconClassName,
       icon: STUFF_CATEGORIES_DATA[category].icon,
     }),
-  ),
-];
+  );
 
 export const STUFF_CATEGORY_FILTER_OPTIONS: IOption<IStuffCategoryFilter>[] = [
   { value: "all", label: "All", icon: Boxes },
