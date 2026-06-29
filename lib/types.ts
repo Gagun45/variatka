@@ -30,6 +30,7 @@ export type IOption<T extends string> = {
   className?: string;
   icon?: LucideIcon | IconType;
   iconClassName?: string;
+  logo?: string;
 };
 
 export type IActionResponse<T> = IActionSuccess<T> | IActionError;

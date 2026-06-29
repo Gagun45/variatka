@@ -21,6 +21,7 @@ import {
 } from "@/components/filter-layout/ActiveFilterBadges";
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { useMemo } from "react";
+import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 
 interface Props {
   recipes: IPublicRecipe[];
@@ -92,7 +93,12 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
   });
 
   return (
-    <div className="w-full pt-18">
+    <div className="w-full">
+      <h1 className="py-6">
+        {category === "all"
+          ? "Продукція"
+          : RECIPE_CATEGORIES_DATA[category].label}
+      </h1>
       <CategoryNavigation
         value={category}
         onChange={setCategory}
@@ -121,12 +127,12 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
         listSlot={<PublicRecipesList recipes={filteredRecipes} />}
       >
         {/* Pass your filter rows directly as standard React children */}
-        <FilterButtons
+        {/* <FilterButtons
           value={category}
           variant="bigger"
           onChange={setCategory}
           config={FILTER_CONFIGS.publicRecipes.category}
-        />
+        /> */}
         <FilterButtons
           value={series}
           onChange={setSeries}

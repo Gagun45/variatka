@@ -7,6 +7,7 @@ export interface IOptionListType {
   icon?: LucideIcon | IconType;
   iconClassName?: string;
   className?: string;
+  logo?: string;
 }
 
 export interface IFilterConfig<T extends string> {

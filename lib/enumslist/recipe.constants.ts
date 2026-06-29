@@ -25,16 +25,19 @@ export const RECIPE_CATEGORIES_DATA: Record<IRecipeCategory, IOptionListType> =
       label: "Спеції",
       icon: GiSaltShaker,
       iconClassName: "text-orange-500",
+      logo: "/spices-poster.png",
     },
     JAMS: {
       label: "Повидло",
       icon: GiHoneyJar,
       iconClassName: "text-pink-500",
+      logo: "/jams-poster.png",
     },
     SAUCES: {
       label: "Соуси",
       icon: FaBottleDroplet,
       iconClassName: "text-blue-500",
+      logo: "/sauces-poster.png",
     },
     SEASONEDSALT: {
       label: "Пряні солі",
@@ -53,6 +56,7 @@ export const RECIPE_CATEGORY_ONLY_OPTIONS: IOption<IRecipeCategory>[] =
       icon: RECIPE_CATEGORIES_DATA[category].icon,
       className: RECIPE_CATEGORIES_DATA[category].className,
       iconClassName: RECIPE_CATEGORIES_DATA[category].iconClassName,
+      logo: RECIPE_CATEGORIES_DATA[category].logo,
     }),
   );
 
@@ -63,10 +67,7 @@ export const RECIPE_CATEGORY_FILTER_OPTIONS: IOption<IRecipeCategoryFilter>[] =
   ];
 
 export const RECIPE_CATEGORY_PUBLIC_FILTER_OPTIONS: IOption<IRecipeCategoryFilter>[] =
-  [
-    { value: "all", label: "All", icon: Boxes },
-    ...RECIPE_CATEGORY_ONLY_OPTIONS.filter((o) => o.value !== "SEASONEDSALT"),
-  ];
+  [...RECIPE_CATEGORY_ONLY_OPTIONS.filter((o) => o.value !== "SEASONEDSALT")];
 
 export const RECIPE_CATEGORY_FILTER_OPTIONS_VALUES =
   RECIPE_CATEGORY_FILTER_OPTIONS.map((o) => o.value);
