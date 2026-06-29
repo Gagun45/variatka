@@ -4,7 +4,10 @@ import { CONFIRMED_OPTIONS } from "../constants/confirmed.optionts";
 import { READY_TO_MAKE_OPTIONS } from "../constants/ready-to-make.options";
 import { STOCK_OPTIONS } from "../constants/stock.options";
 import { INGREDIENT_CATEGORY_FILTER_OPTIONS } from "./ingredient.constants";
-import { RECIPE_CATEGORY_FILTER_OPTIONS } from "./recipe.constants";
+import {
+  RECIPE_CATEGORY_FILTER_OPTIONS,
+  RECIPE_CATEGORY_PUBLIC_FILTER_OPTIONS,
+} from "./recipe.constants";
 import { RECIPE_SERIES_FILTER_OPTIONS } from "./series.constants";
 import { STUFF_CATEGORY_FILTER_OPTIONS } from "./stuff.constants";
 
@@ -45,6 +48,12 @@ export const FILTER_CONFIGS = {
     category: {
       label: "Category",
       options: STUFF_CATEGORY_FILTER_OPTIONS,
+    },
+  },
+  publicRecipes: {
+    category: {
+      label: "Category",
+      options: RECIPE_CATEGORY_PUBLIC_FILTER_OPTIONS,
     },
   },
 } as const;

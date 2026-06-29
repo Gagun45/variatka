@@ -55,7 +55,7 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
             value={categoryFilter}
             variant="bigger"
             onChange={setCategoryFilter}
-            config={FILTER_CONFIGS.recipes.category}
+            config={FILTER_CONFIGS.publicRecipes.category}
           />
           <FilterButtons
             value={seriesFilter}

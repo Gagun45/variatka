@@ -1,6 +1,6 @@
 import ConfirmToggleButton from "@/components/confirmation-btn/ConfirmToggleButton";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
-import { Card } from "@/components/ui/card";
+import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 import { RECIPE_SERIES_DATA } from "@/lib/enumslist/series.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IRecipe } from "@/lib/prisma.args";
@@ -13,6 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import StockBadge from "@/components/stock-badge/StockBadge";
 
 type Props = {
   recipe: IRecipe;
@@ -21,8 +22,16 @@ type Props = {
 };
 
 const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
-  const { id, title, imageKey, isSaved, isConfirmed, imageVersion, series } =
-    recipe;
+  const {
+    id,
+    title,
+    imageKey,
+    isSaved,
+    inStock,
+    isConfirmed,
+    imageVersion,
+    series,
+  } = recipe;
   const href = frontendUrls.recipes.view(id);
 
   const onToggle = () => {
@@ -39,7 +48,7 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition">
-      <div className="flex flex-col gap-2 px-2">
+      <CardHeader>
         <div className="flex justify-between gap-2 items-center">
           <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
 
@@ -49,39 +58,38 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
           />
           <ReadyToCookTooltip recipe={recipe} />
         </div>
+      </CardHeader>
 
-        <Link
-          href={href}
-          className="relative hover:scale-[1.05] transition h-48 w-full rounded-md overflow-hidden"
-        >
-          <Image
-            src={imageSrc}
-            alt={title}
-            fill
-            sizes="384px"
-            className="object-contain"
-          />
-        </Link>
-      </div>
+      <Link
+        href={href}
+        className="relative hover:scale-[1.05] transition h-48 w-full rounded-md overflow-hidden"
+      >
+        <Image
+          src={imageSrc}
+          alt={title}
+          fill
+          sizes="384px"
+          className="object-contain"
+        />
+      </Link>
       <div className="flex justify-center">
         <Link className="hover:underline break-all" href={href}>
           {title}
         </Link>
       </div>
-
-      {Icon && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Icon
-              size={24}
-              className={`${iconClassName} mx-auto cursor-help`}
-            />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{label}</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      <CardFooter className="justify-between items-center">
+        {Icon && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Icon size={24} className={`${iconClassName}`} />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{label}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        <StockBadge isInStock={!!inStock} quantity={inStock} />
+      </CardFooter>
 
       {/* <RecipeSeriesBadge className="mx-auto" series={series} /> */}
     </Card>
