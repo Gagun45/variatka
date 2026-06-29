@@ -24,7 +24,7 @@ model Ingredient {
   imageKey     String?
   imageVersion Int     @default(0)
 
-  categoryNew IngredientCategories @default(SPICES)
+  categoryNew IngredientCategories
 
   isSaved   Boolean  @default(false)
   isInStock Boolean  @default(false)
@@ -43,6 +43,7 @@ enum RecipeCategories {
   SPICES
   SAUCES
   JAMS
+  SEASONEDSALT
 }
 
 model Recipe {
@@ -51,7 +52,7 @@ model Recipe {
   description String
   notes       String
 
-  category RecipeCategories @default(SPICES)
+  category RecipeCategories
 
   inStock Int     @default(0)
   isSaved Boolean @default(false)
@@ -63,7 +64,7 @@ model Recipe {
   imageVersion Int     @default(0)
 
   spicy  Int          @default(0)
-  series RecipeSeries @default(DEFAULT)
+  series RecipeSeries
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -95,7 +96,7 @@ model Stuff {
   description String?
   inStock     Int
 
-  category StuffCategories @default(JARS)
+  category StuffCategories
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
