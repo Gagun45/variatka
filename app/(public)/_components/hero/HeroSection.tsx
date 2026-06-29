@@ -18,27 +18,18 @@ export const HeroSection = () => {
       <div className="absolute top-0 left-1/2 -z-10 h-[400px] w-[600px] -translate-x-1/2 rounded-full bg-muted/40 blur-3xl" />
 
       <div className="container mx-auto px-4 max-w-6xl flex flex-col items-center text-center gap-8">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/80 backdrop-blur-xs">
-          <Sparkles className="size-4 text-amber-500 animate-pulse" />
-          <span className="text-xs font-semibold text-muted-foreground">
-            Крафтові продукти та авторські смаки
-          </span>
-        </div>
-
         {/* Hero text (UNCHANGED) */}
-        <div className="space-y-4 max-w-3xl">
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-foreground leading-[1.15]">
+        <div className="space-y-4 max-w-5xl">
+          <h1 className="text-3xl sm:text-6xl font-black tracking-tight text-foreground leading-[1.15]">
             Відкрийте для себе{" "}
             <span className="bg-gradient-to-r from-foreground via-foreground/80 to-muted-foreground bg-clip-text text-transparent">
               справжні смаки
             </span>
           </h1>
 
-          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base text-muted-foreground max-w-4xl mx-auto leading-relaxed">
             Каталог натуральних сумішей спецій, витончених соусів та домашнього
-            повидла. Зручний пошук, актуальна наявність та повний контроль ваших
-            запасів.
+            повидла.
           </p>
         </div>
 
@@ -51,14 +42,14 @@ export const HeroSection = () => {
 
         {/* IMAGE-ONLY categories */}
         <div className="w-full mt-10">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-10 w-full">
             {categoriesToDisplay.map((opt) => (
               <Link
                 key={opt.value}
                 href={`/recipes?category=${opt.value}`}
                 className="group block active:scale-[0.98] transition-transform"
               >
-                <Card className="relative overflow-hidden border-0 rounded-2xl shadow-sm aspect-[4/5]">
+                <Card className="relative overflow-hidden border-0 rounded-2xl shadow-sm aspect-square">
                   <Image
                     src={opt.logo ?? ""}
                     alt={opt.value}
