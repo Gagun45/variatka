@@ -152,66 +152,64 @@ const SavedRecipesTabs = ({ recipes }: Props) => {
   });
 
   return (
-    <>
+    <div className="w-fulls">
       <div className="flex justify-center items-center gap-2">
         <h1>Saved recipes</h1>
       </div>
-      <div className="flex flex-col gap-4 w-full mx-auto">
-        <Separator className="mb-2" />
+      <Separator className="mb-2" />
 
-        <FilterLayout
-          onReset={reset}
-          sortSlot={
-            <SortSelect
-              value={sort}
-              onChange={setSort}
-              options={RECIPE_SORT_OPTIONS}
-            />
-          }
-          resultsSlot={
-            <ResultsFoundText
-              amount={filteredRecipes.length}
-              searchQuery={searchQuery}
-            />
-          }
-          badgesSlot={
-            <ActiveFilterBadges badges={activeBadges} onClearAll={reset} />
-          }
-          listSlot={<RecipesList recipes={filteredRecipes} />}
-        >
-          <FilterButtons
-            value={category}
-            variant="bigger"
-            onChange={setCategory}
-            config={FILTER_CONFIGS.recipes.category}
+      <FilterLayout
+        onReset={reset}
+        sortSlot={
+          <SortSelect
+            value={sort}
+            onChange={setSort}
+            options={RECIPE_SORT_OPTIONS}
           />
+        }
+        resultsSlot={
+          <ResultsFoundText
+            amount={filteredRecipes.length}
+            searchQuery={searchQuery}
+          />
+        }
+        badgesSlot={
+          <ActiveFilterBadges badges={activeBadges} onClearAll={reset} />
+        }
+        listSlot={<RecipesList recipes={filteredRecipes} />}
+      >
+        <FilterButtons
+          value={category}
+          variant="bigger"
+          onChange={setCategory}
+          config={FILTER_CONFIGS.recipes.category}
+        />
 
-          <FilterButtons
-            value={stock}
-            onChange={setStock}
-            config={FILTER_CONFIGS.recipes.stock}
-          />
+        <FilterButtons
+          value={stock}
+          onChange={setStock}
+          config={FILTER_CONFIGS.recipes.stock}
+        />
 
-          <FilterButtons
-            value={ready}
-            onChange={setReady}
-            config={FILTER_CONFIGS.recipes.ready}
-          />
+        <FilterButtons
+          value={ready}
+          onChange={setReady}
+          config={FILTER_CONFIGS.recipes.ready}
+        />
 
-          <FilterButtons
-            value={series}
-            onChange={setSeries}
-            config={FILTER_CONFIGS.recipes.series}
-          />
+        <FilterButtons
+          value={series}
+          onChange={setSeries}
+          config={FILTER_CONFIGS.recipes.series}
+        />
 
-          <FilterButtons
-            value={confirmed}
-            onChange={setConfirmed}
-            config={FILTER_CONFIGS.recipes.confirmed}
-          />
-        </FilterLayout>
-      </div>
-    </>
+        <FilterButtons
+          value={confirmed}
+          onChange={setConfirmed}
+          config={FILTER_CONFIGS.recipes.confirmed}
+        />
+      </FilterLayout>
+    </div>
   );
 };
 

@@ -35,7 +35,7 @@ export const FilterLayout = ({
   const showReset = isResetVisible ?? !!badgesSlot;
 
   return (
-    <div className="flex flex-col gap-4 w-full mx-auto">
+    <div className="flex flex-col gap-4 w-full mx-auto mt-4">
       {/* Top Header Control Row */}
       <div className="flex items-center justify-between gap-4 w-full">
         {/* Mobile Filter Button & Overlay Sheet */}

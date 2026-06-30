@@ -86,51 +86,49 @@ const SavedIngredientsTabs = ({ ingredients }: Props) => {
   };
 
   return (
-    <>
+    <div className="w-full">
       <div className="flex items-center justify-center gap-2">
         <h1>Saved ingredients</h1>
       </div>
-      <div className="flex flex-col gap-4 w-full mx-auto">
-        <Separator className="mb-2" />
+      <Separator className="mb-2" />
 
-        <FilterLayout
-          onReset={reset}
-          sortSlot={
-            <SortSelect
-              value={sort}
-              onChange={setSort}
-              options={INGREDIENT_SORT_OPTIONS}
-            />
-          }
-          resultsSlot={
-            <ResultsFoundText
-              amount={filteredIngredients.length}
-              searchQuery={searchQuery}
-            />
-          }
-          badgesSlot={
-            <ActiveFilterBadges
-              badges={activeBadges}
-              onClearAll={handleClearAll}
-            />
-          }
-          listSlot={<IngredienstList ingredients={filteredIngredients} />}
-        >
-          <FilterButtons
-            variant="bigger"
-            value={category}
-            onChange={setCategory}
-            config={FILTER_CONFIGS.ingredients.category}
+      <FilterLayout
+        onReset={reset}
+        sortSlot={
+          <SortSelect
+            value={sort}
+            onChange={setSort}
+            options={INGREDIENT_SORT_OPTIONS}
           />
+        }
+        resultsSlot={
+          <ResultsFoundText
+            amount={filteredIngredients.length}
+            searchQuery={searchQuery}
+          />
+        }
+        badgesSlot={
+          <ActiveFilterBadges
+            badges={activeBadges}
+            onClearAll={handleClearAll}
+          />
+        }
+        listSlot={<IngredienstList ingredients={filteredIngredients} />}
+      >
+        <FilterButtons
+          variant="bigger"
+          value={category}
+          onChange={setCategory}
+          config={FILTER_CONFIGS.ingredients.category}
+        />
 
-          <FilterButtons
-            value={stock}
-            onChange={setStock}
-            config={FILTER_CONFIGS.ingredients.stock}
-          />
-        </FilterLayout>
-      </div>
-    </>
+        <FilterButtons
+          value={stock}
+          onChange={setStock}
+          config={FILTER_CONFIGS.ingredients.stock}
+        />
+      </FilterLayout>
+    </div>
   );
 };
 
