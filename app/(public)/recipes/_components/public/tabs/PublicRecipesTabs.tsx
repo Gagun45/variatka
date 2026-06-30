@@ -92,14 +92,19 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
     series,
   });
 
+  const onCategoryReset = () => {
+    setCategory("all");
+  };
+
   return (
     <div className="w-full">
-      <h1 className="py-6">
+      <h1>
         {category === "all"
-          ? "Продукція"
+          ? "Вся продукція"
           : RECIPE_CATEGORIES_DATA[category].label}
       </h1>
       <CategoryNavigation
+        onCategoryReset={onCategoryReset}
         value={category}
         onChange={setCategory}
         config={FILTER_CONFIGS.publicRecipes.category}

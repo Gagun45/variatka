@@ -54,6 +54,7 @@ export const HeroSection = () => {
                     src={opt.logo ?? ""}
                     alt={opt.value}
                     fill
+                    sizes="(max-width: 640px) 50vw, 33vw"
                     className="object-contain group-hover:scale-105 transition-transform duration-300"
                   />
                 </Card>

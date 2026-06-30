@@ -128,7 +128,7 @@
     @apply font-sans;
   }
   main {
-    @apply py-4 px-8 max-w-360 w-full mx-auto space-y-4;
+    @apply py-4 px-2 md:px-8 max-w-420 w-full mx-auto space-y-4;
   }
   h1 {
     @apply text-center py-4 text-4xl font-semibold tracking-widest

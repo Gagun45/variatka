@@ -60,7 +60,9 @@ export default function PublicRecipeView({ recipe }: Props) {
               alt={title}
               width={500}
               height={500}
-              className="aspect-square w-full object-cover transition duration-300 hover:scale-105"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              priority
+              className="aspect-square w-full object-contain transition duration-300 hover:scale-105"
             />
             {isAdmin && (
               <Link

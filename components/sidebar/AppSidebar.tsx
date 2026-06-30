@@ -35,7 +35,13 @@ export function AppSidebar() {
           href={frontendUrls.index}
         >
           <div className="relative size-full">
-            <Image src={"/logo.png"} alt="Logo" fill className="object-cover" />
+            <Image
+              src={"/logo.png"}
+              alt="Logo"
+              sizes="256px"
+              fill
+              className="object-cover"
+            />
           </div>
         </Link>
       </SidebarHeader>
