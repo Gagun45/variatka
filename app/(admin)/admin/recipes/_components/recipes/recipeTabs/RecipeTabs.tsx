@@ -1,24 +1,24 @@
 // @/app/recipes/RecipeTabs.tsx
 "use client";
 
-import { useMemo } from "react";
-import { Separator } from "@/components/ui/separator";
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
-import { SortSelect } from "@/components/sort-select/SortSelect";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
+import { SortSelect } from "@/components/sort-select/SortSelect";
+import { Separator } from "@/components/ui/separator";
+import { useMemo } from "react";
 import RecipesList from "./recipes-list/RecipesList";
 
 import { useRecipesFilter } from "@/hooks/useRecipesFilter";
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
-import { RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
 import { IRecipe } from "@/lib/prisma.args";
+import { RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
 
 // Reusable Components
-import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import {
   ActiveFilterBadges,
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
+import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { useRecipeFiltersStore } from "@/zustand/recipe.filters.store";
 import { useSearchParams } from "next/navigation";
 
@@ -152,66 +152,64 @@ const RecipeTabs = ({ recipes }: Props) => {
   });
 
   return (
-    <>
+    <div className="w-full">
       <div className="flex justify-center items-center gap-2">
         <h1>Recipes</h1>
       </div>
-      <div className="flex flex-col gap-4 w-full mx-auto">
-        <Separator className="mb-2" />
+      <Separator className="mb-2" />
 
-        <FilterLayout
-          onReset={reset}
-          sortSlot={
-            <SortSelect
-              value={sort}
-              onChange={setSort}
-              options={RECIPE_SORT_OPTIONS}
-            />
-          }
-          resultsSlot={
-            <ResultsFoundText
-              amount={filteredRecipes.length}
-              searchQuery={searchQuery}
-            />
-          }
-          badgesSlot={
-            <ActiveFilterBadges badges={activeBadges} onClearAll={reset} />
-          }
-          listSlot={<RecipesList recipes={filteredRecipes} />}
-        >
-          <FilterButtons
-            value={category}
-            variant="bigger"
-            onChange={setCategory}
-            config={FILTER_CONFIGS.recipes.category}
+      <FilterLayout
+        onReset={reset}
+        sortSlot={
+          <SortSelect
+            value={sort}
+            onChange={setSort}
+            options={RECIPE_SORT_OPTIONS}
           />
+        }
+        resultsSlot={
+          <ResultsFoundText
+            amount={filteredRecipes.length}
+            searchQuery={searchQuery}
+          />
+        }
+        badgesSlot={
+          <ActiveFilterBadges badges={activeBadges} onClearAll={reset} />
+        }
+        listSlot={<RecipesList recipes={filteredRecipes} />}
+      >
+        <FilterButtons
+          value={category}
+          variant="bigger"
+          onChange={setCategory}
+          config={FILTER_CONFIGS.recipes.category}
+        />
 
-          <FilterButtons
-            value={stock}
-            onChange={setStock}
-            config={FILTER_CONFIGS.recipes.stock}
-          />
+        <FilterButtons
+          value={stock}
+          onChange={setStock}
+          config={FILTER_CONFIGS.recipes.stock}
+        />
 
-          <FilterButtons
-            value={ready}
-            onChange={setReady}
-            config={FILTER_CONFIGS.recipes.ready}
-          />
+        <FilterButtons
+          value={ready}
+          onChange={setReady}
+          config={FILTER_CONFIGS.recipes.ready}
+        />
 
-          <FilterButtons
-            value={series}
-            onChange={setSeries}
-            config={FILTER_CONFIGS.recipes.series}
-          />
+        <FilterButtons
+          value={series}
+          onChange={setSeries}
+          config={FILTER_CONFIGS.recipes.series}
+        />
 
-          <FilterButtons
-            value={confirmed}
-            onChange={setConfirmed}
-            config={FILTER_CONFIGS.recipes.confirmed}
-          />
-        </FilterLayout>
-      </div>
-    </>
+        <FilterButtons
+          value={confirmed}
+          onChange={setConfirmed}
+          config={FILTER_CONFIGS.recipes.confirmed}
+        />
+      </FilterLayout>
+    </div>
   );
 };
 

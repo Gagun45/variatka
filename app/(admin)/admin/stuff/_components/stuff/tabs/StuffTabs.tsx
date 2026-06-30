@@ -79,40 +79,38 @@ const StuffTabs = ({ stuff }: Props) => {
   };
 
   return (
-    <>
+    <div className="w-full">
       <div className="flex items-center justify-center gap-2">
         <h1>Stuff</h1>
         <StuffFormsDialog initialCategory={initialCategory} />
       </div>
-      <div className="flex flex-col gap-4 w-full mx-auto">
-        <Separator className="mb-2" />
+      <Separator className="mb-2" />
 
-        <FilterLayout
-          onReset={onReset}
-          sortSlot={null} // Left null since this layout does not have an active sorting dropdown
-          resultsSlot={
-            <ResultsFoundText
-              amount={filteredStuff.length}
-              searchQuery={searchQuery}
-            />
-          }
-          badgesSlot={
-            <ActiveFilterBadges
-              badges={activeBadges}
-              onClearAll={() => setActiveCategory("all")}
-            />
-          }
-          listSlot={<StuffList stuff={filteredStuff} />}
-        >
-          <FilterButtons
-            variant="bigger"
-            value={activeCategory}
-            onChange={setActiveCategory}
-            config={FILTER_CONFIGS.stuff.category}
+      <FilterLayout
+        onReset={onReset}
+        sortSlot={null} // Left null since this layout does not have an active sorting dropdown
+        resultsSlot={
+          <ResultsFoundText
+            amount={filteredStuff.length}
+            searchQuery={searchQuery}
           />
-        </FilterLayout>
-      </div>
-    </>
+        }
+        badgesSlot={
+          <ActiveFilterBadges
+            badges={activeBadges}
+            onClearAll={() => setActiveCategory("all")}
+          />
+        }
+        listSlot={<StuffList stuff={filteredStuff} />}
+      >
+        <FilterButtons
+          variant="bigger"
+          value={activeCategory}
+          onChange={setActiveCategory}
+          config={FILTER_CONFIGS.stuff.category}
+        />
+      </FilterLayout>
+    </div>
   );
 };
 

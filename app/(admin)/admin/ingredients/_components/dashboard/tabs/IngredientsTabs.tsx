@@ -1,28 +1,28 @@
 // @/app/ingredients/IngredientsTabs.tsx
 "use client";
 
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import { Separator } from "@/components/ui/separator";
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
-import { SortSelect } from "@/components/sort-select/SortSelect";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
+import { SortSelect } from "@/components/sort-select/SortSelect";
+import { Separator } from "@/components/ui/separator";
+import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import IngredientFormsDialog from "./forms-dialog/IngredientFormsDialog";
 import IngredienstList from "./list/IngredienstList";
 
 import { useIngredientsFilter } from "@/hooks/useIngredientsFilter";
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 import { IIngredientCategory } from "@/lib/enumslist/ingredient.constants";
-import { INGREDIENT_SORT_OPTIONS } from "@/lib/sorting.ingredients";
 import { IIngredient } from "@/lib/prisma.args";
+import { INGREDIENT_SORT_OPTIONS } from "@/lib/sorting.ingredients";
 import { useIngredientFiltersStore } from "@/zustand/ingredient.filter.store";
 
 // Reusable Layout and Badge Elements
-import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import {
   ActiveFilterBadges,
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
+import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 
 interface Props {
   ingredients: IIngredient[];
@@ -91,52 +91,50 @@ const IngredientsTabs = ({ ingredients }: Props) => {
   };
 
   return (
-    <>
+    <div className="w-full">
       <div className="flex items-center justify-center gap-2">
         <h1>Ingredients</h1>
         <IngredientFormsDialog initialCategory={initialCategory} />
       </div>
-      <div className="flex flex-col gap-4 w-full mx-auto">
-        <Separator className="mb-2" />
+      <Separator className="mb-2" />
 
-        <FilterLayout
-          onReset={reset}
-          sortSlot={
-            <SortSelect
-              value={sort}
-              onChange={setSort}
-              options={INGREDIENT_SORT_OPTIONS}
-            />
-          }
-          resultsSlot={
-            <ResultsFoundText
-              amount={filteredIngredients.length}
-              searchQuery={searchQuery}
-            />
-          }
-          badgesSlot={
-            <ActiveFilterBadges
-              badges={activeBadges}
-              onClearAll={handleClearAll}
-            />
-          }
-          listSlot={<IngredienstList ingredients={filteredIngredients} />}
-        >
-          <FilterButtons
-            variant="bigger"
-            value={category}
-            onChange={setCategory}
-            config={FILTER_CONFIGS.ingredients.category}
+      <FilterLayout
+        onReset={reset}
+        sortSlot={
+          <SortSelect
+            value={sort}
+            onChange={setSort}
+            options={INGREDIENT_SORT_OPTIONS}
           />
+        }
+        resultsSlot={
+          <ResultsFoundText
+            amount={filteredIngredients.length}
+            searchQuery={searchQuery}
+          />
+        }
+        badgesSlot={
+          <ActiveFilterBadges
+            badges={activeBadges}
+            onClearAll={handleClearAll}
+          />
+        }
+        listSlot={<IngredienstList ingredients={filteredIngredients} />}
+      >
+        <FilterButtons
+          variant="bigger"
+          value={category}
+          onChange={setCategory}
+          config={FILTER_CONFIGS.ingredients.category}
+        />
 
-          <FilterButtons
-            value={stock}
-            onChange={setStock}
-            config={FILTER_CONFIGS.ingredients.stock}
-          />
-        </FilterLayout>
-      </div>
-    </>
+        <FilterButtons
+          value={stock}
+          onChange={setStock}
+          config={FILTER_CONFIGS.ingredients.stock}
+        />
+      </FilterLayout>
+    </div>
   );
 };
 
