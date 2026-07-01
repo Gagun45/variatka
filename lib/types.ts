@@ -50,6 +50,8 @@ export interface IUser {
   name: string;
   email: string;
   image?: string | null;
+  orderPhone: string | null;
+  orderName: string | null;
   id?: string; // (Inherited from DefaultSession, which we left in)
 }
 

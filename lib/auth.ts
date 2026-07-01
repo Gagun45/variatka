@@ -11,6 +11,8 @@ declare module "next-auth" {
     } & {
       name: string;
       email: string;
+      orderName: string | null;
+      orderPhone: string | null;
     } & DefaultSession["user"];
   }
   interface User {
@@ -18,6 +20,8 @@ declare module "next-auth" {
     role: "USER" | "ADMIN";
     name: string;
     email: string;
+    orderName: string | null;
+    orderPhone: string | null;
   }
 }
 
@@ -46,10 +50,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       });
       if (!existingUser) {
+        const displayName = user.name ?? "";
         await prisma.user.create({
           data: {
             email: user.email,
-            name: user.name ?? "Unknown user",
+            name: displayName,
+
+            orderName: displayName,
+            orderPhone: null,
           },
         });
       }
@@ -67,6 +75,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.userPid = dbUser.id;
         token.email = dbUser.email;
         token.name = dbUser.name;
+        token.orderName = dbUser.orderName;
+        token.orderPhone = dbUser.orderPhone;
       }
       return token;
     },
@@ -76,6 +86,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role;
         session.user.email = token.email;
         session.user.name = token.name;
+        session.user.orderName = token.orderName;
+        session.user.orderPhone = token.orderPhone;
       }
       return session;
     },

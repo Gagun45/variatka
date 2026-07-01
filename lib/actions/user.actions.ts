@@ -32,6 +32,9 @@ export const getCurrentUser = async (): Promise<IUser> => {
     pid: user.pid,
     name: user.name,
     role: user.role,
+    orderName: user.orderName,
+    orderPhone: user.orderPhone,
+    image: user.image,
   };
 };
 
