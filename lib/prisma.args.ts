@@ -43,3 +43,15 @@ export type IStuff = Prisma.StuffGetPayload<typeof stuffArgs>;
 export type IUserWithWishlist = Prisma.UserGetPayload<
   typeof userWithWishlistArgs
 >;
+
+export const orderArgs = {
+  include: {
+    items: {
+      include: {
+        recipe: true,
+      },
+    },
+  },
+} satisfies Omit<Prisma.OrderFindManyArgs, "where">;
+
+export type IOrder = Prisma.OrderGetPayload<typeof orderArgs>;

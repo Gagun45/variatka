@@ -114,6 +114,9 @@ model User {
   email String @unique
   name  String
 
+  orderName  String?
+  orderPhone String?
+
   role Role @default(USER)
 
   createdAt     DateTime       @default(now())
@@ -145,8 +148,14 @@ enum OrderStatus {
 model Order {
   id Int @id @default(autoincrement())
 
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  customerEmail String
+  customerName  String
+
+  customerPhone   String?
+  customerComment String?
 
   status OrderStatus @default(PROCESSING)
 
