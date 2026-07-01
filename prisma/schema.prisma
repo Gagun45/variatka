@@ -71,6 +71,7 @@ model Recipe {
 
   ingredients   RecipeIngredient[]
   withlistItems WithlistItem[]
+  orderItems    OrderItem[]
 }
 
 model RecipeIngredient {
@@ -118,6 +119,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   withlistItems WithlistItem[]
+  orders        Order[]
 }
 
 model WithlistItem {
@@ -131,5 +133,42 @@ model WithlistItem {
 
   @@unique([userId, recipeId])
   @@index([userId])
+  @@index([recipeId])
+}
+
+enum OrderStatus {
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+model Order {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status OrderStatus @default(PROCESSING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id Int @id @default(autoincrement())
+
+  orderId  Int
+  recipeId Int?
+
+  order  Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  recipe Recipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+
+  recipeTitle String
+
+  amount Int
+
+  @@index([orderId])
   @@index([recipeId])
 }
