@@ -1,14 +1,18 @@
 "use client";
 
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import CartSheetHeader from "./header/CartSheetHeader";
 import CartSheetItems from "./items/CartSheetItems";
 import CartSheetFooter from "./footer/CartSheetFooter";
 
 const CartSheet = ({ children }: PropsWithChildren) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const closeSheet = () => {
+    setIsOpen(false);
+  };
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>{children}</SheetTrigger>
 
       <SheetContent className="flex w-full flex-col sm:max-w-md">
@@ -18,7 +22,7 @@ const CartSheet = ({ children }: PropsWithChildren) => {
           <CartSheetItems />
         </div>
 
-        <CartSheetFooter />
+        <CartSheetFooter closeSheet={closeSheet} />
       </SheetContent>
     </Sheet>
   );
