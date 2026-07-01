@@ -5,6 +5,8 @@ import { IUser } from "@/lib/types";
 import { useState } from "react";
 import ProfileView from "./view/ProfileView";
 import UserProfileForm from "@/forms/user/profile/UserProfileForm";
+import { useUpdateProfile } from "@/features/user/hooks/useUpdateProfile";
+import { IUpdateUserProfileDto } from "@/zod/user.schema";
 
 interface Props {
   user: IUser;
@@ -12,6 +14,10 @@ interface Props {
 
 const Profile = ({ user }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
+  const { mutate, isPending } = useUpdateProfile();
+  const onUpdate = (dto: IUpdateUserProfileDto) => {
+    mutate(dto);
+  };
 
   return (
     <div className="flex flex-col gap-4 max-w-md mx-auto">
@@ -33,10 +39,8 @@ const Profile = ({ user }: Props) => {
         <ProfileView user={user} />
       ) : (
         <UserProfileForm
-          isPending={false}
-          onCreate={() => {
-            console.log();
-          }}
+          isPending={isPending}
+          onSubmit={onUpdate}
           user={user}
         />
       )}

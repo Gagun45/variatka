@@ -21,12 +21,12 @@ import OrderPhoneField from "./fields/OrderPhoneField";
 import { Separator } from "@/components/ui/separator";
 
 interface Props {
-  onCreate: (dto: IUpdateUserProfileDto) => void;
+  onSubmit: (dto: IUpdateUserProfileDto) => void;
   user: IUser;
   isPending: boolean;
 }
 
-const UserProfileForm = ({ onCreate, isPending, user }: Props) => {
+const UserProfileForm = ({ onSubmit, isPending, user }: Props) => {
   const schema = zodSchemas.user.updateProfile;
   const defaultValues: IUpdateUserProfileDto = {
     name: user.name,
@@ -44,8 +44,8 @@ const UserProfileForm = ({ onCreate, isPending, user }: Props) => {
     formState: { isDirty },
   } = form;
 
-  const onSubmit = (dto: IUpdateUserProfileDto) => {
-    onCreate(dto);
+  const onSubmitHandle = (dto: IUpdateUserProfileDto) => {
+    onSubmit(dto);
   };
 
   return (
@@ -61,7 +61,7 @@ const UserProfileForm = ({ onCreate, isPending, user }: Props) => {
 
       <CardContent>
         <FormProvider {...form}>
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(onSubmitHandle)}>
             <fieldset disabled={isPending} className="space-y-6">
               {/* Basic Account Info Fields */}
               <div className="space-y-4">
