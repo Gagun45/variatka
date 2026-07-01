@@ -1,6 +1,5 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
 import SpicyLevelTooltip from "@/components/spicy-tooltip/SpicyLevelTooltip";
-import StockBadge from "@/components/stock-badge/StockBadge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Tooltip,
@@ -14,6 +13,7 @@ import { IPublicRecipe } from "@/lib/types";
 import { frontendUrls } from "@/lib/urls";
 import Image from "next/image";
 import Link from "next/link";
+import PublicRecipeCardCartButton from "./cart-btn/PublicRecipeCardCartButton";
 
 interface Props {
   recipe: IPublicRecipe;
@@ -30,6 +30,7 @@ const PublicRecipeCard = ({
 }: Props) => {
   const { id, imageKey, title, inStock, description, category, series, spicy } =
     recipe;
+
   const isWished = wishlistIdsSet.has(id);
   const imageSrc = getImageUrl(imageKey);
   const { icon, iconClassName, label } = RECIPE_SERIES_DATA[series];
@@ -89,11 +90,9 @@ const PublicRecipeCard = ({
       </Link>
 
       {/* Content */}
-      <CardContent className="flex items-center justify-between gap-2">
+      <CardContent className="flex flex-col justify-between gap-3 h-full">
         <div className="flex flex-col gap-2 min-w-0 w-full">
-          <div className="flex w-full items-center justify-between">
-            <StockBadge isInStock={!!inStock} quantity={inStock} />
-          </div>
+          {/* <StockBadge isInStock={!!inStock} quantity={inStock} /> */}
 
           <Link
             href={frontendUrls.public.view(id)}
@@ -108,6 +107,7 @@ const PublicRecipeCard = ({
             </p>
           )}
         </div>
+        <PublicRecipeCardCartButton recipe={recipe} />
       </CardContent>
     </Card>
   );

@@ -10,6 +10,7 @@ import { buttonVariants } from "../ui/button";
 import { SidebarTrigger } from "../ui/sidebar";
 import Search from "./search/Search";
 import { NavigationMenu } from "./nav-menu/NavigationMenu";
+import CartTrigger from "./cart-trigger/CartTrigger";
 
 const Header = () => {
   return (
@@ -39,6 +40,7 @@ const Header = () => {
           >
             <Heart />
           </Link>
+          <CartTrigger />
           <Draft />
         </div>
       </div>
