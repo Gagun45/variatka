@@ -5,11 +5,11 @@ import { prisma } from "../prisma";
 import { IOrder, orderArgs } from "../prisma.args";
 import { IActionResponse } from "../types";
 import { ACTION_ERROR } from "./action.unwrapper";
-import { requireAdmin } from "./user.actions";
+import { getCurrentUser } from "./user.actions";
 
 export const getOrders = async (): Promise<IActionResponse<IOrder[]>> => {
   try {
-    const user = await requireAdmin();
+    const user = await getCurrentUser();
     const orders = await prisma.order.findMany({
       where: {
         userId: user.pid,

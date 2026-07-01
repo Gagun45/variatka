@@ -13,6 +13,7 @@ declare module "next-auth" {
       email: string;
       orderName: string | null;
       orderPhone: string | null;
+      image: string | null;
     } & DefaultSession["user"];
   }
   interface User {
@@ -22,6 +23,7 @@ declare module "next-auth" {
     email: string;
     orderName: string | null;
     orderPhone: string | null;
+    image: string | null;
   }
 }
 
@@ -50,13 +52,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       });
       if (!existingUser) {
-        const displayName = user.name ?? "";
         await prisma.user.create({
           data: {
             email: user.email,
-            name: displayName,
-
-            orderName: displayName,
+            name: user.name ?? "Unknown user",
+            orderName: user.name ?? "",
             orderPhone: null,
           },
         });
