@@ -11,15 +11,13 @@ export const updateUserProfileSchema = z.object({
     .string()
     .trim()
     .max(100, "Order name must be at most 100 characters.")
-    .nullable()
     .optional(),
 
-  orderPhone: z
-    .string()
-    .trim()
-    .max(30, "Phone number is too long.")
-    .nullable()
-    .optional(),
+  orderPhone: z.string().trim().max(30, "Phone number is too long.").optional(),
 });
+
+export const userSchemas = {
+  updateProfile: updateUserProfileSchema,
+};
 
 export type IUpdateUserProfileDto = z.infer<typeof updateUserProfileSchema>;
