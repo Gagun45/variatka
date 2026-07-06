@@ -148,8 +148,8 @@ enum OrderStatus {
 model Order {
   id Int @id @default(autoincrement())
 
-  userId Int?
-  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   customerEmail String
   customerName  String
@@ -169,10 +169,10 @@ model OrderItem {
   id Int @id @default(autoincrement())
 
   orderId  Int
-  recipeId Int?
+  recipeId Int
 
-  order  Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  recipe Recipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Restrict)
 
   recipeTitle String
 
