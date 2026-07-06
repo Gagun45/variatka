@@ -44,6 +44,7 @@ export function CartSheetItem({ item }: Props) {
           <Button
             size="icon"
             variant="outline"
+            disabled={item.quantity === 1}
             className="size-7"
             onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
           >
