@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { orderService } from "../order.api";
 import { orderKeys } from "../order.keys";
+import { recipeKeys } from "@/features/recipe/recipe.keys";
 
 export const useCreateOrder = () => {
   const qclient = useQueryClient();
@@ -10,6 +11,9 @@ export const useCreateOrder = () => {
     mutationFn: orderService.createOrder,
     onSuccess: () => {
       qclient.invalidateQueries({ queryKey: orderKeys.orders });
+      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      qclient.invalidateQueries({ queryKey: recipeKeys.public });
+      qclient.invalidateQueries({ queryKey: recipeKeys.wishlist });
       toast.success("Order created!");
     },
     onError: (e) => {

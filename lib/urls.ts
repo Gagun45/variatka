@@ -26,5 +26,6 @@ export const frontendUrls = {
     wishlist: "/wishlist",
     view: (id: number) => `/recipes/${id}`,
     login: "/login",
+    orders: "/orders",
   },
 };

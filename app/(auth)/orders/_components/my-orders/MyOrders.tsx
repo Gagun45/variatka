@@ -10,7 +10,11 @@ const MyOrders = () => {
   if (isLoading) return <Loader />;
   if (!orders || isError) return <StateScreen />;
   if (orders.length === 0) return <StateScreen title="No orders yet" />;
-  return <MyOrdersList orders={orders} />;
+  return (
+    <div className="max-w-5xl mx-auto">
+      <MyOrdersList orders={orders} />
+    </div>
+  );
 };
 
 export default MyOrders;

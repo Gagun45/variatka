@@ -1,5 +1,6 @@
+import { Accordion } from "@/components/ui/accordion";
 import { IPublicOrder } from "@/lib/types.order";
-import MyOrderCard from "./card/MyOrderCard";
+import { OrderAccordionItem } from "./item/MyOrderListItem";
 
 interface Props {
   orders: IPublicOrder[];
@@ -7,11 +8,15 @@ interface Props {
 
 const MyOrdersList = ({ orders }: Props) => {
   return (
-    <div className="flex flex-col gap-2">
+    <Accordion
+      type="single"
+      collapsible
+      className="w-full border px-2 rounded-md"
+    >
       {orders.map((order) => (
-        <MyOrderCard order={order} key={order.id} />
+        <OrderAccordionItem key={order.id} order={order} />
       ))}
-    </div>
+    </Accordion>
   );
 };
 
