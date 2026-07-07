@@ -22,7 +22,7 @@ export function FilterButtons<T extends string>({
   return (
     <div className="space-y-2">
       {label && (
-        <span className="text-[11px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block ml-0.5">
+        <span className="text-[11px] font-bold uppercase tracking-wider block ml-0.5">
           {label}
         </span>
       )}
@@ -41,7 +41,7 @@ export function FilterButtons<T extends string>({
               key={opt.value}
               // Dynamically adjust button size variant
               size={isBigger ? "default" : "sm"}
-              variant={isSelected ? "default" : "secondary"}
+              variant={isSelected ? "outline" : "ghost"}
               onClick={() => onChange(opt.value)}
               className={`
                 relative font-medium gap-2 transition-all duration-200 active:scale-95 select-none rounded-lg border

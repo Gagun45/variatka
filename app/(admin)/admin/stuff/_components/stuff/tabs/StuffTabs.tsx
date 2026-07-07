@@ -1,13 +1,12 @@
 // @/app/stuff/StuffTabs.tsx
 "use client";
 
-import { useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import { Separator } from "@/components/ui/separator";
-import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
-import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
+import { Separator } from "@/components/ui/separator";
+import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import StuffList from "../list/StuffList";
+import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
 
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 import {
@@ -17,11 +16,12 @@ import {
 import { IStuff } from "@/lib/prisma.args";
 
 // Reusable Layout and Badge Elements
-import { FilterLayout } from "@/components/filter-layout/FilterLayout";
+import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 import {
   ActiveFilterBadges,
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
+import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 
 interface Props {
   stuff: IStuff[];
@@ -85,6 +85,13 @@ const StuffTabs = ({ stuff }: Props) => {
         <StuffFormsDialog initialCategory={initialCategory} />
       </div>
       <Separator className="mb-2" />
+      <div className="flex justify-center">
+        <AdminCategoryButtons
+          onChange={setActiveCategory}
+          value={activeCategory}
+          config={FILTER_CONFIGS.stuff.category}
+        />
+      </div>
 
       <FilterLayout
         onReset={onReset}
@@ -103,12 +110,7 @@ const StuffTabs = ({ stuff }: Props) => {
         }
         listSlot={<StuffList stuff={filteredStuff} />}
       >
-        <FilterButtons
-          variant="bigger"
-          value={activeCategory}
-          onChange={setActiveCategory}
-          config={FILTER_CONFIGS.stuff.category}
-        />
+        {null}
       </FilterLayout>
     </div>
   );

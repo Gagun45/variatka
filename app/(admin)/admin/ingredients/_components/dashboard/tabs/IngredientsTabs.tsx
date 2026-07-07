@@ -18,6 +18,7 @@ import { INGREDIENT_SORT_OPTIONS } from "@/lib/sorting.ingredients";
 import { useIngredientFiltersStore } from "@/zustand/ingredient.filter.store";
 
 // Reusable Layout and Badge Elements
+import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 import {
   ActiveFilterBadges,
   IActiveBadge,
@@ -97,6 +98,13 @@ const IngredientsTabs = ({ ingredients }: Props) => {
         <IngredientFormsDialog initialCategory={initialCategory} />
       </div>
       <Separator className="mb-2" />
+      <div className="flex justify-center">
+        <AdminCategoryButtons
+          onChange={setCategory}
+          value={category}
+          config={FILTER_CONFIGS.ingredients.category}
+        />
+      </div>
 
       <FilterLayout
         onReset={reset}
@@ -121,13 +129,6 @@ const IngredientsTabs = ({ ingredients }: Props) => {
         }
         listSlot={<IngredienstList ingredients={filteredIngredients} />}
       >
-        <FilterButtons
-          variant="bigger"
-          value={category}
-          onChange={setCategory}
-          config={FILTER_CONFIGS.ingredients.category}
-        />
-
         <FilterButtons
           value={stock}
           onChange={setStock}

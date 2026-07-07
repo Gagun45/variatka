@@ -77,7 +77,7 @@ export const FilterLayout = ({
       {/* Primary Layout Engine */}
       <div className="flex items-start gap-6 w-full relative">
         {/* Static Desktop Left Sidebar Panel */}
-        <aside className="hidden 2xl:flex flex-col gap-4 w-90 shrink-0 border-r pr-4 sticky top-32 max-h-[calc(100vh-3rem)] overflow-y-auto pb-6 custom-scrollbar">
+        <aside className="hidden 2xl:flex flex-col gap-4 w-60 shrink-0 border-r pr-4 sticky top-32 max-h-[calc(100vh-3rem)] overflow-y-auto pb-6 custom-scrollbar">
           <div className="flex items-center justify-between min-h-9">
             <span className="text-lg font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50 pl-0.5">
               Фільтри

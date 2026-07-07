@@ -21,6 +21,7 @@ import {
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { useRecipeFiltersStore } from "@/zustand/recipe.filters.store";
 import { useSearchParams } from "next/navigation";
+import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 
 interface Props {
   recipes: IRecipe[];
@@ -157,6 +158,13 @@ const RecipeTabs = ({ recipes }: Props) => {
         <h1>Recipes</h1>
       </div>
       <Separator className="mb-2" />
+      <div className="flex justify-center">
+        <AdminCategoryButtons
+          onChange={setCategory}
+          value={category}
+          config={FILTER_CONFIGS.recipes.category}
+        />
+      </div>
 
       <FilterLayout
         onReset={reset}
@@ -178,13 +186,6 @@ const RecipeTabs = ({ recipes }: Props) => {
         }
         listSlot={<RecipesList recipes={filteredRecipes} />}
       >
-        <FilterButtons
-          value={category}
-          variant="bigger"
-          onChange={setCategory}
-          config={FILTER_CONFIGS.recipes.category}
-        />
-
         <FilterButtons
           value={stock}
           onChange={setStock}
