@@ -17,7 +17,7 @@ export function AdminCategoryButtons<T extends string>({
   const { options } = config;
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="flex flex-nowrap gap-4">
       {options.map((opt) => {
         const isSelected = opt.value === value;
         return (
