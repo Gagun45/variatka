@@ -21,6 +21,7 @@ import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { useSavedRecipeFiltersStore } from "@/zustand/recipe.saved.filters.store";
 import { useSearchParams } from "next/navigation";
 import RecipesList from "../../../_components/recipes/recipeTabs/recipes-list/RecipesList";
+import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 
 interface Props {
   recipes: IRecipe[];
@@ -157,6 +158,11 @@ const SavedRecipesTabs = ({ recipes }: Props) => {
         <h1>Saved recipes</h1>
       </div>
       <Separator className="mb-2" />
+      <AdminCategoryButtons
+        config={FILTER_CONFIGS.recipes.category}
+        value={category}
+        onChange={setCategory}
+      />
 
       <FilterLayout
         onReset={reset}

@@ -21,6 +21,7 @@ import {
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { useSavedIngredientFiltersStore } from "@/zustand/ingredient.saved.filter.store";
 import IngredienstList from "../../../_components/dashboard/tabs/list/IngredienstList";
+import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 
 interface Props {
   ingredients: IIngredient[];
@@ -91,6 +92,11 @@ const SavedIngredientsTabs = ({ ingredients }: Props) => {
         <h1>Saved ingredients</h1>
       </div>
       <Separator className="mb-2" />
+      <AdminCategoryButtons
+        config={FILTER_CONFIGS.ingredients.category}
+        value={category}
+        onChange={setCategory}
+      />
 
       <FilterLayout
         onReset={reset}
