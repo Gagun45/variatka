@@ -54,8 +54,9 @@ model Recipe {
 
   category RecipeCategories
 
-  inStock Int     @default(0)
-  isSaved Boolean @default(false)
+  inStock  Int     @default(0)
+  isSaved  Boolean @default(false)
+  isHidden Boolean @default(false)
 
   isConfirmed       Boolean @default(false)
   confirmationNotes String?
