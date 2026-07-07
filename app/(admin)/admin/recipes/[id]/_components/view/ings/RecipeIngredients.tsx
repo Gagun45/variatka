@@ -84,7 +84,7 @@ const RecipeIngredients = ({ recipe }: Props) => {
           return (
             <div
               key={id}
-              className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
+              className="flex items-center justify-between flex-wrap gap-3 rounded-md border px-3 py-2"
             >
               <Link
                 href={frontendUrls.ingredients.view(id)}
@@ -93,7 +93,7 @@ const RecipeIngredients = ({ recipe }: Props) => {
                 {title}
               </Link>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-3 shrink-0 ml-auto">
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                   {amount}
                 </span>

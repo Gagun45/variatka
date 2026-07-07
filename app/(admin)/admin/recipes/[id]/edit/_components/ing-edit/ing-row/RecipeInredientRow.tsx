@@ -14,23 +14,24 @@ const RecipeIngredientRow = ({
   onRemove,
 }: RecipeIngredientRowProps) => {
   return (
-    <div className="flex items-center gap-2 border px-2 py-1 rounded-md">
+    <div className="flex items-center gap-2 border px-2 py-1 flex-wrap rounded-md">
       <div className="flex-1">{item.title}</div>
+      <div className="flex gap-2 ml-auto">
+        <Input
+          value={item.amount}
+          placeholder="Amount"
+          className="w-24 shrink-0"
+          onChange={(e) => onChangeAmount(item.ingredientId, e.target.value)}
+        />
 
-      <Input
-        value={item.amount}
-        placeholder="Amount"
-        className="w-24 shrink-0"
-        onChange={(e) => onChangeAmount(item.ingredientId, e.target.value)}
-      />
-
-      <Button
-        variant="destructive"
-        size="icon"
-        onClick={() => onRemove(item.ingredientId)}
-      >
-        ✕
-      </Button>
+        <Button
+          variant="destructive"
+          size="icon"
+          onClick={() => onRemove(item.ingredientId)}
+        >
+          ✕
+        </Button>
+      </div>
     </div>
   );
 };
