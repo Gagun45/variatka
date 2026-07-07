@@ -98,13 +98,12 @@ const IngredientsTabs = ({ ingredients }: Props) => {
         <IngredientFormsDialog initialCategory={initialCategory} />
       </div>
       <Separator className="mb-2" />
-      <div className="flex justify-center">
-        <AdminCategoryButtons
-          onChange={setCategory}
-          value={category}
-          config={FILTER_CONFIGS.ingredients.category}
-        />
-      </div>
+
+      <AdminCategoryButtons
+        onChange={setCategory}
+        value={category}
+        config={FILTER_CONFIGS.ingredients.category}
+      />
 
       <FilterLayout
         onReset={reset}

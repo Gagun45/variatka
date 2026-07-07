@@ -16,12 +16,12 @@ import {
 import { IStuff } from "@/lib/prisma.args";
 
 // Reusable Layout and Badge Elements
-import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 import {
   ActiveFilterBadges,
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   stuff: IStuff[];
@@ -85,12 +85,20 @@ const StuffTabs = ({ stuff }: Props) => {
         <StuffFormsDialog initialCategory={initialCategory} />
       </div>
       <Separator className="mb-2" />
-      <div className="flex justify-center">
-        <AdminCategoryButtons
-          onChange={setActiveCategory}
-          value={activeCategory}
-          config={FILTER_CONFIGS.stuff.category}
-        />
+      <div className="flex flex-nowrap gap-4">
+        {FILTER_CONFIGS.stuff.category.options.map((opt) => {
+          const isSelected = opt.value === activeCategory;
+          return (
+            <Button
+              className="p-5 text-base font-semibold"
+              variant={isSelected ? "default" : "secondary"}
+              onClick={() => setActiveCategory(opt.value)}
+              key={opt.value}
+            >
+              {opt.label}
+            </Button>
+          );
+        })}
       </div>
 
       <FilterLayout
