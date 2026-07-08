@@ -21,6 +21,7 @@ import SeriesField from "./fields/SeriesField";
 import SpicyField from "./fields/SpicyField";
 import TitleField from "./fields/TitleField";
 import { IRecipeCategory } from "@/lib/enumslist/recipe.constants";
+import IsHiddenField from "./fields/IsHiddenField";
 
 interface Props {
   onSubmit: (dto: IRecipeDto) => void;
@@ -51,6 +52,7 @@ const RecipeForm = ({
     spicy: initialValues?.spicy ?? 0,
     series: initialValues?.series ?? "DEFAULT",
     category: initialCategory,
+    isHidden: initialValues?.isHidden ?? false,
   };
   const form = useForm<IRecipeDto>({
     resolver: zodResolver(schema),
@@ -76,6 +78,7 @@ const RecipeForm = ({
         isConfirmed: values.isConfirmed ?? false,
         spicy: values.spicy ?? 0,
         series: values.series ?? "DEFAULT",
+        isHidden: values.isHidden ?? false,
       });
     });
 
@@ -100,6 +103,7 @@ const RecipeForm = ({
           <SpicyField />
           <SeriesField />
           <IsConfirmedField />
+          <IsHiddenField />
           <ConfirmationNotesField />
           <Button
             type="reset"

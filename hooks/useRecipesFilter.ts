@@ -1,6 +1,7 @@
 import { IConfirmedType } from "@/lib/constants/confirmed.optionts";
 import { IReadyToMakeType } from "@/lib/constants/ready-to-make.options";
 import { IStockType } from "@/lib/constants/stock.options";
+import { IRecipeHiddenFilter } from "@/lib/enumslist/hidden.constants";
 import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
 import { IRecipeSeriesFilter } from "@/lib/enumslist/series.constants";
 import { IRecipe } from "@/lib/prisma.args";
@@ -16,6 +17,7 @@ export function useRecipesFilter({
   confirmed,
   sort,
   series,
+  hidden,
 }: {
   recipes: IRecipe[];
   searchQuery: string;
@@ -25,6 +27,7 @@ export function useRecipesFilter({
   confirmed: IConfirmedType;
   sort: IRecipeSortType;
   series: IRecipeSeriesFilter;
+  hidden: IRecipeHiddenFilter;
 }) {
   return useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -71,6 +74,12 @@ export function useRecipesFilter({
       return recipe.series === series;
     });
 
+    result = result.filter((recipe) => {
+      if (hidden === "all") return true;
+
+      return hidden === "hidden" ? recipe.isHidden : !recipe.isHidden;
+    });
+
     // 7. SORT
     return [...result].sort(RECIPE_SORTERS[sort]);
   }, [
@@ -82,5 +91,6 @@ export function useRecipesFilter({
     confirmed,
     series,
     sort,
+    hidden,
   ]);
 }

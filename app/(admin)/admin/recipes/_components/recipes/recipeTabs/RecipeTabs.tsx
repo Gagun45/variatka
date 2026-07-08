@@ -39,6 +39,8 @@ const RecipeTabs = ({ recipes }: Props) => {
     confirmed,
     series,
     sort,
+    hidden,
+    setHidden,
     setCategory,
     setStock,
     setReady,
@@ -126,6 +128,20 @@ const RecipeTabs = ({ recipes }: Props) => {
         });
       }
     }
+    if (hidden && hidden !== "visible") {
+      const option = FILTER_CONFIGS.recipes.hidden.options.find(
+        (o) => o.value === hidden,
+      );
+      if (option) {
+        list.push({
+          id: "hidden",
+          label: `Visibility: ${option.label}`,
+          icon: option.icon,
+          iconClassName: option.iconClassName,
+          onClear: () => setHidden("visible"),
+        });
+      }
+    }
 
     return list;
   }, [
@@ -134,6 +150,8 @@ const RecipeTabs = ({ recipes }: Props) => {
     ready,
     series,
     confirmed,
+    hidden,
+    setHidden,
     setCategory,
     setStock,
     setReady,
@@ -144,6 +162,7 @@ const RecipeTabs = ({ recipes }: Props) => {
   const filteredRecipes = useRecipesFilter({
     recipes,
     searchQuery,
+    hidden,
     category,
     stock,
     sort,
@@ -206,6 +225,12 @@ const RecipeTabs = ({ recipes }: Props) => {
           value={confirmed}
           onChange={setConfirmed}
           config={FILTER_CONFIGS.recipes.confirmed}
+        />
+
+        <FilterButtons
+          value={hidden}
+          onChange={setHidden}
+          config={FILTER_CONFIGS.recipes.hidden}
         />
       </FilterLayout>
     </div>

@@ -20,7 +20,7 @@ const RecipeHeader = ({ recipe }: Props) => {
   const onToggleSaved = () => {
     mutate(id);
   };
-  const { description, inStock, spicy, series, category } = recipe;
+  const { description, inStock, spicy, series, isHidden, category } = recipe;
   const categoryLabel = RECIPE_CATEGORIES_DATA[category].label;
 
   return (
@@ -34,11 +34,15 @@ const RecipeHeader = ({ recipe }: Props) => {
 
         <SaveToggleButton isSaved={isSaved} onToggle={onToggleSaved} />
       </div>
+
       <div className="view-item-card-header-row">
         <RecipeSeriesBadge series={series} />
         <Badge>
           Spicy: {SpicyOptions.find((o) => o.value === spicy)?.label}
         </Badge>
+      </div>
+      <div className="view-item-card-header-row">
+        <Badge>Hidden: {isHidden ? "Yes" : "No"}</Badge>
       </div>
     </CardHeader>
   );

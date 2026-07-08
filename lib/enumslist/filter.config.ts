@@ -3,6 +3,7 @@
 import { CONFIRMED_OPTIONS } from "../constants/confirmed.optionts";
 import { READY_TO_MAKE_OPTIONS } from "../constants/ready-to-make.options";
 import { STOCK_OPTIONS } from "../constants/stock.options";
+import { RECIPE_HIDDEN_FILTER_OPTIONS } from "./hidden.constants";
 import { INGREDIENT_CATEGORY_FILTER_OPTIONS } from "./ingredient.constants";
 import {
   RECIPE_CATEGORY_FILTER_OPTIONS,
@@ -32,6 +33,10 @@ export const FILTER_CONFIGS = {
     confirmed: {
       label: "Status",
       options: CONFIRMED_OPTIONS,
+    },
+    hidden: {
+      label: "Visibility",
+      options: RECIPE_HIDDEN_FILTER_OPTIONS,
     },
   },
   ingredients: {

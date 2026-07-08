@@ -30,6 +30,7 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
     inStock,
     isConfirmed,
     imageVersion,
+    isHidden,
     series,
   } = recipe;
   const href = frontendUrls.recipes.view(id);
@@ -47,7 +48,17 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
   const Icon = icon;
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition">
+    <Card
+      className={`overflow-hidden hover:shadow-md transition relative ${isHidden ? "select-none" : ""}`}
+    >
+      {/* 3. Optional: Absolute overlay banner for extra visual clarity */}
+      {isHidden && (
+        <div className="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+          <span className="bg-destructive/90 text-destructive-foreground px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider shadow-sm">
+            Hidden
+          </span>
+        </div>
+      )}
       <CardHeader>
         <div className="flex justify-between gap-2 items-center">
           <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />

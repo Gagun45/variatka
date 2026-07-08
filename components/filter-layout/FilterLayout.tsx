@@ -35,7 +35,7 @@ export const FilterLayout = ({
   const showReset = isResetVisible ?? !!badgesSlot;
 
   return (
-    <div className="flex flex-col gap-4 w-full mx-auto mt-4">
+    <div className="flex flex-col gap-4 w-full mx-auto py-4">
       {/* Top Header Control Row */}
       <div className="flex items-center justify-between gap-4 w-full">
         {/* Mobile Filter Button & Overlay Sheet */}
@@ -48,7 +48,7 @@ export const FilterLayout = ({
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-75 px-3 overflow-y-auto pt-10"
+              className="w-75 px-3 overflow-y-auto py-5"
             >
               <div className="flex items-center justify-between mb-4 pr-6">
                 <SheetTitle className="m-0">Фільтри</SheetTitle>
@@ -77,7 +77,7 @@ export const FilterLayout = ({
       {/* Primary Layout Engine */}
       <div className="flex items-start gap-6 w-full relative">
         {/* Static Desktop Left Sidebar Panel */}
-        <aside className="hidden 2xl:flex flex-col gap-4 w-60 shrink-0 border-r pr-4 sticky top-32 max-h-[calc(100vh-3rem)] overflow-y-auto pb-6 custom-scrollbar">
+        <aside className="hidden 2xl:flex flex-col gap-4 w-60 shrink-0 border-r pr-4 sticky top-32 max-h-[calc(100vh-8rem)] overflow-y-auto pb-6">
           <div className="flex items-center justify-between min-h-9">
             <span className="text-lg font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50 pl-0.5">
               Фільтри

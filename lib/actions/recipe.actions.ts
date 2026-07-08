@@ -73,6 +73,7 @@ export const createRecipe = async (
       isConfirmed,
       category,
       inStock,
+      isHidden,
       series,
       spicy,
     } = dto;
@@ -92,6 +93,7 @@ export const createRecipe = async (
         inStock,
         confirmationNotes,
         isConfirmed,
+        isHidden,
         series,
         spicy,
         ingredients: {
@@ -287,6 +289,34 @@ export const toggleConfirmedRecipe = async (
     };
   } catch (e) {
     console.error("Error in toggleConfirmedRecipe:", e);
+    if (e instanceof AppError) {
+      return ACTION_ERROR(e.message);
+    }
+    return ACTION_ERROR();
+  }
+};
+
+export const toggleHiddenRecipe = async (
+  id: number,
+): Promise<IActionResponse<IRecipe>> => {
+  try {
+    await requireAdmin();
+    const recipe = await prisma.recipe.findUnique({
+      where: { id },
+      select: { isHidden: true },
+    });
+    if (!recipe) throw new AppError("Recipe not found");
+    const updatedRecipe = await prisma.recipe.update({
+      where: { id },
+      data: { isHidden: !recipe.isHidden },
+      ...recipeArgs,
+    });
+    return {
+      ok: true,
+      data: updatedRecipe,
+    };
+  } catch (e) {
+    console.error("Error in toggleHiddenRecipe:", e);
     if (e instanceof AppError) {
       return ACTION_ERROR(e.message);
     }

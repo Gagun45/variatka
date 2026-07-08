@@ -9,6 +9,7 @@ import {
   getWishlist,
   removeRecipeImage,
   toggleConfirmedRecipe,
+  toggleHiddenRecipe,
   toggleSavedRecipe,
   toggleWishlist,
   updateRecipeFields,
@@ -46,6 +47,8 @@ export const recipeService = {
 
   toggleConfirmed: (id: number): Promise<IRecipe> =>
     unwrapAction(() => toggleConfirmedRecipe(id)),
+  toggleHidden: (id: number): Promise<IRecipe> =>
+    unwrapAction(() => toggleHiddenRecipe(id)),
   getPublicRecipes: (): Promise<IPublicRecipe[]> =>
     unwrapAction(() => getPublicRecipes()),
   getWishlist: (): Promise<IPublicRecipe[]> =>

@@ -10,6 +10,7 @@ export const recipeSchema = z.object({
   inStock: z.number().min(0),
   confirmationNotes: z.string().optional(),
   isConfirmed: z.boolean(),
+  isHidden: z.boolean(),
   spicy: z.number().min(0).max(4),
   series: z.enum(RECIPE_SERIES),
   category: z.enum(RECIPE_CATEGORIES),
