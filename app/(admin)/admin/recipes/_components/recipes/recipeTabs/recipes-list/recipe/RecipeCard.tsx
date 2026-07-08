@@ -14,6 +14,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import StockBadge from "@/components/stock-badge/StockBadge";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type Props = {
   recipe: IRecipe;
@@ -49,16 +51,12 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
 
   return (
     <Card
-      className={`overflow-hidden hover:shadow-md transition relative ${isHidden ? "select-none" : ""}`}
-    >
-      {/* 3. Optional: Absolute overlay banner for extra visual clarity */}
-      {isHidden && (
-        <div className="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-          <span className="bg-destructive/90 text-destructive-foreground px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider shadow-sm">
-            Hidden
-          </span>
-        </div>
+      className={cn(
+        "relative overflow-hidden transition hover:shadow-md",
+        isHidden &&
+          "bg-muted/30 ring-muted-foreground/25 shadow-none hover:shadow-sm"
       )}
+    >
       <CardHeader>
         <div className="flex justify-between gap-2 items-center">
           <SaveToggleButton isSaved={isSaved} onToggle={onToggle} />
@@ -73,18 +71,35 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
 
       <Link
         href={href}
-        className="relative hover:scale-[1.05] transition h-48 w-full rounded-md overflow-hidden"
+        className="relative h-48 w-full overflow-hidden rounded-md transition hover:scale-[1.05]"
       >
+        {isHidden && (
+          <Badge
+            variant="secondary"
+            className="absolute right-2 top-2 z-10 border border-border bg-background/90 text-muted-foreground shadow-sm"
+          >
+            Hidden
+          </Badge>
+        )}
         <Image
           src={imageSrc}
           alt={title}
           fill
           sizes="384px"
-          className="object-contain"
+          className={cn(
+            "object-contain",
+            isHidden && "grayscale opacity-55 saturate-50"
+          )}
         />
       </Link>
       <div className="flex justify-center">
-        <Link className="hover:underline break-all" href={href}>
+        <Link
+          className={cn(
+            "break-all hover:underline",
+            isHidden && "text-muted-foreground"
+          )}
+          href={href}
+        >
           {title}
         </Link>
       </div>

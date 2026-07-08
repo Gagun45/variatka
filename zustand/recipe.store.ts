@@ -28,6 +28,7 @@ const initialDraft: IRecipeDto = {
   category: "SPICES",
   confirmationNotes: "",
   isConfirmed: false,
+  isHidden: false,
   spicy: 0,
   series: "DEFAULT",
 };
