@@ -15,11 +15,11 @@ const CartSheet = ({ children }: PropsWithChildren) => {
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <SheetContent className="flex w-full flex-col sm:max-w-md">
+      <SheetContent className="flex w-full gap-0 bg-background sm:max-w-md">
         <CartSheetHeader />
 
-        <div className="flex-1 overflow-y-auto py-6">
-          <CartSheetItems />
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <CartSheetItems closeSheet={closeSheet} />
         </div>
 
         <CartSheetFooter closeSheet={closeSheet} />
