@@ -22,22 +22,27 @@ export function useIngredientsFilter({
 }) {
   return useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const isSearching = query.length > 0;
 
-    // Search globally across all ingredients
-    const base = isSearching
-      ? ingredients.filter((i) => i.title.toLowerCase().includes(query))
-      : category === "all"
-        ? ingredients
-        : ingredients.filter((i) => i.category === category);
+    let result = ingredients;
 
-    const stockFiltered =
-      stock === "in"
-        ? base.filter((i) => i.isInStock)
-        : stock === "out"
-          ? base.filter((i) => !i.isInStock)
-          : base;
+    // 1. CATEGORY (base scope)
+    if (category !== "all") {
+      result = result.filter((i) => i.category === category);
+    }
 
-    return [...stockFiltered].sort(INGREDIENT_SORTERS[sort]);
+    // 2. SEARCH (inside category scope)
+    if (query.length > 0) {
+      result = result.filter((i) => i.title.toLowerCase().includes(query));
+    }
+
+    // 3. STOCK
+    if (stock === "in") {
+      result = result.filter((i) => i.isInStock);
+    } else if (stock === "out") {
+      result = result.filter((i) => !i.isInStock);
+    }
+
+    // 4. SORT
+    return [...result].sort(INGREDIENT_SORTERS[sort]);
   }, [ingredients, searchQuery, category, stock, sort]);
 }
