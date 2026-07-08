@@ -2,14 +2,16 @@
 
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { useDebouncedCallback } from "use-debounce";
 
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { Button } from "@/components/ui/button";
 import { FieldSet } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 import { IRecipeDto } from "@/zod/recipe.schema";
+import { RotateCcw, Save } from "lucide-react";
 import { useEffect } from "react";
 import CategorySelectField from "./fields/CategorySelectField";
 import ConfirmationNotesField from "./fields/ConfirmationNotesField";
@@ -30,6 +32,8 @@ interface Props {
   isPending: boolean;
   onDraftChange?: (data: Partial<IRecipeDto>) => void;
   onReset?: () => void;
+  submitLabel?: string;
+  layout?: "page" | "sheet";
 }
 
 const RecipeForm = ({
@@ -39,6 +43,8 @@ const RecipeForm = ({
   isDisabled,
   onDraftChange,
   onReset,
+  submitLabel,
+  layout = "page",
 }: Props) => {
   const schema = zodSchemas.recipe.create;
   const initialCategory: IRecipeCategory = initialValues?.category ?? "SPICES";
@@ -58,6 +64,8 @@ const RecipeForm = ({
     resolver: zodResolver(schema),
     defaultValues,
   });
+  const watchedValues = useWatch({ control: form.control });
+  const isSheetLayout = layout === "sheet";
 
   const setDraftDebounced = useDebouncedCallback(
     (values: Partial<IRecipeDto>) => {
@@ -67,23 +75,21 @@ const RecipeForm = ({
     300,
   );
   useEffect(() => {
-    const subscription = form.watch((values) => {
-      setDraftDebounced({
-        title: values.title ?? "",
-        description: values.description ?? "",
-        notes: values.notes ?? "",
-        inStock: values.inStock ?? 0,
-        category: values.category ?? initialCategory,
-        confirmationNotes: values.confirmationNotes ?? "",
-        isConfirmed: values.isConfirmed ?? false,
-        spicy: values.spicy ?? 0,
-        series: values.series ?? "DEFAULT",
-        isHidden: values.isHidden ?? false,
-      });
-    });
+    if (!onDraftChange) return;
 
-    return () => subscription.unsubscribe();
-  }, [form, setDraftDebounced, initialCategory]);
+    setDraftDebounced({
+      title: watchedValues.title ?? "",
+      description: watchedValues.description ?? "",
+      notes: watchedValues.notes ?? "",
+      inStock: watchedValues.inStock ?? 0,
+      category: watchedValues.category ?? initialCategory,
+      confirmationNotes: watchedValues.confirmationNotes ?? "",
+      isConfirmed: watchedValues.isConfirmed ?? false,
+      spicy: watchedValues.spicy ?? 0,
+      series: watchedValues.series ?? "DEFAULT",
+      isHidden: watchedValues.isHidden ?? false,
+    });
+  }, [watchedValues, setDraftDebounced, initialCategory, onDraftChange]);
   const { handleSubmit, reset } = form;
   const handleReset = () => {
     reset();
@@ -94,32 +100,81 @@ const RecipeForm = ({
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet disabled={isPending} className="space-y-4">
-          <CategorySelectField />
-          <TitleField />
-          <DescriptionField />
-          <NotesField />
-          <InStockField />
-          <SpicyField />
-          <SeriesField />
-          <IsConfirmedField />
-          <IsHiddenField />
-          <ConfirmationNotesField />
-          <Button
-            type="reset"
-            className="w-full"
-            variant={"destructive"}
-            onClick={handleReset}
+        <FieldSet
+          disabled={isPending}
+          className={cn(isSheetLayout ? "gap-4" : "gap-6")}
+        >
+          <div className={cn("grid gap-4", !isSheetLayout && "lg:grid-cols-2")}>
+            <div className="grid gap-4">
+              <CategorySelectField />
+              <TitleField />
+              <DescriptionField />
+            </div>
+            <div className="grid gap-4 content-start">
+              <SeriesField />
+              <NotesField />
+            </div>
+          </div>
+
+          <section
+            className={cn(
+              "rounded-xl p-4",
+              isSheetLayout
+                ? "bg-muted/40"
+                : "border bg-muted/20 sm:p-5",
+            )}
           >
-            Reset
-          </Button>
-          <LoadingButton
-            isPending={isPending}
-            disabled={isDisabled}
-            type="submit"
+            <div className="mb-4">
+              <h4 className="text-sm font-medium">Publishing controls</h4>
+              <p className="text-xs text-muted-foreground">
+                Configure stock, visibility, and review state.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InStockField />
+              <SpicyField />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <IsConfirmedField />
+              <IsHiddenField />
+            </div>
+            <div className="mt-4">
+              <ConfirmationNotesField />
+            </div>
+          </section>
+
+          <div
+            className={cn(
+              "flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end",
+              isSheetLayout && "sticky bottom-0 -mx-4 bg-card/95 px-4 pb-1",
+            )}
           >
-            {isDisabled ? "Set amounts!" : initialValues ? "Save" : "Add"}
-          </LoadingButton>
+            <Button
+              type="reset"
+              variant="outline"
+              onClick={handleReset}
+              className="sm:w-auto"
+            >
+              <RotateCcw className="size-4" />
+              {onReset ? "Reset draft" : "Reset form"}
+            </Button>
+            <LoadingButton
+              isPending={isPending}
+              disabled={isDisabled}
+              type="submit"
+              className="sm:min-w-32"
+            >
+              {isDisabled ? (
+                "Set amounts"
+              ) : (
+                <>
+                  <Save className="size-4" />
+                  {submitLabel ??
+                    (initialValues ? "Save recipe" : "Add recipe")}
+                </>
+              )}
+            </LoadingButton>
+          </div>
         </FieldSet>
       </form>
     </FormProvider>

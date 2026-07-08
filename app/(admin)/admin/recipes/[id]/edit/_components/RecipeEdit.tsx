@@ -2,7 +2,13 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
@@ -52,14 +58,19 @@ const RecipeEdit = ({ id }: Props) => {
   };
 
   return (
-    <div className="space-y-12">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-center">Basic information</CardTitle>
+    <div className="space-y-8">
+      <Card className="gap-0">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="space-y-1">
+            <CardTitle>Basic information</CardTitle>
+            <CardDescription>
+              Update recipe metadata, publishing state, and admin notes.
+            </CardDescription>
+          </div>
         </CardHeader>
         <Separator />
 
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <RecipeForm
             isPending={isPending}
             onSubmit={onSubmit}
