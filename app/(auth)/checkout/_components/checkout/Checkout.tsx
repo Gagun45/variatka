@@ -29,14 +29,16 @@ const Checkout = () => {
       {
         onSuccess: () => {
           clearCart();
+          router.push(frontendUrls.public.orders);
         },
       },
     );
-    router.push(frontendUrls.public.orders);
   };
   return (
-    <div className="flex flex-col gap-2">
-      <CheckoutItemsList items={items} />
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-start">
+      <div className="min-w-0">
+        <CheckoutItemsList items={items} />
+      </div>
       <CheckoutForm
         customerEmail={user.email}
         customerName={user.orderName ?? ""}
