@@ -14,6 +14,7 @@ import { IIngredient } from "@/lib/prisma.args";
 import { INGREDIENT_SORT_OPTIONS } from "@/lib/sorting.ingredients";
 
 // Reusable Layout and Badge Elements
+import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 import {
   ActiveFilterBadges,
   IActiveBadge,
@@ -21,7 +22,6 @@ import {
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { useSavedIngredientFiltersStore } from "@/zustand/ingredient.saved.filter.store";
 import IngredienstList from "../../../_components/dashboard/tabs/list/IngredienstList";
-import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 
 interface Props {
   ingredients: IIngredient[];
@@ -121,13 +121,6 @@ const SavedIngredientsTabs = ({ ingredients }: Props) => {
         }
         listSlot={<IngredienstList ingredients={filteredIngredients} />}
       >
-        <FilterButtons
-          variant="bigger"
-          value={category}
-          onChange={setCategory}
-          config={FILTER_CONFIGS.ingredients.category}
-        />
-
         <FilterButtons
           value={stock}
           onChange={setStock}

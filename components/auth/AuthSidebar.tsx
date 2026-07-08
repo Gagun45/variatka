@@ -16,7 +16,7 @@ const AuthSidebar = () => {
   const { data: session, status } = useSession();
   if (status === "loading")
     return (
-      <LoadingButton className="w-fit" isPending={true}>
+      <LoadingButton variant={"outline"} className="w-fit" isPending={true}>
         {null}
       </LoadingButton>
     );

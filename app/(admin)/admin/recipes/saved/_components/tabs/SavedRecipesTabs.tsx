@@ -185,13 +185,6 @@ const SavedRecipesTabs = ({ recipes }: Props) => {
         listSlot={<RecipesList recipes={filteredRecipes} />}
       >
         <FilterButtons
-          value={category}
-          variant="bigger"
-          onChange={setCategory}
-          config={FILTER_CONFIGS.recipes.category}
-        />
-
-        <FilterButtons
           value={stock}
           onChange={setStock}
           config={FILTER_CONFIGS.recipes.stock}

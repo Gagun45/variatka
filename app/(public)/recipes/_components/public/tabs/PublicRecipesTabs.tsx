@@ -131,22 +131,15 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
         }
         listSlot={<PublicRecipesList recipes={filteredRecipes} />}
       >
-        {/* Pass your filter rows directly as standard React children */}
-        {/* <FilterButtons
-          value={category}
-          variant="bigger"
-          onChange={setCategory}
-          config={FILTER_CONFIGS.publicRecipes.category}
-        /> */}
-        <FilterButtons
-          value={series}
-          onChange={setSeries}
-          config={FILTER_CONFIGS.recipes.series}
-        />
         <FilterButtons
           value={stock}
           onChange={setStock}
           config={FILTER_CONFIGS.recipes.stock}
+        />
+        <FilterButtons
+          value={series}
+          onChange={setSeries}
+          config={FILTER_CONFIGS.recipes.series}
         />
       </FilterLayout>
     </div>
