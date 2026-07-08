@@ -11,13 +11,13 @@ const PublicLinks = () => {
         <SidebarLink
           key={frontendUrls.public.recipes}
           href={frontendUrls.public.recipes}
-          label={"Рецепти"}
+          label={"Продукція"}
         />
         {isAuthenticated && (
           <SidebarLink
             key={frontendUrls.public.wishlist}
             href={frontendUrls.public.wishlist}
-            label={"Wishlist"}
+            label={"Обране"}
           />
         )}
       </SidebarMenu>

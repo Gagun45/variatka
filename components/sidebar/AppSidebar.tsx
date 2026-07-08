@@ -57,13 +57,6 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroup>
             <SavedLinks />
-            {/* <SidebarGroup>
-              <SidebarMenu>
-                {ADMIN_LINKS.map(({ href, label }) => (
-                  <SidebarLink key={href} href={href} label={label} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroup> */}
           </>
         )}
       </SidebarContent>
