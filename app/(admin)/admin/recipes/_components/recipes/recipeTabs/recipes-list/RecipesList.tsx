@@ -11,7 +11,7 @@ const RecipesList = ({ recipes }: Props) => {
   const { mutate } = useToggleSavedRecipe();
   const { mutate: confirmMutate } = useToggleConfirmedRecipe();
   return (
-    <div className="grid grid-cols-1 gap-4 py-2 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 py-2 xl:grid-cols-2">
       {recipes.map((rec) => (
         <RecipeCard
           onSavedToggle={mutate}
