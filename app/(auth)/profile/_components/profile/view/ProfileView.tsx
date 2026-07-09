@@ -1,12 +1,7 @@
-import { IUser } from "@/lib/types";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { IUser } from "@/lib/types";
+import { Mail, Phone, ShoppingBag, UserRound } from "lucide-react";
+import { ComponentType } from "react";
 
 interface Props {
   user: IUser;
@@ -14,74 +9,81 @@ interface Props {
 
 const ProfileView = ({ user }: Props) => {
   return (
-    <Card className="border-muted max-w-md">
-      <CardHeader>
-        <CardTitle className="text-base font-semibold">
-          Account Details
-        </CardTitle>
-        <CardDescription>
-          Manage your profile and default shipping settings.
-        </CardDescription>
-      </CardHeader>
+    <div className="space-y-6 text-sm">
+      <section className="space-y-4">
+        <SectionHeader
+          title="Account details"
+          description="Your sign-in email and public display name."
+        />
 
-      <CardContent className="space-y-6 text-sm">
-        {/* Basic Account Info */}
-        <dl className="space-y-4">
-          <InfoRow label="Email" value={user.email} />
+        <dl className="overflow-hidden rounded-lg border border-border/70">
+          <InfoRow icon={Mail} label="Email address" value={user.email} />
           <Separator />
-          <InfoRow label="Name" value={user.name} />
+          <InfoRow icon={UserRound} label="Display name" value={user.name} />
         </dl>
+      </section>
 
-        {/* Checkout Defaults Section */}
-        <div className="rounded-lg bg-muted/40 p-4 border border-muted/60 space-y-4">
-          <div className="space-y-1">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              Checkout Defaults
-            </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              These values pre-fill your order form and can be modified during
-              checkout.
-            </p>
-          </div>
+      <section className="space-y-4 rounded-lg border border-border/70 bg-muted/30 p-4">
+        <SectionHeader
+          title="Checkout defaults"
+          description="Saved contact details used to pre-fill new orders."
+        />
 
-          <Separator className="bg-muted-foreground/10" />
-
-          <dl className="space-y-4">
-            <InfoRow
-              label="Default Name"
-              value={user.orderName}
-              fallback="Not set"
-            />
-            <Separator className="bg-muted-foreground/10" />
-            <InfoRow
-              label="Default Phone"
-              value={user.orderPhone}
-              fallback="Not set"
-            />
-            <Separator />
-          </dl>
-        </div>
-      </CardContent>
-    </Card>
+        <dl className="overflow-hidden rounded-lg border border-border/70 bg-background">
+          <InfoRow
+            icon={ShoppingBag}
+            label="Recipient name"
+            value={user.orderName}
+            fallback="Not set yet"
+          />
+          <Separator />
+          <InfoRow
+            icon={Phone}
+            label="Phone number"
+            value={user.orderPhone}
+            fallback="Not set yet"
+          />
+        </dl>
+      </section>
+    </div>
   );
 };
 
-// Clean, local helper to keep the main JSX readable
+interface SectionHeaderProps {
+  title: string;
+  description: string;
+}
+
+const SectionHeader = ({ title, description }: SectionHeaderProps) => {
+  return (
+    <div className="space-y-1">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
+    </div>
+  );
+};
+
 interface InfoRowProps {
+  icon: ComponentType<{ className?: string }>;
   label: string;
   value: string | null | undefined;
   fallback?: string;
 }
 
-const InfoRow = ({ label, value, fallback = "—" }: InfoRowProps) => {
+const InfoRow = ({ icon: Icon, label, value, fallback = "-" }: InfoRowProps) => {
   const displayValue = value?.trim() ? value : fallback;
   const isFallback = displayValue === fallback;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4">
-      <dt className="text-xs text-muted-foreground font-medium">{label}</dt>
+    <div className="grid gap-2 p-4 sm:grid-cols-[minmax(10rem,0.75fr)_1fr] sm:items-center">
+      <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        <Icon className="size-4" />
+        {label}
+      </dt>
       <dd
-        className={`font-medium ${isFallback ? "text-muted-foreground/60 italic font-normal" : "text-foreground"}`}
+        className={`break-words font-medium sm:text-right ${isFallback ? "font-normal italic text-muted-foreground/70" : "text-foreground"}`}
       >
         {displayValue}
       </dd>

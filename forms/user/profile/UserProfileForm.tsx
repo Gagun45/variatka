@@ -1,24 +1,18 @@
 "use client";
 
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { zodSchemas } from "@/zod/zod.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { IUser } from "@/lib/types";
 import { IUpdateUserProfileDto } from "@/zod/user.schema";
+import { Mail } from "lucide-react";
 import NameField from "./fields/NameField";
 import OrderNameField from "./fields/OrderNameField";
 import OrderPhoneField from "./fields/OrderPhoneField";
-import { Separator } from "@/components/ui/separator";
 
 interface Props {
   onSubmit: (dto: IUpdateUserProfileDto) => void;
@@ -49,76 +43,80 @@ const UserProfileForm = ({ onSubmit, isPending, user }: Props) => {
   };
 
   return (
-    <Card className="border-muted max-w-md">
-      <CardHeader>
-        <CardTitle className="text-base font-semibold">
-          Account Details
-        </CardTitle>
-        <CardDescription>
-          Manage your profile and default shipping settings.
-        </CardDescription>
-      </CardHeader>
+    <FormProvider {...form}>
+      <form onSubmit={handleSubmit(onSubmitHandle)}>
+        <fieldset disabled={isPending} className="space-y-6">
+          <section className="space-y-4">
+            <SectionHeader
+              title="Account details"
+              description="Update the name shown around the app."
+            />
 
-      <CardContent>
-        <FormProvider {...form}>
-          <form onSubmit={handleSubmit(onSubmitHandle)}>
-            <fieldset disabled={isPending} className="space-y-6">
-              {/* Basic Account Info Fields */}
-              <div className="space-y-4">
-                {/* Visual read-only display for Email to match ProfileView height */}
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground text-xs">Email</span>
-                  <span className="text-sm font-medium text-muted-foreground/70">
-                    {user.email}
-                  </span>
-                </div>
-                <Separator />
+            <div className="overflow-hidden rounded-lg border border-border/70">
+              <div className="grid gap-2 p-4 sm:grid-cols-[minmax(10rem,0.75fr)_1fr] sm:items-center">
+                <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Mail className="size-4" />
+                  Email address
+                </span>
+                <span className="break-words text-sm font-medium text-muted-foreground sm:text-right">
+                  {user.email}
+                </span>
+              </div>
+              <Separator />
+              <div className="p-4">
                 <NameField />
               </div>
+            </div>
+          </section>
 
-              {/* Grouped Checkout Defaults (Matches ProfileView styling perfectly) */}
-              <div className="rounded-lg bg-muted/40 p-4 border border-muted/60 space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Checkout defaults
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    These values are used to pre-fill your order form. You can
-                    change them when placing an order.
-                  </p>
-                </div>
+          <section className="space-y-4 rounded-lg border border-border/70 bg-muted/30 p-4">
+            <SectionHeader
+              title="Checkout defaults"
+              description="Save contact details that should appear first on new orders."
+            />
 
-                <Separator className="bg-muted-foreground/10" />
+            <div className="space-y-4 rounded-lg border border-border/70 bg-background p-4">
+              <OrderNameField />
+              <OrderPhoneField />
+            </div>
+          </section>
 
-                <div className="space-y-4">
-                  <OrderNameField />
-                  <OrderPhoneField />
-                </div>
-              </div>
+          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+            <Button
+              disabled={!isDirty}
+              type="button"
+              variant="outline"
+              onClick={() => reset()}
+            >
+              Reset
+            </Button>
+            <LoadingButton
+              disabled={!isDirty}
+              isPending={isPending}
+              type="submit"
+            >
+              Save changes
+            </LoadingButton>
+          </div>
+        </fieldset>
+      </form>
+    </FormProvider>
+  );
+};
 
-              {/* Form Actions Footer */}
-              <div className="flex justify-center gap-4 pt-2">
-                <Button
-                  disabled={!isDirty}
-                  type="button"
-                  variant={"destructive"}
-                  onClick={() => reset()}
-                >
-                  Reset
-                </Button>
-                <LoadingButton
-                  disabled={!isDirty}
-                  isPending={isPending}
-                  type="submit"
-                >
-                  Save changes
-                </LoadingButton>
-              </div>
-            </fieldset>
-          </form>
-        </FormProvider>
-      </CardContent>
-    </Card>
+interface SectionHeaderProps {
+  title: string;
+  description: string;
+}
+
+const SectionHeader = ({ title, description }: SectionHeaderProps) => {
+  return (
+    <div className="space-y-1">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
+    </div>
   );
 };
 

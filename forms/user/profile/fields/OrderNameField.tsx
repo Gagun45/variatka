@@ -11,8 +11,8 @@ const OrderNameField = () => {
       control={control}
       render={({ field, fieldState }) => (
         <Field>
-          <FieldLabel>Default name</FieldLabel>
-          <Input {...field} placeholder="Default name" />
+          <FieldLabel className="text-sm">Recipient name</FieldLabel>
+          <Input {...field} placeholder="Name for order forms" />
           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
         </Field>
       )}

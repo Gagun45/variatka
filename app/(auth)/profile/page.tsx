@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { signIn } from "next-auth/react";
 import Profile from "./_components/profile/Profile";
+import { LogIn } from "lucide-react";
 
 export default function ProfilePage() {
   const { status, session } = useAuth();
@@ -12,12 +13,17 @@ export default function ProfilePage() {
 
   if (!session) {
     return (
-      <main>
-        <h1>Profile</h1>
+      <main className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+        <div className="space-y-2">
+          <h1>Profile</h1>
+          <p className="text-sm text-muted-foreground">
+            Sign in to view and update your account details.
+          </p>
+        </div>
         <div className="flex flex-col items-center gap-4">
-          <p>You need to log in</p>
           <Button className="w-fit" onClick={() => signIn("google")}>
-            Login via Google
+            <LogIn />
+            Sign in with Google
           </Button>
         </div>
       </main>
@@ -28,7 +34,12 @@ export default function ProfilePage() {
 
   return (
     <main>
-      <h1>Your Profile</h1>
+      <div className="space-y-1 text-center">
+        <h1>Your profile</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage your account information and checkout contact defaults.
+        </p>
+      </div>
       <Profile user={user} />
     </main>
   );
