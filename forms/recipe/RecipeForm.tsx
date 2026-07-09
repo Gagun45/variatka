@@ -119,16 +119,16 @@ const RecipeForm = ({
           <section
             className={cn(
               "rounded-xl p-4",
-              isSheetLayout
-                ? "bg-muted/40"
-                : "border bg-muted/20 sm:p-5",
+              isSheetLayout ? "bg-muted/40" : "border bg-muted/20 sm:p-5",
             )}
           >
             <div className="mb-4">
               <h4 className="text-sm font-medium">Publishing controls</h4>
-              <p className="text-xs text-muted-foreground">
-                Configure stock, visibility, and review state.
-              </p>
+              {!isSheetLayout && (
+                <p className="text-xs text-muted-foreground">
+                  Configure stock, visibility, and review state.
+                </p>
+              )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <InStockField />
@@ -145,24 +145,26 @@ const RecipeForm = ({
 
           <div
             className={cn(
-              "flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end",
-              isSheetLayout && "sticky bottom-0 -mx-4 bg-card/95 px-4 pb-1",
+              "flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-center",
+              isSheetLayout && "mt-1",
             )}
           >
             <Button
               type="reset"
               variant="outline"
               onClick={handleReset}
-              className="sm:w-auto"
+              className={cn(isSheetLayout ? "sm:w-28" : "sm:w-auto")}
             >
               <RotateCcw className="size-4" />
-              {onReset ? "Reset draft" : "Reset form"}
+              {isSheetLayout ? "Reset" : onReset ? "Reset draft" : "Reset form"}
             </Button>
             <LoadingButton
               isPending={isPending}
               disabled={isDisabled}
               type="submit"
-              className="sm:min-w-32"
+              className={cn(
+                isSheetLayout ? "flex-1 sm:flex-none" : "sm:min-w-32",
+              )}
             >
               {isDisabled ? (
                 "Set amounts"

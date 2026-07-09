@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IRecipeIngredientItem, useRecipeStore } from "@/zustand/recipe.store";
-import { Check, Hash, X } from "lucide-react";
+import { X } from "lucide-react";
 
 interface Props {
   item: IRecipeIngredientItem;
@@ -14,7 +13,6 @@ const RecipeItemCard = ({ item }: Props) => {
   const updateAmount = useRecipeStore((state) => state.updateAmount);
   const removeItem = useRecipeStore((s) => s.removeItem);
   const suggestionsId = `quantity-suggestions-${id}`;
-  const hasAmount = Boolean(amount);
 
   return (
     <div className="rounded-lg border bg-background p-3">
@@ -27,18 +25,6 @@ const RecipeItemCard = ({ item }: Props) => {
             >
               {title}
             </Label>
-
-            <Badge
-              variant={hasAmount ? "secondary" : "outline"}
-              className="shrink-0 gap-1 text-[11px]"
-            >
-              {hasAmount ? (
-                <Check className="size-3" />
-              ) : (
-                <Hash className="size-3" />
-              )}
-              {hasAmount ? "Amount set" : "Needs amount"}
-            </Badge>
           </div>
 
           <div className="flex gap-2">

@@ -9,10 +9,11 @@ type LoadingButtonProps = {
 export const LoadingButton = ({
   isPending,
   children,
+  disabled,
   ...props
 }: LoadingButtonProps) => {
   return (
-    <Button disabled={isPending} {...props}>
+    <Button disabled={isPending || disabled} {...props}>
       {isPending ? <BarLoader /> : children}
     </Button>
   );
