@@ -1,6 +1,6 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
 import SpicyLevelTooltip from "@/components/spicy-tooltip/SpicyLevelTooltip";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
@@ -42,17 +42,30 @@ const PublicRecipeCard = ({
   const CategoryIcon = categoryIcon;
 
   return (
-    <Card className="overflow-hidden">
-      {/* Image */}
-      <CardHeader className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+    <Card className="h-full overflow-hidden py-0 transition-colors hover:ring-foreground/20">
+      <div className="relative border-b bg-muted/30">
+        <Link href={frontendUrls.public.view(id)} className="block">
+          <div className="relative aspect-[4/3] w-full">
+            <Image
+              src={imageSrc}
+              alt={title}
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              fill
+              className="object-contain p-4 transition-transform duration-300 group-hover/card:scale-[1.02]"
+            />
+          </div>
+        </Link>
+
+        <div className="absolute left-3 top-3 flex items-center gap-1.5">
           {CategoryIcon && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <CategoryIcon
-                  size={24}
-                  className={`${categoryIconClassName}`}
-                />
+                <span className="flex size-8 items-center justify-center rounded-full border bg-background/90 shadow-sm backdrop-blur">
+                  <CategoryIcon
+                    size={17}
+                    className={`${categoryIconClassName}`}
+                  />
+                </span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>{categoryLabel}</p>
@@ -62,46 +75,43 @@ const PublicRecipeCard = ({
           {Icon && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Icon size={24} className={`${iconClassName}`} />
+                <span className="flex size-8 items-center justify-center rounded-full border bg-background/90 shadow-sm backdrop-blur">
+                  <Icon size={17} className={`${iconClassName}`} />
+                </span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>{label}</p>
               </TooltipContent>
             </Tooltip>
           )}
+        </div>
+
+        <div className="absolute bottom-3 left-3 flex min-h-8 items-center">
           <SpicyLevelTooltip level={spicy} />
         </div>
+
         {isAuthenticated && (
-          <WishedToggleButton onToggle={onToggleWished} isWished={isWished} />
-        )}
-      </CardHeader>
-
-      <Link href={frontendUrls.public.view(id)}>
-        <div className="relative aspect-square w-full">
-          <Image
-            src={imageSrc}
-            alt={title}
-            sizes="384px"
-            fill
-            className="object-contain"
+          <WishedToggleButton
+            className="absolute right-3 top-3 border bg-background/90 shadow-sm backdrop-blur"
+            onToggle={onToggleWished}
+            isWished={isWished}
           />
-        </div>
-      </Link>
+        )}
+      </div>
 
-      {/* Content */}
-      <CardContent className="flex flex-col justify-between gap-3 h-full">
-        <div className="flex flex-col gap-2 min-w-0 w-full">
-          {/* <StockBadge isInStock={!!inStock} quantity={inStock} /> */}
-
-          <Link
-            href={frontendUrls.public.view(id)}
-            className="text-sm font-medium text-center line-clamp-1 hover:underline"
-          >
-            {title}
-          </Link>
+      <CardContent className="flex flex-1 flex-col justify-between gap-4 p-4">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <h2 className="text-base font-semibold leading-snug">
+            <Link
+              href={frontendUrls.public.view(id)}
+              className="line-clamp-2 hover:underline"
+            >
+              {title}
+            </Link>
+          </h2>
 
           {description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
+            <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
               {description}
             </p>
           )}

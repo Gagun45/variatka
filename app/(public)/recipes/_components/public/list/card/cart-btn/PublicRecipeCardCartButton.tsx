@@ -4,7 +4,7 @@ import IconButton from "@/components/icon-button/IconButton";
 import { Button } from "@/components/ui/button";
 import { IPublicRecipe } from "@/lib/types";
 import { useCartStore, selectItemQuantity } from "@/zustand/cart.store";
-import { Minus, Plus, ShoppingCart } from "lucide-react";
+import { Minus, PackageCheck, Plus, ShoppingCart, Trash2 } from "lucide-react";
 
 interface Props {
   recipe: IPublicRecipe;
@@ -17,52 +17,86 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
 
   const isOutOfStock = recipe.inStock === 0;
   const isMaxReached = quantity >= recipe.inStock;
+  const isRemovingNext = quantity === 1;
+  const DecreaseIcon = isRemovingNext ? Trash2 : Minus;
 
   if (isOutOfStock) {
     return (
-      <Button className="h-10 w-full" variant="destructive" disabled>
-        Out of stock
-      </Button>
+      <div className="space-y-2">
+        <p className="flex min-h-4 items-center justify-center gap-1 text-xs text-muted-foreground">
+          <PackageCheck className="size-3.5" />
+          Currently unavailable
+        </p>
+        <Button
+          className="h-10 w-full justify-center gap-2"
+          variant="destructive"
+          disabled
+        >
+          Out of stock
+        </Button>
+      </div>
     );
   }
 
   if (quantity === 0) {
     return (
-      <Button className="h-10 w-full" onClick={() => addItem(recipe)}>
-        <ShoppingCart className="mr-2 size-4" />
-        Add to cart
-      </Button>
+      <div className="space-y-2">
+        <p className="flex min-h-4 items-center justify-center gap-1 text-xs text-muted-foreground">
+          <PackageCheck className="size-3.5" />
+          {recipe.inStock} available
+        </p>
+        <Button
+          className="h-10 w-full justify-center gap-2"
+          onClick={() => addItem(recipe)}
+        >
+          <ShoppingCart className="size-4" />
+          Add to cart
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="flex h-10 items-center justify-center gap-3 rounded-lg border p-1 w-full bg-background">
-      <IconButton
-        variant="outline"
-        size="icon"
-        className="size-8"
-        onClick={() => updateQuantity(recipe.id, quantity - 1)}
-        label={`Decrease ${recipe.title} quantity`}
-        title="Decrease quantity"
-      >
-        <Minus className="size-4" />
-      </IconButton>
+    <div className="space-y-2">
+      <p className="flex min-h-4 items-center justify-center gap-1 text-xs text-muted-foreground">
+        <PackageCheck className="size-3.5" />
+        {isMaxReached ? "Maximum selected" : `${recipe.inStock} available`}
+      </p>
 
-      <span className="min-w-8 text-center font-semibold text-sm">
-        {quantity}
-      </span>
+      <div className="grid h-10 w-full grid-cols-[2.25rem_1fr_2.25rem] items-center rounded-lg border bg-background p-1">
+        <IconButton
+          variant="ghost"
+          size="icon"
+          className={`size-8 rounded-md ${isRemovingNext ? "text-muted-foreground hover:bg-destructive/10 hover:text-destructive" : ""}`}
+          onClick={() => updateQuantity(recipe.id, quantity - 1)}
+          label={
+            isRemovingNext
+              ? `Remove ${recipe.title} from cart`
+              : `Decrease ${recipe.title} quantity`
+          }
+          title={isRemovingNext ? "Remove from cart" : "Decrease quantity"}
+        >
+          <DecreaseIcon className="size-4" />
+        </IconButton>
 
-      <IconButton
-        variant="outline"
-        size="icon"
-        className="size-8"
-        disabled={isMaxReached}
-        onClick={() => updateQuantity(recipe.id, quantity + 1)}
-        label={`Increase ${recipe.title} quantity`}
-        title="Increase quantity"
-      >
-        <Plus className="size-4" />
-      </IconButton>
+        <div className="flex min-w-0 items-center justify-center gap-1.5 px-2 text-sm font-semibold tabular-nums">
+          <ShoppingCart className="size-4 text-muted-foreground" />
+          <span>{quantity}</span>
+          <span className="text-muted-foreground">in cart</span>
+        </div>
+
+        <IconButton
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-md"
+          disabled={isMaxReached}
+          onClick={() => updateQuantity(recipe.id, quantity + 1)}
+          label={`Increase ${recipe.title} quantity`}
+          title={isMaxReached ? "Maximum selected" : "Increase quantity"}
+        >
+          <Plus className="size-4" />
+        </IconButton>
+      </div>
     </div>
   );
 };
