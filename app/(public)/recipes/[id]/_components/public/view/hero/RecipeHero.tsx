@@ -70,7 +70,7 @@ export default function RecipeHero({ recipe }: Props) {
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)] lg:items-stretch">
           <div className="rounded-xl border bg-card p-3 shadow-sm">
-            <div className="relative flex min-h-[22rem] items-center justify-center overflow-hidden rounded-lg bg-muted/30 sm:min-h-[32rem] lg:min-h-[38rem]">
+            <div className="relative flex min-h-88 items-center justify-center overflow-hidden rounded-lg bg-muted/30 sm:min-h-128 lg:min-h-152">
               <Image
                 src={imageSrc}
                 alt={title}
