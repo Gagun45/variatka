@@ -1,3 +1,4 @@
+import IconButton from "@/components/icon-button/IconButton";
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,15 +64,14 @@ const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
           <CardTitle className="text-center">
             Recipe ingredients ({items.length})
           </CardTitle>
-          <Button
+          <IconButton
             variant="ghost"
             size="icon"
             onClick={handleCopyIngredients}
-            aria-label="Copy ingredients"
-            title="Copy ingredients"
+            label="Copy ingredients"
           >
             <Copy className="size-4" />
-          </Button>
+          </IconButton>
         </div>
       </CardHeader>
       <Separator />

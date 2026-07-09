@@ -16,13 +16,12 @@ import {
 import { IStuff } from "@/lib/prisma.args";
 
 // Reusable Layout and Badge Elements
+import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 import {
   ActiveFilterBadges,
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
-import { Button } from "@/components/ui/button";
-import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 
 interface Props {
   stuff: IStuff[];

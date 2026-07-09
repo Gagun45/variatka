@@ -4,6 +4,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot } from "radix-ui";
 
+import IconButton from "@/components/icon-button/IconButton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -258,14 +259,13 @@ function SidebarTrigger({
   const { toggleSidebar } = useSidebar();
 
   return (
-    <Button
+    <IconButton
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       variant="ghost"
       size={"icon"}
       className={cn(className)}
-      aria-label="Toggle Sidebar"
-      title="Toggle Sidebar"
+      label="Toggle Sidebar"
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
@@ -274,7 +274,7 @@ function SidebarTrigger({
     >
       <PanelLeftIcon />
       <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+    </IconButton>
   );
 }
 

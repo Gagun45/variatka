@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { Minus, PackageCheck, Plus, Trash2 } from "lucide-react";
+import IconButton from "@/components/icon-button/IconButton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getImageUrl } from "@/lib/image.helper";
 import { ICartItem, useCartStore } from "@/zustand/cart.store";
@@ -65,16 +65,16 @@ export function CartSheetItem({ item, closeSheet }: Props) {
           </div>
         </div>
 
-        <Button
+        <IconButton
           size="icon"
           variant="ghost"
           className="-mr-1 -mt-1 size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           onClick={() => removeItem(item.recipeId)}
-          aria-label={`Remove ${item.name} from cart`}
+          label={`Remove ${item.name} from cart`}
           title="Remove from cart"
         >
           <Trash2 className="size-4" />
-        </Button>
+        </IconButton>
       </div>
 
       <Separator className="my-3" />
@@ -85,33 +85,33 @@ export function CartSheetItem({ item, closeSheet }: Props) {
         </span>
 
         <div className="flex items-center gap-2">
-          <Button
+          <IconButton
             size="icon"
             variant="outline"
             disabled={item.quantity === 1}
             className="size-8 rounded-full"
             onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
-            aria-label={`Decrease ${item.name} quantity`}
+            label={`Decrease ${item.name} quantity`}
             title="Decrease quantity"
           >
             <Minus className="size-3.5" />
-          </Button>
+          </IconButton>
 
           <span className="grid h-8 min-w-12 place-items-center rounded-full border bg-background px-3 text-sm font-semibold tabular-nums">
             {item.quantity}
           </span>
 
-          <Button
+          <IconButton
             size="icon"
             variant="outline"
             className="size-8 rounded-full"
             disabled={isMaxReached}
             onClick={() => updateQuantity(item.recipeId, item.quantity + 1)}
-            aria-label={`Increase ${item.name} quantity`}
+            label={`Increase ${item.name} quantity`}
             title="Increase quantity"
           >
             <Plus className="size-3.5" />
-          </Button>
+          </IconButton>
         </div>
       </div>
     </article>

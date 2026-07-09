@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import IconButton from "@/components/icon-button/IconButton";
 import { getImageUrl } from "@/lib/image.helper";
 import { Check, Pencil, Trash2, X } from "lucide-react";
 import {
@@ -104,52 +104,48 @@ export function ImageViewAdmin({
         <div className="absolute top-2 right-2 flex gap-2">
           {file ? (
             <>
-              <Button
+              <IconButton
                 size="icon"
                 variant="destructive"
                 onClick={handleCancel}
                 disabled={isPending}
-                aria-label="Cancel image change"
-                title="Cancel image change"
+                label="Cancel image change"
               >
                 <X />
-              </Button>
-              <Button
+              </IconButton>
+              <IconButton
                 size="icon"
                 onClick={handleSave}
                 variant={"success"}
                 disabled={isPending}
-                aria-label="Save image"
-                title="Save image"
+                label="Save image"
               >
                 <Check />
-              </Button>
+              </IconButton>
             </>
           ) : (
             <>
-              <Button
+              <IconButton
                 size="icon"
                 variant="secondary"
                 onClick={openFilePicker}
                 disabled={isPending}
-                aria-label="Change image"
-                title="Change image"
+                label="Change image"
               >
                 <Pencil />
-              </Button>
+              </IconButton>
 
               {imageKey && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button
+                    <IconButton
                       size="icon"
                       variant="destructive"
                       disabled={isPending}
-                      aria-label="Delete image"
-                      title="Delete image"
+                      label="Delete image"
                     >
                       <Trash2 />
-                    </Button>
+                    </IconButton>
                   </AlertDialogTrigger>
 
                   <AlertDialogContent>

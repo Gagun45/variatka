@@ -1,6 +1,6 @@
+import IconButton from "@/components/icon-button/IconButton";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import StockBadge from "@/components/stock-badge/StockBadge";
-import { Button } from "@/components/ui/button";
 import { useToggleIngredientStock } from "@/features/ingredient/hooks/useToggleIngredientStock";
 import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleSavedIngredient";
 import { IRecipe } from "@/lib/prisma.args";
@@ -54,15 +54,14 @@ const RecipeIngredients = ({ recipe }: Props) => {
           Ingredients ({recipe.ingredients.length})
         </h3>
 
-        <Button
+        <IconButton
           variant="ghost"
           size="icon"
           onClick={handleCopyIngredients}
-          aria-label="Copy ingredients"
-          title="Copy ingredients"
+          label="Copy ingredients"
         >
           <Copy className="size-4" />
-        </Button>
+        </IconButton>
       </div>
 
       <div className="flex flex-col gap-2">

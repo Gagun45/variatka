@@ -28,8 +28,7 @@ const PublicRecipeCard = ({
   onToggleWished,
   isAuthenticated,
 }: Props) => {
-  const { id, imageKey, title, inStock, description, category, series, spicy } =
-    recipe;
+  const { id, imageKey, title, description, category, series, spicy } = recipe;
 
   const isWished = wishlistIdsSet.has(id);
   const imageSrc = getImageUrl(imageKey);

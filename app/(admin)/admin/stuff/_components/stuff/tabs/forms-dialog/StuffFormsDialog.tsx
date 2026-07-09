@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import IconButton from "@/components/icon-button/IconButton";
 import {
   Dialog,
   DialogContent,
@@ -33,14 +33,13 @@ const StuffFormsDialog = ({ initialCategory }: Props) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
+        <IconButton
           className="text-xl size-12"
           variant={"ghost"}
-          aria-label="Add stuff"
-          title="Add stuff"
+          label="Add stuff"
         >
           <PlusCircle className="size-8" />
-        </Button>
+        </IconButton>
       </DialogTrigger>
 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

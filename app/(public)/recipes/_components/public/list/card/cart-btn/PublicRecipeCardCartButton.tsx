@@ -1,5 +1,6 @@
 "use client";
 
+import IconButton from "@/components/icon-button/IconButton";
 import { Button } from "@/components/ui/button";
 import { IPublicRecipe } from "@/lib/types";
 import { useCartStore, selectItemQuantity } from "@/zustand/cart.store";
@@ -36,32 +37,32 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
 
   return (
     <div className="flex h-10 items-center justify-center gap-3 rounded-lg border p-1 w-full bg-background">
-      <Button
+      <IconButton
         variant="outline"
         size="icon"
         className="size-8"
         onClick={() => updateQuantity(recipe.id, quantity - 1)}
-        aria-label={`Decrease ${recipe.title} quantity`}
+        label={`Decrease ${recipe.title} quantity`}
         title="Decrease quantity"
       >
         <Minus className="size-4" />
-      </Button>
+      </IconButton>
 
       <span className="min-w-8 text-center font-semibold text-sm">
         {quantity}
       </span>
 
-      <Button
+      <IconButton
         variant="outline"
         size="icon"
         className="size-8"
         disabled={isMaxReached}
         onClick={() => updateQuantity(recipe.id, quantity + 1)}
-        aria-label={`Increase ${recipe.title} quantity`}
+        label={`Increase ${recipe.title} quantity`}
         title="Increase quantity"
       >
         <Plus className="size-4" />
-      </Button>
+      </IconButton>
     </div>
   );
 };

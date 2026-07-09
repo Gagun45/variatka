@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { Bookmark } from "lucide-react";
-import { Button } from "../ui/button";
+import IconButton from "../icon-button/IconButton";
 
 interface Props {
   onToggle: () => void;
@@ -10,12 +10,11 @@ interface Props {
 
 const SaveToggleButton = ({ onToggle, isSaved, className }: Props) => {
   return (
-    <Button
+    <IconButton
       onClick={onToggle}
       variant="ghost"
       size="icon"
-      aria-label={isSaved ? "Unsave" : "Save"}
-      title={isSaved ? "Unsave" : "Save"}
+      label={isSaved ? "Unsave" : "Save"}
       className={`group shrink-0 rounded-full hover:bg-yellow-50 ${className}`}
     >
       <Bookmark
@@ -26,7 +25,7 @@ const SaveToggleButton = ({ onToggle, isSaved, className }: Props) => {
             : "text-muted-foreground group-hover:text-yellow-500",
         )}
       />
-    </Button>
+    </IconButton>
   );
 };
 

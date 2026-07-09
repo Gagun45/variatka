@@ -1,7 +1,7 @@
 "use client";
 
+import IconButton from "@/components/icon-button/IconButton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -69,16 +69,16 @@ const CheckoutItemCard = ({ item }: Props) => {
                 </div>
               </div>
 
-              <Button
+              <IconButton
                 size="icon"
                 variant="ghost"
                 className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                 onClick={() => removeItem(item.recipeId)}
-                aria-label={`Remove ${item.name} from checkout`}
+                label={`Remove ${item.name} from checkout`}
                 title="Remove from checkout"
               >
                 <Trash2 className="size-4" />
-              </Button>
+              </IconButton>
             </div>
           </CardHeader>
 
@@ -86,33 +86,33 @@ const CheckoutItemCard = ({ item }: Props) => {
 
           <CardFooter className="flex flex-col items-stretch gap-3 rounded-none border-0 bg-transparent p-0 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <Button
+              <IconButton
                 size="icon"
                 variant="outline"
                 disabled={item.quantity === 1}
                 className="size-8"
                 onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
-                aria-label={`Decrease ${item.name} quantity`}
+                label={`Decrease ${item.name} quantity`}
                 title="Decrease quantity"
               >
                 <Minus className="size-3.5" />
-              </Button>
+              </IconButton>
 
               <div className="grid h-8 min-w-12 place-items-center rounded-lg border bg-background px-3 text-sm font-semibold">
                 {item.quantity}
               </div>
 
-              <Button
+              <IconButton
                 size="icon"
                 variant="outline"
                 disabled={isMaxReached}
                 className="size-8"
                 onClick={() => updateQuantity(item.recipeId, item.quantity + 1)}
-                aria-label={`Increase ${item.name} quantity`}
+                label={`Increase ${item.name} quantity`}
                 title="Increase quantity"
               >
                 <Plus className="size-3.5" />
-              </Button>
+              </IconButton>
             </div>
           </CardFooter>
         </div>

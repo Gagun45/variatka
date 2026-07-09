@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, Sparkles } from "lucide-react";
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 export const HeroSection = () => {
   const categoriesToDisplay =
@@ -15,14 +15,14 @@ export const HeroSection = () => {
 
   return (
     <section className="relative w-full overflow-hidden bg-background py-12 sm:py-8">
-      <div className="absolute top-0 left-1/2 -z-10 h-[400px] w-[600px] -translate-x-1/2 rounded-full bg-muted/40 blur-3xl" />
+      <div className="absolute top-0 left-1/2 -z-10 h-100 w-150 -translate-x-1/2 rounded-full bg-muted/40 blur-3xl" />
 
       <div className="container mx-auto px-4 max-w-6xl flex flex-col items-center text-center gap-8">
         {/* Hero text (UNCHANGED) */}
         <div className="space-y-4 max-w-5xl">
           <h1 className="text-3xl sm:text-6xl font-black tracking-tight text-foreground leading-[1.15]">
             Відкрийте для себе{" "}
-            <span className="bg-gradient-to-r from-foreground via-foreground/80 to-muted-foreground bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-foreground via-foreground/80 to-muted-foreground bg-clip-text text-transparent">
               справжні смаки
             </span>
           </h1>

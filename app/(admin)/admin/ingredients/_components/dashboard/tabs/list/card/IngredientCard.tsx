@@ -1,7 +1,7 @@
+import IconButton from "@/components/icon-button/IconButton";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import StockBadge from "@/components/stock-badge/StockBadge";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { INGREDIENT_CATEGORIES_DATA } from "@/lib/enumslist/ingredient.constants";
 import { IIngredient } from "@/lib/prisma.args";
@@ -79,18 +79,16 @@ const IngredientCard = ({
             </div>
           </div>
 
-          <Button
+          <IconButton
             onClick={onToggleDraft}
             variant={isAdded ? "success" : "outline"}
             size="icon-sm"
             className="shrink-0"
-            aria-label={
-              isAdded ? "Remove from recipe draft" : "Add to recipe draft"
-            }
+            label={isAdded ? "Remove from recipe draft" : "Add to recipe draft"}
             title={isAdded ? "Remove from draft" : "Add to draft"}
           >
             {isAdded ? <CheckIcon /> : <PlusIcon />}
-          </Button>
+          </IconButton>
         </div>
 
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-2">

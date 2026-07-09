@@ -1,7 +1,7 @@
 "use client";
 
+import IconButton from "@/components/icon-button/IconButton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { selectCartTotalQuantity, useCartStore } from "@/zustand/cart.store";
 import { ShoppingCart } from "lucide-react";
 import CartSheet from "./cart-sheet/CartSheet";
@@ -13,11 +13,10 @@ const CartTrigger = () => {
 
   return (
     <CartSheet>
-      <Button
+      <IconButton
         variant="ghost"
         size="icon"
-        aria-label={cartLabel}
-        title={cartLabel}
+        label={cartLabel}
         className="relative rounded-full text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
       >
         <ShoppingCart className="size-4.5" />
@@ -27,7 +26,7 @@ const CartTrigger = () => {
             {quantity}
           </Badge>
         )}
-      </Button>
+      </IconButton>
     </CartSheet>
   );
 };

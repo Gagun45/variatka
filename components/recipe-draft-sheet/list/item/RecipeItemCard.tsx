@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import IconButton from "@/components/icon-button/IconButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IRecipeIngredientItem, useRecipeStore } from "@/zustand/recipe.store";
@@ -49,17 +49,17 @@ const RecipeItemCard = ({ item }: Props) => {
           </div>
         </div>
 
-        <Button
+        <IconButton
           type="button"
           variant="ghost"
           size="icon"
           className="-mr-1 -mt-1 size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           onClick={() => removeItem(id)}
-          aria-label={`Remove ${title}`}
+          label={`Remove ${title}`}
           title="Remove ingredient"
         >
           <X className="h-4 w-4" />
-        </Button>
+        </IconButton>
       </div>
     </div>
   );

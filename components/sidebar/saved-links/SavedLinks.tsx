@@ -1,13 +1,8 @@
-import {
-  SidebarGroup,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarGroup, SidebarMenu } from "@/components/ui/sidebar";
+import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 import { frontendUrls } from "@/lib/urls";
 import SidebarLink from "../link/SidebarLink";
-import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 
 const SavedLinks = () => {
   const { data: ingredients = [] } = useIngredients();

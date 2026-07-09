@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import IconButton from "@/components/icon-button/IconButton";
 import clsx from "clsx";
 import { Bookmark } from "lucide-react";
 
@@ -10,12 +10,11 @@ interface Props {
 
 const WishedToggleButton = ({ onToggle, isWished, className }: Props) => {
   return (
-    <Button
+    <IconButton
       variant="ghost"
       size="icon"
       onClick={onToggle}
-      aria-label={isWished ? "Remove from wishlist" : "Add to wishlist"}
-      title={isWished ? "Remove from wishlist" : "Add to wishlist"}
+      label={isWished ? "Remove from wishlist" : "Add to wishlist"}
       className={`${className} group shrink-0 rounded-full hover:bg-red-50`}
     >
       <Bookmark
@@ -26,7 +25,7 @@ const WishedToggleButton = ({ onToggle, isWished, className }: Props) => {
             : "text-muted-foreground group-hover:text-yellow-500",
         )}
       />
-    </Button>
+    </IconButton>
   );
 };
 

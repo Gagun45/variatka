@@ -1,5 +1,6 @@
-import { Button } from "@/components/ui/button";
+import IconButton from "@/components/icon-button/IconButton";
 import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 import { IRecipeItem } from "../RecipeIngredientsEdit";
 
 type RecipeIngredientRowProps = {
@@ -24,15 +25,15 @@ const RecipeIngredientRow = ({
           onChange={(e) => onChangeAmount(item.ingredientId, e.target.value)}
         />
 
-        <Button
+        <IconButton
           variant="destructive"
           size="icon"
           onClick={() => onRemove(item.ingredientId)}
-          aria-label={`Remove ${item.title}`}
+          label={`Remove ${item.title}`}
           title="Remove ingredient"
         >
-          ✕
-        </Button>
+          <X className="size-4" />
+        </IconButton>
       </div>
     </div>
   );

@@ -5,10 +5,10 @@ import RecipeForm from "@/forms/recipe/RecipeForm";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useRecipeStore } from "@/zustand/recipe.store";
 import { Badge } from "@/components/ui/badge";
+import IconButton from "@/components/icon-button/IconButton";
 import { ClipboardList, List, PackagePlus, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "../ui/button";
 import {
   Sheet,
   SheetContent,
@@ -59,11 +59,11 @@ const RecipeDraftSheet = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button
+        <IconButton
           variant="ghost"
           size="icon"
           className="relative rounded-full text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
-          aria-label={`Open recipe draft, ${items.length} ingredient${items.length !== 1 ? "s" : ""}`}
+          label={`Open recipe draft, ${items.length} ingredient${items.length !== 1 ? "s" : ""}`}
           title="Open recipe draft"
         >
           <List className="size-4.5" />
@@ -73,7 +73,7 @@ const RecipeDraftSheet = () => {
               {items.length}
             </span>
           )}
-        </Button>
+        </IconButton>
       </SheetTrigger>
       <SheetContent className="w-full gap-0 bg-background sm:max-w-2xl">
         <SheetHeader className="border-b bg-card px-5 py-4 pr-12">

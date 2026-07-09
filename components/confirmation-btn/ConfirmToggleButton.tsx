@@ -1,5 +1,5 @@
 import { CheckCircle, Circle } from "lucide-react";
-import { Button } from "../ui/button";
+import IconButton from "../icon-button/IconButton";
 
 interface Props {
   onToggle: () => void;
@@ -9,20 +9,19 @@ interface Props {
 
 const ConfirmToggleButton = ({ onToggle, isConfirmed, className }: Props) => {
   return (
-    <Button
+    <IconButton
       variant="ghost"
       size="icon"
       className={`${className} group shrink-0 rounded-full hover:bg-green-50`}
       onClick={onToggle}
-      aria-label={isConfirmed ? "Mark unconfirmed" : "Mark confirmed"}
-      title={isConfirmed ? "Mark unconfirmed" : "Mark confirmed"}
+      label={isConfirmed ? "Mark unconfirmed" : "Mark confirmed"}
     >
       {isConfirmed ? (
         <CheckCircle className="size-5 transition-all duration-200 text-green-500 group-hover:scale-110" />
       ) : (
         <Circle className="size-5 transition-all duration-200 text-muted-foreground group-hover:text-green-500 group-hover:scale-110" />
       )}
-    </Button>
+    </IconButton>
   );
 };
 
