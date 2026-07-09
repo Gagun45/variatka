@@ -29,7 +29,7 @@ export function FilterButtons<T extends string>({
 
       <div
         className={`
-  grid gap-2 w-full grid-cols-1
+  grid gap-0 w-full grid-cols-1
 `}
       >
         {options.map((opt) => {
