@@ -1,153 +1,20 @@
 "use client";
 
-import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
-import RecipeSeriesBadge from "@/components/series-badge/RecipeSeriesBadge";
-import StockBadge from "@/components/stock-badge/StockBadge";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
-import { SpicyOptions } from "@/forms/recipe/fields/SpicyField";
-import { useAuth } from "@/hooks/useAuth";
-import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
-import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
-import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
-import { frontendUrls } from "@/lib/urls";
-import { ChefHat } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import RecipeDetailsSection from "./sections/RecipeDetailsSection";
+import RecipeHero from "./hero/RecipeHero";
 
 interface Props {
   recipe: IPublicRecipe;
 }
 
 export default function PublicRecipeView({ recipe }: Props) {
-  const { isAuthenticated, isAdmin } = useAuth();
-  const {
-    title,
-    id,
-    imageKey,
-    category,
-    series,
-    ingredients,
-    description,
-    inStock,
-    notes,
-    spicy,
-  } = recipe;
-
-  const wishlistIdsSet = useWishlistIdsSet();
-  const isWished = wishlistIdsSet.has(id);
-
-  const categoryLabel = RECIPE_CATEGORIES_DATA[category].label;
-
-  const { mutate } = useToggleWishlist();
-
-  const imageSrc = getImageUrl(imageKey);
-
-  const spicyOption = SpicyOptions.find((s) => s.value === spicy);
+  const hasNotes = recipe.notes.trim().length > 0;
 
   return (
-    <div className="mx-auto max-w-6xl py-8">
-      <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
-        {/* Image */}
-        <aside className="lg:sticky lg:top-36 h-fit">
-          <div className="relative overflow-hidden rounded-2xl border bg-muted">
-            <Image
-              src={imageSrc}
-              alt={title}
-              width={500}
-              height={500}
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-              className="aspect-square w-full object-contain transition duration-300 hover:scale-105"
-            />
-            {isAdmin && (
-              <Link
-                className={`${buttonVariants()} absolute top-4 right-4`}
-                href={frontendUrls.recipes.edit(id)}
-              >
-                Edit
-              </Link>
-            )}
-
-            <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/70 to-transparent" />
-
-            {isAuthenticated && (
-              <WishedToggleButton
-                className="absolute right-4 bottom-4 size-10 border-muted-foreground backdrop-blur"
-                isWished={isWished}
-                onToggle={() => mutate(id)}
-              />
-            )}
-          </div>
-        </aside>
-
-        {/* Content */}
-        <div className="space-y-8">
-          <section className="space-y-5">
-            <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
-
-            <p className="text-lg leading-7 text-muted-foreground">
-              {description}
-            </p>
-
-            <div className="flex flex-wrap gap-3">
-              <Badge variant={"outline"} className="px-3 py-1">
-                <ChefHat className="mr-2 h-4 w-4" />
-                {categoryLabel}
-              </Badge>
-
-              <RecipeSeriesBadge series={series} />
-              <StockBadge isInStock={!!inStock} quantity={inStock} />
-              {spicyOption && spicyOption.value > 0 && (
-                <Badge>{spicyOption.tooltip}</Badge>
-              )}
-            </div>
-          </section>
-
-          <Separator />
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Ingredients ({ingredients.length})</CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <div className="grid gap-3 grid-cols-1 xl:grid-cols-2">
-                {ingredients.map((ingredient) => (
-                  <div
-                    key={ingredient.id}
-                    className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                      {ingredient.title[0].toUpperCase()}
-                    </div>
-
-                    <span className="font-medium">{ingredient.title}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {notes.trim() && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional notes</CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <p className="whitespace-pre-wrap leading-7 text-muted-foreground">
-                  {notes}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </div>
+    <article className="bg-background">
+      <RecipeHero recipe={recipe} />
+      <RecipeDetailsSection recipe={recipe} hasNotes={hasNotes} />
+    </article>
   );
 }

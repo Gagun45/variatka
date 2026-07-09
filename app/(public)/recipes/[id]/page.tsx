@@ -8,7 +8,7 @@ const PublicRecipePage = async ({ params }: Props) => {
   const { id } = await params;
   const recipeId = +id;
   return (
-    <main>
+    <main className="!max-w-none !space-y-0 !px-0 !py-0">
       <PublicRecipe id={recipeId} />
     </main>
   );
