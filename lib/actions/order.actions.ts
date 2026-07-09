@@ -6,13 +6,13 @@ import { prisma } from "../prisma";
 import { orderArgs } from "../prisma.args";
 import { IActionResponse } from "../types";
 import { ICreateOrderDto, IPublicOrder } from "../types.order";
-import { ACTION_ERROR } from "./action.unwrapper";
+import { safeAction } from "./action.wrapper";
 import { getCurrentUser } from "./user.actions";
 
 export const getMyOrders = async (): Promise<
   IActionResponse<IPublicOrder[]>
 > => {
-  try {
+  return safeAction("getMyOrders", async () => {
     const user = await getCurrentUser();
     const orders = await prisma.order.findMany({
       where: {
@@ -21,24 +21,15 @@ export const getMyOrders = async (): Promise<
       ...orderArgs,
     });
     const publicOrders = orders.map(orderPresenter.toPublic);
-    return {
-      ok: true,
-      data: publicOrders,
-    };
-  } catch (e) {
-    console.error("Error in getMyOrders:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return publicOrders;
+  });
 };
 
 export const createOrder = async ({
   formValues,
   orderItems,
 }: ICreateOrderDto): Promise<IActionResponse<IPublicOrder>> => {
-  try {
+  return safeAction("createOrder", async () => {
     const user = await getCurrentUser();
 
     if (orderItems.length === 0) {
@@ -118,18 +109,6 @@ export const createOrder = async ({
     });
 
     const publicOrder = orderPresenter.toPublic(order);
-
-    return {
-      ok: true,
-      data: publicOrder,
-    };
-  } catch (e) {
-    console.error("Error in createOrder:", e);
-
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-
-    return ACTION_ERROR();
-  }
+    return publicOrder;
+  });
 };

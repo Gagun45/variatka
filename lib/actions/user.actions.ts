@@ -4,24 +4,15 @@ import { IUpdateUserProfileDto } from "@/zod/user.schema";
 import { auth } from "../auth";
 import { AppError } from "../error";
 import { IActionResponse, IUser } from "../types";
-import { ACTION_ERROR } from "./action.unwrapper";
 import { prisma } from "../prisma";
 import { userPrenseter } from "@/presenters/user.presenter";
+import { safeAction } from "./action.wrapper";
 
 export const getMe = async (): Promise<IActionResponse<IUser>> => {
-  try {
+  return safeAction("getMe", async () => {
     const user = await getCurrentUser();
-    return {
-      ok: true,
-      data: user,
-    };
-  } catch (e) {
-    console.log("Get user error: ", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return user;
+  });
 };
 
 export const getCurrentUser = async (): Promise<IUser> => {
@@ -49,7 +40,7 @@ export const requireAdmin = async (): Promise<IUser> => {
 export const updateUserProfile = async (
   dto: IUpdateUserProfileDto,
 ): Promise<IActionResponse<IUser>> => {
-  try {
+  return safeAction("updateUserProfile", async () => {
     const user = await getCurrentUser();
     const updatedUser = await prisma.user.update({
       where: {
@@ -58,15 +49,6 @@ export const updateUserProfile = async (
       data: dto,
     });
     const publicUser = userPrenseter.toPublic(updatedUser);
-    return {
-      ok: true,
-      data: publicUser,
-    };
-  } catch (e) {
-    console.log("updateUserProfile error: ", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return publicUser;
+  });
 };

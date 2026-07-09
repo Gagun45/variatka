@@ -6,31 +6,22 @@ import { prisma } from "../prisma";
 import { IIngredient, ingredientArgs } from "../prisma.args";
 import { uploadHelper } from "../s3/upload.helper";
 import { IActionResponse } from "../types";
-import { ACTION_ERROR } from "./action.unwrapper";
+import { safeAction } from "./action.wrapper";
 import { requireAdmin } from "./user.actions";
 
 export const getIngredients = async (): Promise<
   IActionResponse<IIngredient[]>
 > => {
-  try {
+  return safeAction("getIngredients", async () => {
     const ingredients = await prisma.ingredient.findMany(ingredientArgs);
-    return {
-      ok: true,
-      data: ingredients,
-    };
-  } catch (e) {
-    console.error("Error in getIngredients:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return ingredients;
+  });
 };
 
 export const createIngredient = async (
   dto: IIngredientFormValues,
 ): Promise<IActionResponse<IIngredient>> => {
-  try {
+  return safeAction("createIngredient", async () => {
     await requireAdmin();
     const { title } = dto;
 
@@ -44,24 +35,15 @@ export const createIngredient = async (
       data: dto,
       ...ingredientArgs,
     });
-    return {
-      ok: true,
-      data: newIngredient,
-    };
-  } catch (e) {
-    console.error("Error in updateRecipeFields:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return newIngredient;
+  });
 };
 
 export const editIngredient = async (
   id: number,
   dto: IIngredientFormValues,
 ): Promise<IActionResponse<IIngredient>> => {
-  try {
+  return safeAction("editIngredient", async () => {
     await requireAdmin();
     const existingIngredient = await prisma.ingredient.findFirst({
       where: {
@@ -78,23 +60,14 @@ export const editIngredient = async (
       data: dto,
       ...ingredientArgs,
     });
-    return {
-      ok: true,
-      data: updatedIngredient,
-    };
-  } catch (e) {
-    console.error("Error in updateIngredient:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedIngredient;
+  });
 };
 
 export const deleteIngredient = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
-  try {
+  return safeAction("deleteIngredient", async () => {
     await requireAdmin();
     const ingredient = await prisma.ingredient.findUnique({
       where: { id },
@@ -113,24 +86,15 @@ export const deleteIngredient = async (
     await prisma.ingredient.delete({
       where: { id },
     });
-    return {
-      data: id,
-      ok: true,
-    };
-  } catch (e) {
-    console.error("Error in deleteIngredient:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return id;
+  });
 };
 
 export const toggleSavedIngredient = async (
   id: number,
   isSaved: boolean,
 ): Promise<IActionResponse<IIngredient>> => {
-  try {
+  return safeAction("toggleSavedIngredient", async () => {
     await requireAdmin();
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
@@ -142,24 +106,15 @@ export const toggleSavedIngredient = async (
       data: { isSaved },
       ...ingredientArgs,
     });
-    return {
-      ok: true,
-      data: updatedIngredient,
-    };
-  } catch (e) {
-    console.error("Error in toggleSavedIngredient:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedIngredient;
+  });
 };
 
 export const uploadIngredientImage = async (
   ingredientId: number,
   file: File,
 ): Promise<IActionResponse<IIngredient>> => {
-  try {
+  return safeAction("uploadIngredientImage", async () => {
     await requireAdmin();
     const imageKey = await uploadHelper.image({
       entity: "ingredients",
@@ -174,23 +129,14 @@ export const uploadIngredientImage = async (
       },
       ...ingredientArgs,
     });
-    return {
-      ok: true,
-      data: updatedIngredient,
-    };
-  } catch (e) {
-    console.error("Error in uploadIngredientImage:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedIngredient;
+  });
 };
 
 export const removeIngredientImage = async (
   ingredientId: number,
 ): Promise<IActionResponse<IIngredient>> => {
-  try {
+  return safeAction("removeIngredientImage", async () => {
     await requireAdmin();
     const updatedIngredient = await prisma.ingredient.update({
       where: { id: ingredientId },
@@ -200,24 +146,15 @@ export const removeIngredientImage = async (
       },
       ...ingredientArgs,
     });
-    return {
-      ok: true,
-      data: updatedIngredient,
-    };
-  } catch (e) {
-    console.error("Error in removeIngredientImage:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedIngredient;
+  });
 };
 
 export const toggleIngredientInStockValue = async (
   id: number,
   isInStock: boolean,
 ): Promise<IActionResponse<IIngredient>> => {
-  try {
+  return safeAction("toggleIngredientInStockValue", async () => {
     await requireAdmin();
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { id },
@@ -228,15 +165,6 @@ export const toggleIngredientInStockValue = async (
       data: { isInStock },
       ...ingredientArgs,
     });
-    return {
-      ok: true,
-      data: updatedIngredient,
-    };
-  } catch (e) {
-    console.error("Error in toggleIngredientInStockValue:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedIngredient;
+  });
 };

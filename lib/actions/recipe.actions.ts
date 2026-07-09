@@ -17,52 +17,33 @@ import {
   IPublicRecipe,
   IRecipeIngredient,
 } from "../types";
-import { ACTION_ERROR } from "./action.unwrapper";
+import { safeAction } from "./action.wrapper";
 import { getCurrentUser, requireAdmin } from "./user.actions";
 
 export const getRecipes = async (): Promise<IActionResponse<IRecipe[]>> => {
-  try {
+  return safeAction("getRecipes", async () => {
     const recipes = await prisma.recipe.findMany(recipeArgs);
-
-    return {
-      ok: true,
-      data: recipes,
-    };
-  } catch (e) {
-    console.error("Error in getRecipes:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return recipes;
+  });
 };
 
 export const getRecipe = async (
   id: number,
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("getRecipe", async () => {
     const recipe = await prisma.recipe.findUnique({
       where: { id },
       ...recipeArgs,
     });
     if (!recipe) throw new AppError("Recipe not found");
-    return {
-      ok: true,
-      data: recipe,
-    };
-  } catch (e) {
-    console.error("Error in getRecipe", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return recipe;
+  });
 };
 
 export const createRecipe = async (
   dto: ICreateRecipeDto,
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("createRecipe", async () => {
     await requireAdmin();
     const {
       title,
@@ -105,24 +86,15 @@ export const createRecipe = async (
       },
       ...recipeArgs,
     });
-    return {
-      ok: true,
-      data: newRecipe,
-    };
-  } catch (e) {
-    console.error("Error in createRecipe:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return newRecipe;
+  });
 };
 
 export const updateRecipeFields = async (
   id: number,
   dto: IRecipeDto,
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("updateRecipeFields", async () => {
     await requireAdmin();
     const existingRecipe = await prisma.recipe.findFirst({
       where: {
@@ -142,80 +114,60 @@ export const updateRecipeFields = async (
       data: dto,
       ...recipeArgs,
     });
-    return {
-      ok: true,
-      data: updatedRecipe,
-    };
-  } catch (e) {
-    console.error("Error in updateRecipeFields:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedRecipe;
+  });
 };
 
 export const updateRecipeIngredients = async (
   recipeId: number,
   items: IRecipeIngredient[],
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("updateRecipeIngredients", async () => {
     await requireAdmin();
     if (!Array.isArray(items)) throw new AppError("Invalid items payload");
 
-    const response = await prisma.$transaction(
-      async (tx): Promise<IActionResponse<IRecipe>> => {
-        const recipe = await tx.recipe.findUnique({
-          where: { id: recipeId },
-          select: { id: true },
+    const updatedRecipe = await prisma.$transaction(async (tx) => {
+      const recipe = await tx.recipe.findUnique({
+        where: { id: recipeId },
+        select: { id: true },
+      });
+
+      if (!recipe) throw new AppError("Recipe not found");
+
+      if (items.some((i) => !i.ingredientId || !i.amount))
+        throw new AppError("Invalid ingredient data");
+
+      await tx.recipeIngredient.deleteMany({
+        where: { recipeId },
+      });
+
+      if (items.length > 0) {
+        await tx.recipeIngredient.createMany({
+          data: items.map((i) => ({
+            recipeId,
+            ingredientId: i.ingredientId,
+            amount: i.amount,
+          })),
         });
+      }
 
-        if (!recipe) throw new AppError("Recipe not found");
+      const updated = await tx.recipe.findUnique({
+        where: { id: recipeId },
+        ...recipeArgs,
+      });
 
-        if (items.some((i) => !i.ingredientId || !i.amount))
-          throw new AppError("Invalid ingredient data");
+      if (!updated) throw new Error("Not found after update");
 
-        await tx.recipeIngredient.deleteMany({
-          where: { recipeId },
-        });
-
-        if (items.length > 0) {
-          await tx.recipeIngredient.createMany({
-            data: items.map((i) => ({
-              recipeId,
-              ingredientId: i.ingredientId,
-              amount: i.amount,
-            })),
-          });
-        }
-
-        const updated = await tx.recipe.findUnique({
-          where: { id: recipeId },
-          ...recipeArgs,
-        });
-
-        if (!updated) throw new Error("Not found after update");
-
-        return {
-          data: updated,
-          ok: true,
-        };
-      },
-    );
-    return response;
-  } catch (e) {
-    console.error("Error in updateRecipeIngredients:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+      return updated;
+    });
+    return updatedRecipe;
+  });
 };
 
 export const deleteRecipe = async (
   recipeId: number,
 ): Promise<IActionResponse<number>> => {
-  try {
+  return safeAction("deleteRecipe", async () => {
     await requireAdmin();
     const recipe = await prisma.recipe.findUnique({
       where: { id: recipeId },
@@ -227,23 +179,14 @@ export const deleteRecipe = async (
     await prisma.recipe.delete({
       where: { id: recipeId },
     });
-    return {
-      data: recipeId,
-      ok: true,
-    };
-  } catch (e) {
-    console.error("Database error in deleteRecipe:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return recipeId;
+  });
 };
 
 export const toggleSavedRecipe = async (
   id: number,
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("toggleSavedRecipe", async () => {
     await requireAdmin();
     const recipe = await prisma.recipe.findUnique({
       where: { id },
@@ -255,23 +198,14 @@ export const toggleSavedRecipe = async (
       data: { isSaved: !recipe.isSaved },
       ...recipeArgs,
     });
-    return {
-      ok: true,
-      data: updatedRecipe,
-    };
-  } catch (e) {
-    console.error("Error in toggleSavedRecipe:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedRecipe;
+  });
 };
 
 export const toggleConfirmedRecipe = async (
   id: number,
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("toggleConfirmedRecipe", async () => {
     await requireAdmin();
     const recipe = await prisma.recipe.findUnique({
       where: { id },
@@ -283,23 +217,14 @@ export const toggleConfirmedRecipe = async (
       data: { isConfirmed: !recipe.isConfirmed },
       ...recipeArgs,
     });
-    return {
-      ok: true,
-      data: updatedRecipe,
-    };
-  } catch (e) {
-    console.error("Error in toggleConfirmedRecipe:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedRecipe;
+  });
 };
 
 export const toggleHiddenRecipe = async (
   id: number,
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("toggleHiddenRecipe", async () => {
     await requireAdmin();
     const recipe = await prisma.recipe.findUnique({
       where: { id },
@@ -311,24 +236,15 @@ export const toggleHiddenRecipe = async (
       data: { isHidden: !recipe.isHidden },
       ...recipeArgs,
     });
-    return {
-      ok: true,
-      data: updatedRecipe,
-    };
-  } catch (e) {
-    console.error("Error in toggleHiddenRecipe:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedRecipe;
+  });
 };
 
 export const uploadRecipeImage = async (
   recipeId: number,
   file: File,
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("uploadRecipeImage", async () => {
     await requireAdmin();
     const imageKey = await uploadHelper.image({
       entity: "recipes",
@@ -343,23 +259,14 @@ export const uploadRecipeImage = async (
       },
       ...recipeArgs,
     });
-    return {
-      ok: true,
-      data: updatedRecipe,
-    };
-  } catch (e) {
-    console.error("Error in uploadRecipeImage:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedRecipe;
+  });
 };
 
 export const removeRecipeImage = async (
   recipeId: number,
 ): Promise<IActionResponse<IRecipe>> => {
-  try {
+  return safeAction("removeRecipeImage", async () => {
     await requireAdmin();
     const updatedRecipe = await prisma.recipe.update({
       where: { id: recipeId },
@@ -369,23 +276,14 @@ export const removeRecipeImage = async (
       },
       ...recipeArgs,
     });
-    return {
-      ok: true,
-      data: updatedRecipe,
-    };
-  } catch (e) {
-    console.error("Error in removeRecipeImage:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedRecipe;
+  });
 };
 
 export const getPublicRecipes = async (): Promise<
   IActionResponse<IPublicRecipe[]>
 > => {
-  try {
+  return safeAction("getPublicRecipes", async () => {
     const recipes = await prisma.recipe.findMany({
       where: { isConfirmed: true },
       ...recipeArgs,
@@ -394,23 +292,14 @@ export const getPublicRecipes = async (): Promise<
       recipePresenter.toPublic,
     );
 
-    return {
-      ok: true,
-      data: publicRecipes,
-    };
-  } catch (e) {
-    console.error("Error in getPublicRecipes:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return publicRecipes;
+  });
 };
 
 export const getWishlist = async (): Promise<
   IActionResponse<IPublicRecipe[]>
 > => {
-  try {
+  return safeAction("getWishlist", async () => {
     const user = await getCurrentUser();
     const recipes: IRecipe[] = await prisma.recipe.findMany({
       where: {
@@ -423,23 +312,14 @@ export const getWishlist = async (): Promise<
       ...recipeArgs,
     });
     const publicRecipes = recipes.map(recipePresenter.toPublic);
-    return {
-      ok: true,
-      data: publicRecipes,
-    };
-  } catch (e) {
-    console.error("Error in getWishlist:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return publicRecipes;
+  });
 };
 
 export const toggleWishlist = async (
   recipeId: number,
 ): Promise<IActionResponse<boolean>> => {
-  try {
+  return safeAction("toggleWishlist", async () => {
     const user = await getCurrentUser();
     const existing = await prisma.withlistItem.findUnique({
       where: {
@@ -458,7 +338,7 @@ export const toggleWishlist = async (
           },
         },
       });
-      return { ok: true, data: false };
+      return false;
     }
     await prisma.withlistItem.create({
       data: {
@@ -466,23 +346,14 @@ export const toggleWishlist = async (
         recipeId,
       },
     });
-    return {
-      ok: true,
-      data: true,
-    };
-  } catch (e) {
-    console.error("Error in toggleWishlist:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return true;
+  });
 };
 
 export const getAdminWishlists = async (): Promise<
   IActionResponse<IUserWithWishlist[]>
 > => {
-  try {
+  return safeAction("getAdminWishlists", async () => {
     const wishlistItems = await prisma.user.findMany({
       where: {
         withlistItems: {
@@ -491,15 +362,6 @@ export const getAdminWishlists = async (): Promise<
       },
       ...userWithWishlistArgs,
     });
-    return {
-      ok: true,
-      data: wishlistItems,
-    };
-  } catch (e) {
-    console.error("Error in getAdminWishlists:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return wishlistItems;
+  });
 };

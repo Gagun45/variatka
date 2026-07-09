@@ -6,29 +6,20 @@ import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IStuff, stuffArgs } from "../prisma.args";
 import { IActionResponse } from "../types";
-import { ACTION_ERROR } from "./action.unwrapper";
+import { safeAction } from "./action.wrapper";
 import { requireAdmin } from "./user.actions";
 
 export const getStuff = async (): Promise<IActionResponse<IStuff[]>> => {
-  try {
+  return safeAction("getStuff", async () => {
     const stuff = await prisma.stuff.findMany();
-    return {
-      ok: true,
-      data: stuff,
-    };
-  } catch (e) {
-    console.error("Error in getStuff:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return stuff;
+  });
 };
 
 export const createStuff = async (
   dto: ICreateStuffDto,
 ): Promise<IActionResponse<IStuff>> => {
-  try {
+  return safeAction("createStuff", async () => {
     await requireAdmin();
     const { title } = dto;
 
@@ -42,24 +33,15 @@ export const createStuff = async (
       data: dto,
       ...stuffArgs,
     });
-    return {
-      ok: true,
-      data: newStuff,
-    };
-  } catch (e) {
-    console.error("Error in createStuff:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return newStuff;
+  });
 };
 
 export const editStuff = async (
   id: number,
   dto: ICreateStuffDto,
 ): Promise<IActionResponse<IStuff>> => {
-  try {
+  return safeAction("editStuff", async () => {
     await requireAdmin();
     const existingStuff = await prisma.stuff.findFirst({
       where: {
@@ -77,23 +59,14 @@ export const editStuff = async (
       data: dto,
       ...stuffArgs,
     });
-    return {
-      ok: true,
-      data: updatedStuff,
-    };
-  } catch (e) {
-    console.error("Error in editStuff:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return updatedStuff;
+  });
 };
 
 export const deleteStuff = async (
   id: number,
 ): Promise<IActionResponse<number>> => {
-  try {
+  return safeAction("deleteStuff", async () => {
     await requireAdmin();
     const existingStuff = await prisma.stuff.findUnique({
       where: { id },
@@ -103,15 +76,6 @@ export const deleteStuff = async (
     await prisma.stuff.delete({
       where: { id },
     });
-    return {
-      ok: true,
-      data: id,
-    };
-  } catch (e) {
-    console.error("Error in deleteStuff:", e);
-    if (e instanceof AppError) {
-      return ACTION_ERROR(e.message);
-    }
-    return ACTION_ERROR();
-  }
+    return id;
+  });
 };
