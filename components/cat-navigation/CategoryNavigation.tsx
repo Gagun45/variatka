@@ -19,12 +19,12 @@ export function CategoryNavigation<T extends string>({
   onCategoryReset,
 }: Props<T>) {
   return (
-    <div className="mx-auto mb-10 w-full max-w-4xl px-4">
-      <p className="pb-4 text-center text-sm text-muted-foreground">
+    <div className="mx-auto mb-5 w-full max-w-3xl px-2">
+      <p className="pb-2 text-center text-xs text-muted-foreground">
         Перегляд за категоріями
       </p>
 
-      <nav className="flex flex-wrap justify-center gap-8">
+      <nav className="flex flex-wrap justify-center gap-3 sm:gap-4">
         {config.options.map((option) => {
           const isActive = value === option.value;
 
@@ -39,16 +39,16 @@ export function CategoryNavigation<T extends string>({
               aria-label={option.label}
               title={option.label}
               className={cn(
-                "relative size-36 overflow-hidden rounded-2xl p-0 transition-all duration-300",
+                "relative size-24 overflow-hidden rounded-xl p-0 transition-all duration-300 sm:size-28",
                 "hover:scale-[1.02]",
-                isActive && "scale-[1.03] border-primary ring-4 ring-primary",
+                isActive && "scale-[1.03] border-primary ring-2 ring-primary",
               )}
             >
               <Image
                 src={option.logo ?? "/default-poster.png"}
                 alt={option.label}
                 fill
-                sizes="144px"
+                sizes="112px"
                 className={cn(
                   "object-contain transition-all duration-300",
                   isActive ? "brightness-110" : "hover:brightness-105",
