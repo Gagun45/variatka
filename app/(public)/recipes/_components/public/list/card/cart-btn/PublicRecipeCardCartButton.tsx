@@ -41,6 +41,8 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
         size="icon"
         className="size-8"
         onClick={() => updateQuantity(recipe.id, quantity - 1)}
+        aria-label={`Decrease ${recipe.title} quantity`}
+        title="Decrease quantity"
       >
         <Minus className="size-4" />
       </Button>
@@ -55,6 +57,8 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
         className="size-8"
         disabled={isMaxReached}
         onClick={() => updateQuantity(recipe.id, quantity + 1)}
+        aria-label={`Increase ${recipe.title} quantity`}
+        title="Increase quantity"
       >
         <Plus className="size-4" />
       </Button>

@@ -14,6 +14,8 @@ const SaveToggleButton = ({ onToggle, isSaved, className }: Props) => {
       onClick={onToggle}
       variant="ghost"
       size="icon"
+      aria-label={isSaved ? "Unsave" : "Save"}
+      title={isSaved ? "Unsave" : "Save"}
       className={`group shrink-0 rounded-full hover:bg-yellow-50 ${className}`}
     >
       <Bookmark

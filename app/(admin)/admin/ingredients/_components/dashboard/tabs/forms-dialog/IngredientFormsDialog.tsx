@@ -33,7 +33,12 @@ const IngredientFormsDialog = ({ initialCategory }: Props) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="text-xl size-12" variant={"ghost"}>
+        <Button
+          className="text-xl size-12"
+          variant={"ghost"}
+          aria-label="Create ingredient"
+          title="Create ingredient"
+        >
           <PlusCircle className="size-8" />
         </Button>
       </DialogTrigger>

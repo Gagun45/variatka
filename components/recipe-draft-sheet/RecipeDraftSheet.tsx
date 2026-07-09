@@ -64,6 +64,7 @@ const RecipeDraftSheet = () => {
           size="icon"
           className="relative rounded-full text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
           aria-label={`Open recipe draft, ${items.length} ingredient${items.length !== 1 ? "s" : ""}`}
+          title="Open recipe draft"
         >
           <List className="size-4.5" />
 

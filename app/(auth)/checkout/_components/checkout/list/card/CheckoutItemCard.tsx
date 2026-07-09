@@ -75,6 +75,7 @@ const CheckoutItemCard = ({ item }: Props) => {
                 className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                 onClick={() => removeItem(item.recipeId)}
                 aria-label={`Remove ${item.name} from checkout`}
+                title="Remove from checkout"
               >
                 <Trash2 className="size-4" />
               </Button>
@@ -92,6 +93,7 @@ const CheckoutItemCard = ({ item }: Props) => {
                 className="size-8"
                 onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
                 aria-label={`Decrease ${item.name} quantity`}
+                title="Decrease quantity"
               >
                 <Minus className="size-3.5" />
               </Button>
@@ -107,6 +109,7 @@ const CheckoutItemCard = ({ item }: Props) => {
                 className="size-8"
                 onClick={() => updateQuantity(item.recipeId, item.quantity + 1)}
                 aria-label={`Increase ${item.name} quantity`}
+                title="Increase quantity"
               >
                 <Plus className="size-3.5" />
               </Button>

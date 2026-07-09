@@ -109,6 +109,8 @@ export function ImageViewAdmin({
                 variant="destructive"
                 onClick={handleCancel}
                 disabled={isPending}
+                aria-label="Cancel image change"
+                title="Cancel image change"
               >
                 <X />
               </Button>
@@ -117,6 +119,8 @@ export function ImageViewAdmin({
                 onClick={handleSave}
                 variant={"success"}
                 disabled={isPending}
+                aria-label="Save image"
+                title="Save image"
               >
                 <Check />
               </Button>
@@ -128,6 +132,8 @@ export function ImageViewAdmin({
                 variant="secondary"
                 onClick={openFilePicker}
                 disabled={isPending}
+                aria-label="Change image"
+                title="Change image"
               >
                 <Pencil />
               </Button>
@@ -139,6 +145,8 @@ export function ImageViewAdmin({
                       size="icon"
                       variant="destructive"
                       disabled={isPending}
+                      aria-label="Delete image"
+                      title="Delete image"
                     >
                       <Trash2 />
                     </Button>

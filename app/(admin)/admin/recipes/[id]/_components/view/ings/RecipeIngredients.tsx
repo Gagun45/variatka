@@ -59,6 +59,7 @@ const RecipeIngredients = ({ recipe }: Props) => {
           size="icon"
           onClick={handleCopyIngredients}
           aria-label="Copy ingredients"
+          title="Copy ingredients"
         >
           <Copy className="size-4" />
         </Button>

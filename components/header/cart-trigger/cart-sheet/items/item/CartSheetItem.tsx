@@ -71,6 +71,7 @@ export function CartSheetItem({ item, closeSheet }: Props) {
           className="-mr-1 -mt-1 size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           onClick={() => removeItem(item.recipeId)}
           aria-label={`Remove ${item.name} from cart`}
+          title="Remove from cart"
         >
           <Trash2 className="size-4" />
         </Button>
@@ -91,6 +92,7 @@ export function CartSheetItem({ item, closeSheet }: Props) {
             className="size-8 rounded-full"
             onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
             aria-label={`Decrease ${item.name} quantity`}
+            title="Decrease quantity"
           >
             <Minus className="size-3.5" />
           </Button>
@@ -106,6 +108,7 @@ export function CartSheetItem({ item, closeSheet }: Props) {
             disabled={isMaxReached}
             onClick={() => updateQuantity(item.recipeId, item.quantity + 1)}
             aria-label={`Increase ${item.name} quantity`}
+            title="Increase quantity"
           >
             <Plus className="size-3.5" />
           </Button>

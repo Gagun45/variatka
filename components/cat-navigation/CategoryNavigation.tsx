@@ -36,6 +36,8 @@ export function CategoryNavigation<T extends string>({
               onClick={() =>
                 isActive ? onCategoryReset() : onChange(option.value)
               }
+              aria-label={option.label}
+              title={option.label}
               className={cn(
                 "relative size-36 overflow-hidden rounded-2xl p-0 transition-all duration-300",
                 "hover:scale-[1.02]",

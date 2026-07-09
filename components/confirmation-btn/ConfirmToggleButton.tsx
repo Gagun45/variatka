@@ -14,6 +14,8 @@ const ConfirmToggleButton = ({ onToggle, isConfirmed, className }: Props) => {
       size="icon"
       className={`${className} group shrink-0 rounded-full hover:bg-green-50`}
       onClick={onToggle}
+      aria-label={isConfirmed ? "Mark unconfirmed" : "Mark confirmed"}
+      title={isConfirmed ? "Mark unconfirmed" : "Mark confirmed"}
     >
       {isConfirmed ? (
         <CheckCircle className="size-5 transition-all duration-200 text-green-500 group-hover:scale-110" />

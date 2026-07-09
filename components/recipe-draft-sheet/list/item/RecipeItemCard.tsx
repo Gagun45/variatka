@@ -56,6 +56,7 @@ const RecipeItemCard = ({ item }: Props) => {
           className="-mr-1 -mt-1 size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           onClick={() => removeItem(id)}
           aria-label={`Remove ${title}`}
+          title="Remove ingredient"
         >
           <X className="h-4 w-4" />
         </Button>

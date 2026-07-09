@@ -14,6 +14,8 @@ const WishedToggleButton = ({ onToggle, isWished, className }: Props) => {
       variant="ghost"
       size="icon"
       onClick={onToggle}
+      aria-label={isWished ? "Remove from wishlist" : "Add to wishlist"}
+      title={isWished ? "Remove from wishlist" : "Add to wishlist"}
       className={`${className} group shrink-0 rounded-full hover:bg-red-50`}
     >
       <Bookmark

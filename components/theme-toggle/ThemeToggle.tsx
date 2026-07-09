@@ -15,6 +15,7 @@ const ThemeToggle = () => {
     <Button
       size="icon"
       aria-label={"Theme toggle"}
+      title="Toggle theme"
       onClick={toggleTheme}
       className="bg-foreground rounded-full text-background hover:bg-foreground"
     >

@@ -28,6 +28,8 @@ const RecipeIngredientRow = ({
           variant="destructive"
           size="icon"
           onClick={() => onRemove(item.ingredientId)}
+          aria-label={`Remove ${item.title}`}
+          title="Remove ingredient"
         >
           ✕
         </Button>
