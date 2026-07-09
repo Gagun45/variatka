@@ -40,47 +40,70 @@ const IngredientCard = ({
 
   const removeItem = useRecipeStore((state) => state.removeItem);
   const addItem = useRecipeStore((state) => state.addItem);
+
+  const onToggleDraft = () => {
+    if (isAdded) {
+      removeItem(id);
+      return;
+    }
+
+    addItem({
+      ...ingredient,
+      amount: "",
+    });
+  };
+
   return (
-    <Card className="w-full py-2">
-      <CardContent className="flex justify-between gap-4 px-4  h-full">
-        <div className="min-w-0 flex-1 flex-col flex justify-between">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex gap-2 items-center">
-              <Link
-                href={frontendUrls.ingredients.view(id)}
-                className="break-all text-base font-medium hover:underline"
-              >
-                {title}
-              </Link>
-            </div>
-
-            <Button
-              onClick={() =>
-                isAdded
-                  ? removeItem(id)
-                  : addItem({
-                      ...ingredient,
-                      amount: "",
-                    })
-              }
-              variant={isAdded ? "success" : "outline"}
+    <Card
+      size="sm"
+      className="w-full rounded-lg py-3 transition-colors hover:bg-muted/30"
+    >
+      <CardContent className="flex h-full flex-col gap-3 px-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <Link
+              href={frontendUrls.ingredients.view(id)}
+              className="line-clamp-2 text-sm font-medium leading-5 hover:underline"
             >
-              {isAdded ? <CheckIcon /> : <PlusIcon />}
-            </Button>
+              {title}
+            </Link>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="secondary" className="max-w-full">
+                {Icon && <Icon className={iconClassName} />}
+                <span className="truncate">{label}</span>
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {ingredient._count.recipeIngredients} recipes
+              </span>
+            </div>
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-1">
-            <SaveToggleButton isSaved={isSaved} onToggle={onToggleSaved} />
+          <Button
+            onClick={onToggleDraft}
+            variant={isAdded ? "success" : "outline"}
+            size="icon-sm"
+            className="shrink-0"
+            aria-label={
+              isAdded ? "Remove from recipe draft" : "Add to recipe draft"
+            }
+            title={isAdded ? "Remove from draft" : "Add to draft"}
+          >
+            {isAdded ? <CheckIcon /> : <PlusIcon />}
+          </Button>
+        </div>
 
-            <StockBadge isInStock={isInStock} onClick={onToggleStock} />
-
-            <Badge variant={"secondary"}>
-              {Icon && <Icon className={iconClassName} />}
-            </Badge>
-            <span className="text-xs text-muted-foreground">
-              Used in {ingredient._count.recipeIngredients} recipes
-            </span>
-          </div>
+        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-2">
+          <StockBadge
+            isInStock={isInStock}
+            onClick={onToggleStock}
+            className="h-6"
+          />
+          <SaveToggleButton
+            isSaved={isSaved}
+            onToggle={onToggleSaved}
+            className="size-7"
+          />
         </div>
       </CardContent>
     </Card>
