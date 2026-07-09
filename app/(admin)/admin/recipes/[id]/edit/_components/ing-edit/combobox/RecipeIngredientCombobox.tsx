@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,11 +26,17 @@ type Ingredient = {
 
 interface Props {
   ingredients: Ingredient[];
+  disabled?: boolean;
   onSelect: (ingredient: Ingredient) => void;
 }
 
-export default function IngredientCombobox({ ingredients, onSelect }: Props) {
+export default function IngredientCombobox({
+  ingredients,
+  disabled,
+  onSelect,
+}: Props) {
   const [open, setOpen] = React.useState(false);
+  const hasIngredients = ingredients.length > 0;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -39,14 +45,20 @@ export default function IngredientCombobox({ ingredients, onSelect }: Props) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          disabled={disabled || !hasIngredients}
+          className="h-9 w-full justify-between"
         >
-          Add ingredient...
-          <ChevronsUpDown className="opacity-50" />
+          <span className="inline-flex min-w-0 items-center gap-2">
+            <Plus className="size-4" />
+            <span className="truncate">
+              {hasIngredients ? "Add ingredient" : "All ingredients added"}
+            </span>
+          </span>
+          <ChevronsUpDown className="size-4 opacity-50" />
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandInput placeholder="Search ingredient..." />
 

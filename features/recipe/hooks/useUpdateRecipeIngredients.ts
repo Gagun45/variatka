@@ -16,9 +16,15 @@ export const useUpdateRecipeIngredients = () => {
   >({
     mutationFn: ({ recipeId, items }) =>
       recipeService.updateIngredients(recipeId, items),
-    onSuccess: () => {
+    onSuccess: (updatedRecipe) => {
+      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
+        old.map((recipe) =>
+          recipe.id === updatedRecipe.id ? updatedRecipe : recipe,
+        ),
+      );
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
       qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      qclient.invalidateQueries({ queryKey: recipeKeys.public });
       toast.success("Recipe edited!");
     },
     onError: (e) => {

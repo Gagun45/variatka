@@ -2,6 +2,7 @@
 
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { AppError } from "../error";
+import { recipeIngredientsService } from "../domain/recipe-ingredients.service";
 import { prisma } from "../prisma";
 import {
   IRecipe,
@@ -124,43 +125,7 @@ export const updateRecipeIngredients = async (
 ): Promise<IActionResponse<IRecipe>> => {
   return safeAction("updateRecipeIngredients", async () => {
     await requireAdmin();
-    if (!Array.isArray(items)) throw new AppError("Invalid items payload");
-
-    const updatedRecipe = await prisma.$transaction(async (tx) => {
-      const recipe = await tx.recipe.findUnique({
-        where: { id: recipeId },
-        select: { id: true },
-      });
-
-      if (!recipe) throw new AppError("Recipe not found");
-
-      if (items.some((i) => !i.ingredientId || !i.amount))
-        throw new AppError("Invalid ingredient data");
-
-      await tx.recipeIngredient.deleteMany({
-        where: { recipeId },
-      });
-
-      if (items.length > 0) {
-        await tx.recipeIngredient.createMany({
-          data: items.map((i) => ({
-            recipeId,
-            ingredientId: i.ingredientId,
-            amount: i.amount,
-          })),
-        });
-      }
-
-      const updated = await tx.recipe.findUnique({
-        where: { id: recipeId },
-        ...recipeArgs,
-      });
-
-      if (!updated) throw new Error("Not found after update");
-
-      return updated;
-    });
-    return updatedRecipe;
+    return recipeIngredientsService.replace(recipeId, items);
   });
 };
 

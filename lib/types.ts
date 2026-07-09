@@ -14,6 +14,10 @@ export interface IRecipeIngredient {
   ingredientId: number;
 }
 
+export type IRecipeIngredientEditorItem = IRecipeIngredient & {
+  title: string;
+};
+
 export type ICreateRecipeDto = IRecipeDto & {
   items: IRecipeIngredient[];
 };

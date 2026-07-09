@@ -1,57 +1,118 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { IRecipe } from "@/lib/prisma.args";
-import { IRecipeIngredient } from "@/lib/types";
+import {
+  IRecipeIngredient,
+  IRecipeIngredientEditorItem,
+} from "@/lib/types";
 
-export type IRecipeItem = IRecipeIngredient & {
-  title: string;
-};
-
-export const useRecipeIngredientsEditor = (recipe: IRecipe) => {
-  const initialItems: IRecipeItem[] = recipe.ingredients.map((ing) => ({
+const getInitialItems = (recipe: IRecipe): IRecipeIngredientEditorItem[] =>
+  recipe.ingredients.map((ing) => ({
     amount: ing.amount,
     ingredientId: ing.ingredientId,
     title: ing.ingredient.title,
   }));
 
-  const [items, setItems] = useState<IRecipeItem[]>(initialItems);
+const serializeItems = (items: IRecipeIngredientEditorItem[]) =>
+  JSON.stringify(
+    items.map((item) => ({
+      ingredientId: item.ingredientId,
+      amount: item.amount.trim(),
+    })),
+  );
 
-  const isAmountNotSet = items.some((i) => !i.amount);
+export const useRecipeIngredientsEditor = (recipe: IRecipe) => {
+  const initialItems = useMemo(() => getInitialItems(recipe), [recipe]);
+  const initialSnapshot = useMemo(
+    () => serializeItems(initialItems),
+    [initialItems],
+  );
 
-  const updateAmount = (id: number, value: string) => {
-    setItems((prev) =>
-      prev.map((i) => (i.ingredientId === id ? { ...i, amount: value } : i)),
-    );
-  };
+  const [state, setState] = useState({
+    sourceSnapshot: initialSnapshot,
+    items: initialItems,
+  });
 
-  const removeItem = (id: number) => {
-    setItems((prev) => prev.filter((i) => i.ingredientId !== id));
-  };
+  const currentState =
+    state.sourceSnapshot === initialSnapshot
+      ? state
+      : {
+          sourceSnapshot: initialSnapshot,
+          items: initialItems,
+        };
 
-  const addItem = (ingredient: { id: number; title: string }) => {
-    setItems((prev) => {
-      if (prev.some((i) => i.ingredientId === ingredient.id)) return prev;
+  if (state.sourceSnapshot !== initialSnapshot) {
+    setState(currentState);
+  }
 
-      return [
+  const { items } = currentState;
+
+  const emptyAmountCount = items.filter((i) => !i.amount.trim()).length;
+  const isDirty = serializeItems(items) !== initialSnapshot;
+  const canSave = isDirty && emptyAmountCount === 0;
+
+  const updateAmount = useCallback((id: number, value: string) => {
+    setState((prev) => ({
+      ...prev,
+      items: prev.items.map((i) =>
+        i.ingredientId === id ? { ...i, amount: value } : i,
+      ),
+    }));
+  }, []);
+
+  const removeItem = useCallback((id: number) => {
+    setState((prev) => ({
+      ...prev,
+      items: prev.items.filter((i) => i.ingredientId !== id),
+    }));
+  }, []);
+
+  const addItem = useCallback((ingredient: { id: number; title: string }) => {
+    setState((prev) => {
+      if (prev.items.some((i) => i.ingredientId === ingredient.id)) {
+        return prev;
+      }
+
+      return {
         ...prev,
-        {
-          ingredientId: ingredient.id,
-          title: ingredient.title,
-          amount: "",
-        },
-      ];
+        items: [
+          ...prev.items,
+          {
+            ingredientId: ingredient.id,
+            title: ingredient.title,
+            amount: "",
+          },
+        ],
+      };
     });
-  };
+  }, []);
 
-  const reset = () => setItems(initialItems);
+  const reset = useCallback(() => {
+    setState({
+      sourceSnapshot: initialSnapshot,
+      items: initialItems,
+    });
+  }, [initialItems, initialSnapshot]);
+
+  const toPayload = useCallback(
+    (): IRecipeIngredient[] =>
+      items.map((i) => ({
+        ingredientId: i.ingredientId,
+        amount: i.amount.trim(),
+      })),
+    [items],
+  );
 
   return {
     items,
-    setItems,
     updateAmount,
     removeItem,
     addItem,
     reset,
-    isAmountNotSet,
+    toPayload,
+    canSave,
+    emptyAmountCount,
+    isDirty,
+    isAmountNotSet: emptyAmountCount > 0,
     initialItems,
   };
 };

@@ -1,33 +1,36 @@
-import IconButton from "@/components/icon-button/IconButton";
-import { LoadingButton } from "@/components/loading-btn/LoadingButton";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useRecipeIngredientsEditor } from "@/hooks/useRecipeIngredientsEditor";
 import { useSaveRecipeIngredients } from "@/hooks/useSaveRecipeIngredients";
 import { IIngredient, IRecipe } from "@/lib/prisma.args";
-import { IRecipeIngredient } from "@/lib/types";
 import { toast } from "sonner";
-import IngredientCombobox from "./combobox/RecipeIngredientCombobox";
-import RecipeIngredientRow from "./ing-row/RecipeInredientRow";
 import { Separator } from "@/components/ui/separator";
-import { Copy } from "lucide-react";
+import RecipeIngredientsActions from "./RecipeIngredientsActions";
+import RecipeIngredientsHeader from "./RecipeIngredientsHeader";
+import RecipeIngredientsList from "./RecipeIngredientsList";
+import RecipeIngredientsToolbar from "./RecipeIngredientsToolbar";
 
 interface Props {
   recipe: IRecipe;
   allIngredients: IIngredient[];
 }
 
-export type IRecipeItem = IRecipeIngredient & {
-  title: string;
-};
-
 const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
-  const { items, updateAmount, removeItem, addItem, reset, isAmountNotSet } =
-    useRecipeIngredientsEditor(recipe);
+  const {
+    items,
+    updateAmount,
+    removeItem,
+    addItem,
+    reset,
+    toPayload,
+    canSave,
+    emptyAmountCount,
+    isDirty,
+  } = useRecipeIngredientsEditor(recipe);
+  const { save, isPending } = useSaveRecipeIngredients(recipe.id);
 
   const handleCopyIngredients = async () => {
     const text = items
-      .map(({ title, amount }) => `${title} - ${amount}`)
+      .map(({ title, amount }) => `${title} - ${amount.trim()}`)
       .join("\n");
     try {
       await navigator.clipboard.writeText(text);
@@ -37,77 +40,58 @@ const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
     }
   };
 
-  const { save, isPending } = useSaveRecipeIngredients(recipe.id);
-
   const availableIngredients = allIngredients.filter(
     (ing) => !items.some((t) => t.ingredientId === ing.id),
   );
 
   const onSubmit = () => {
-    if (isAmountNotSet) {
+    if (emptyAmountCount > 0) {
       toast.error("Set all of the amounts!");
       return;
     }
 
-    save(
-      items.map((i) => ({
-        ingredientId: i.ingredientId,
-        amount: i.amount,
-      })),
-    );
+    if (!isDirty) {
+      toast.message("No ingredient changes to save");
+      return;
+    }
+
+    save(toPayload());
   };
 
   return (
-    <Card className={isPending ? "opacity-60 pointer-events-none" : ""}>
-      <CardHeader>
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <CardTitle className="text-center">
-            Recipe ingredients ({items.length})
-          </CardTitle>
-          <IconButton
-            variant="ghost"
-            size="icon"
-            onClick={handleCopyIngredients}
-            label="Copy ingredients"
-          >
-            <Copy className="size-4" />
-          </IconButton>
-        </div>
-      </CardHeader>
+    <Card className={isPending ? "opacity-75" : ""}>
+      <RecipeIngredientsHeader
+        selectedCount={items.length}
+        availableCount={availableIngredients.length}
+        emptyAmountCount={emptyAmountCount}
+        isDirty={isDirty}
+      />
       <Separator />
 
-      <CardContent className="space-y-4">
-        <div className="flex flex-col w-full gap-4">
-          {items.map((item) => (
-            <RecipeIngredientRow
-              key={item.ingredientId}
-              item={item}
-              onRemove={removeItem}
-              onChangeAmount={updateAmount}
-            />
-          ))}
-        </div>
-        <div>
-          <IngredientCombobox
-            ingredients={availableIngredients}
-            onSelect={addItem}
-          />
-        </div>
-        <Separator />
-        <div className="flex flex-col w-full gap-2">
-          <Button disabled={isPending} variant="destructive" onClick={reset}>
-            Reset
-          </Button>
+      <CardContent className="space-y-4 p-4 sm:p-6">
+        <RecipeIngredientsToolbar
+          availableIngredients={availableIngredients}
+          hasSelectedItems={items.length > 0}
+          disabled={isPending}
+          onAdd={addItem}
+          onCopy={handleCopyIngredients}
+        />
 
-          <LoadingButton
-            disabled={isAmountNotSet}
-            onClick={onSubmit}
-            isPending={isPending}
-          >
-            {isAmountNotSet ? "Set amounts!" : "Save"}
-          </LoadingButton>
-        </div>
+        <RecipeIngredientsList
+          items={items}
+          disabled={isPending}
+          onRemove={removeItem}
+          onChangeAmount={updateAmount}
+        />
       </CardContent>
+
+      <RecipeIngredientsActions
+        canSave={canSave}
+        isDirty={isDirty}
+        isPending={isPending}
+        onReset={reset}
+        onSave={onSubmit}
+      />
     </Card>
   );
 };
