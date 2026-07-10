@@ -1,16 +1,12 @@
 "use client";
 
-import { frontendUrls } from "@/lib/urls";
-import { Heart } from "lucide-react";
-import Link from "next/link";
 import { Suspense } from "react";
 import Loader from "../loader/Loader";
 import Draft from "../recipe-draft-sheet/Draft";
-import { buttonVariants } from "../ui/button";
 import { SidebarTrigger } from "../ui/sidebar";
-import Search from "./search/Search";
-import { NavigationMenu } from "./nav-menu/NavigationMenu";
 import CartTrigger from "./cart-trigger/CartTrigger";
+import { NavigationMenu } from "./nav-menu/NavigationMenu";
+import Search from "./search/Search";
 
 const Header = () => {
   return (
@@ -34,12 +30,12 @@ const Header = () => {
 
         {/* Right */}
         <div className="flex items-center justify-end gap-2">
-          <Link
+          {/* <Link
             href={frontendUrls.public.wishlist}
             className={buttonVariants({ size: "icon", variant: "ghost" })}
           >
             <Heart />
-          </Link>
+          </Link> */}
           <CartTrigger />
           <Draft />
         </div>
