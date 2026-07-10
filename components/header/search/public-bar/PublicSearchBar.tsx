@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useDebouncedCallback } from "use-debounce";
-import { Input } from "@/components/ui/input";
+import { frontendUrls } from "@/lib/urls";
+import SearchField from "../SearchField";
 
 type PublicSearchBarProps = {
   initialQuery: string;
@@ -15,33 +15,48 @@ const PublicSearchBar = ({ initialQuery }: PublicSearchBarProps) => {
   const searchParams = useSearchParams();
 
   const [query, setQuery] = useState(initialQuery);
+  const [urlQuery, setUrlQuery] = useState(initialQuery);
 
-  const updateURL = useDebouncedCallback((value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+  if (initialQuery !== urlQuery) {
+    setUrlQuery(initialQuery);
+    setQuery(initialQuery);
+  }
 
-    if (value.trim()) {
-      params.set("query", value);
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const params =
+      pathname === frontendUrls.public.recipes
+        ? new URLSearchParams(searchParams.toString())
+        : new URLSearchParams();
+    const normalizedQuery = query.trim();
+
+    if (normalizedQuery) {
+      params.set("query", normalizedQuery);
     } else {
       params.delete("query");
     }
 
-    router.replace(`${pathname}?${params.toString()}`);
-  }, 250);
-
-  // Update URL when user types
-  useEffect(() => {
-    updateURL(query);
-  }, [query, updateURL]);
+    const queryString = params.toString();
+    const destination = queryString
+      ? `${frontendUrls.public.recipes}?${queryString}`
+      : frontendUrls.public.recipes;
+    router.push(destination);
+  };
 
   return (
-    <div className="mx-auto w-full max-w-md">
-      <Input
-        placeholder="Search..."
+    <form
+      role="search"
+      className="mx-auto w-full max-w-md"
+      onSubmit={handleSubmit}
+    >
+      <SearchField
+        placeholder="Search recipes..."
         value={query}
-        className="border-accent"
         onChange={(e) => setQuery(e.target.value)}
+        submitButton
       />
-    </div>
+    </form>
   );
 };
 

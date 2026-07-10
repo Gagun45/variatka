@@ -8,15 +8,13 @@ import CartSheet from "./cart-sheet/CartSheet";
 
 const CartTrigger = () => {
   const quantity = useCartStore((s) => selectCartTotalQuantity(s));
-  const cartLabel =
-    quantity > 0 ? `Open cart, ${quantity} item${quantity === 1 ? "" : "s"}` : "Open cart";
 
   return (
     <CartSheet>
       <IconButton
         variant="ghost"
         size="icon"
-        label={cartLabel}
+        label={"Open cart"}
         className="relative rounded-full text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
       >
         <ShoppingCart className="size-4.5" />

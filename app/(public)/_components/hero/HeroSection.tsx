@@ -14,9 +14,7 @@ export const HeroSection = () => {
     );
 
   return (
-    <section className="relative w-full overflow-hidden bg-background py-12 sm:py-8">
-      <div className="absolute top-0 left-1/2 -z-10 h-100 w-150 -translate-x-1/2 rounded-full bg-muted/40 blur-3xl" />
-
+    <section className="relative w-full overflow-hidden py-12 sm:py-8">
       <div className="container mx-auto px-4 max-w-6xl flex flex-col items-center text-center gap-8">
         {/* Hero text (UNCHANGED) */}
         <div className="space-y-4 max-w-5xl">
