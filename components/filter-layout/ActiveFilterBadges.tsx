@@ -37,7 +37,7 @@ export const ActiveFilterBadges = ({
             onClick={badge.onClear}
             className="
               relative font-medium gap-2 transition-all duration-200 active:scale-95 select-none rounded-lg border
-              h-9 px-3.5 text-xs shadow-xs
+              h-9 px-3.5 text-xs
               border-transparent bg-foreground text-background shadow-md shadow-foreground/10
               group
             "

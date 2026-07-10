@@ -2,10 +2,12 @@
 
 import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
+import { ActiveFilterBadges } from "@/components/filter-layout/ActiveFilterBadges";
 import {
-  ActiveFilterBadges,
-  IActiveBadge,
-} from "@/components/filter-layout/ActiveFilterBadges";
+  createActiveFilterBadges,
+  type FilterDefinition,
+  resetFilterDefinitions,
+} from "@/components/filter-layout/filterDefinitions";
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 import { SortSelect } from "@/components/sort-select/SortSelect";
@@ -14,14 +16,13 @@ import { useIngredientsFilter } from "@/hooks/useIngredientsFilter";
 import { IStockType } from "@/lib/constants/stock.options";
 import { FILTER_CONFIGS } from "@/lib/enumslist/filter.config";
 import { IIngredientCategoryFilter } from "@/lib/enumslist/ingredient.constants";
-import { IFilterConfig } from "@/lib/enumslist/types";
 import { IIngredient } from "@/lib/prisma.args";
 import {
   IIngredientSortType,
   INGREDIENT_SORT_OPTIONS,
 } from "@/lib/sorting.ingredients";
 import { useSearchParams } from "next/navigation";
-import { ReactNode, useMemo } from "react";
+import type { ReactNode } from "react";
 import IngredienstList from "./list/IngredienstList";
 
 type IngredientFilterValues = {
@@ -34,7 +35,6 @@ type IngredientFilterActions = {
   setCategory: (category: IIngredientCategoryFilter) => void;
   setStock: (stock: IStockType) => void;
   setSort: (sort: IIngredientSortType) => void;
-  reset: () => void;
 };
 
 type Props = {
@@ -43,33 +43,6 @@ type Props = {
   filters: IngredientFilterValues & IngredientFilterActions;
   headerAction?: ReactNode;
 };
-
-function createActiveBadge<T extends string>({
-  id,
-  value,
-  defaultValue,
-  config,
-  onClear,
-}: {
-  id: string;
-  value: T;
-  defaultValue: T;
-  config: IFilterConfig<T>;
-  onClear: () => void;
-}): IActiveBadge | null {
-  if (value === defaultValue) return null;
-
-  const option = config.options.find((o) => o.value === value);
-  if (!option) return null;
-
-  return {
-    id,
-    label: option.label,
-    icon: option.icon,
-    iconClassName: option.iconClassName,
-    onClear,
-  };
-}
 
 const IngredientFilterView = ({
   title,
@@ -87,7 +60,6 @@ const IngredientFilterView = ({
     setCategory,
     setStock,
     setSort,
-    reset,
   } = filters;
 
   const filteredIngredients = useIngredientsFilter({
@@ -98,31 +70,24 @@ const IngredientFilterView = ({
     category,
   });
 
-  const activeBadges = useMemo(() => {
-    const badges = [
-      createActiveBadge({
-        id: "category",
-        value: category,
-        defaultValue: "all",
-        config: FILTER_CONFIGS.ingredients.category,
-        onClear: () => setCategory("all"),
-      }),
-      createActiveBadge({
-        id: "stock",
-        value: stock,
-        defaultValue: "all",
-        config: FILTER_CONFIGS.ingredients.stock,
-        onClear: () => setStock("all"),
-      }),
-    ];
-
-    return badges.filter((badge): badge is IActiveBadge => Boolean(badge));
-  }, [category, stock, setCategory, setStock]);
-
-  const clearActiveFilters = () => {
-    setCategory("all");
-    setStock("all");
-  };
+  const filterDefinitions: FilterDefinition[] = [
+    {
+      id: "category",
+      value: category,
+      defaultValue: "all",
+      options: FILTER_CONFIGS.ingredients.category.options,
+      reset: () => setCategory("all"),
+    },
+    {
+      id: "stock",
+      value: stock,
+      defaultValue: "all",
+      options: FILTER_CONFIGS.ingredients.stock.options,
+      reset: () => setStock("all"),
+    },
+  ];
+  const activeBadges = createActiveFilterBadges(filterDefinitions);
+  const resetActiveFilters = () => resetFilterDefinitions(filterDefinitions);
 
   return (
     <div className="w-full">
@@ -139,7 +104,7 @@ const IngredientFilterView = ({
       />
 
       <FilterLayout
-        onReset={reset}
+        onReset={resetActiveFilters}
         activeFilterCount={activeBadges.length}
         sort={
           <SortSelect
@@ -157,7 +122,7 @@ const IngredientFilterView = ({
         activeFilters={
           <ActiveFilterBadges
             badges={activeBadges}
-            onClearAll={clearActiveFilters}
+            onClearAll={resetActiveFilters}
           />
         }
         content={<IngredienstList ingredients={filteredIngredients} />}

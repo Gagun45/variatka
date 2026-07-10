@@ -92,7 +92,7 @@ const PublicRecipeCard = ({
 
         {isAuthenticated && (
           <WishedToggleButton
-            className="absolute right-3 top-3 border bg-background/90 shadow-sm backdrop-blur"
+            className="absolute right-3 top-3"
             onToggle={onToggleWished}
             isWished={isWished}
           />

@@ -16,13 +16,14 @@ import { IPublicRecipe } from "@/lib/types";
 
 // Import your brand new reusable framework layout
 import { CategoryNavigation } from "@/components/cat-navigation/CategoryNavigation";
+import { ActiveFilterBadges } from "@/components/filter-layout/ActiveFilterBadges";
 import {
-  ActiveFilterBadges,
-  IActiveBadge,
-} from "@/components/filter-layout/ActiveFilterBadges";
+  createActiveFilterBadges,
+  type FilterDefinition,
+  resetFilterDefinitions,
+} from "@/components/filter-layout/filterDefinitions";
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { PackageOpen, RotateCcw, SearchX } from "lucide-react";
-import { useMemo } from "react";
 
 interface Props {
   recipes: IPublicRecipe[];
@@ -33,41 +34,23 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
     usePublicRecipeFilters();
   const { category, searchQuery, series, sort, stock } = query;
 
-  const activeBadges = useMemo(() => {
-    const list: IActiveBadge[] = [];
-
-    if (series && series !== "all") {
-      const option = FILTER_CONFIGS.recipes.series.options.find(
-        (o) => o.value === series,
-      );
-      if (option) {
-        list.push({
-          id: "series",
-          label: option.label,
-          icon: option.icon,
-          iconClassName: option.iconClassName,
-          onClear: () => setSeries("all"),
-        });
-      }
-    }
-
-    if (stock && stock !== "all") {
-      const option = FILTER_CONFIGS.recipes.stock.options.find(
-        (o) => o.value === stock,
-      );
-      if (option) {
-        list.push({
-          id: "stock",
-          label: option.label,
-          icon: option.icon,
-          iconClassName: option.iconClassName,
-          onClear: () => setStock("all"),
-        });
-      }
-    }
-
-    return list;
-  }, [series, stock, setSeries, setStock]);
+  const filterDefinitions: FilterDefinition[] = [
+    {
+      id: "series",
+      value: series,
+      defaultValue: "all",
+      options: FILTER_CONFIGS.recipes.series.options,
+      reset: () => setSeries("all"),
+    },
+    {
+      id: "stock",
+      value: stock,
+      defaultValue: "all",
+      options: FILTER_CONFIGS.recipes.stock.options,
+      reset: () => setStock("all"),
+    },
+  ];
+  const activeBadges = createActiveFilterBadges(filterDefinitions);
 
   const filteredRecipes = usePublicRecipesFilter({
     recipes,
@@ -82,9 +65,8 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
     setCategory("all");
   };
 
-  const resetAdditionalFilters = () => {
-    setSeries("all");
-    setStock("all");
+  const resetActiveFilters = () => {
+    resetFilterDefinitions(filterDefinitions);
   };
 
   const hasActiveCriteria =
@@ -128,12 +110,12 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
       />
 
       <FilterLayout
-        onReset={resetAdditionalFilters}
+        onReset={resetActiveFilters}
         activeFilterCount={activeBadges.length}
         activeFilters={
           <ActiveFilterBadges
             badges={activeBadges}
-            onClearAll={resetAdditionalFilters}
+            onClearAll={resetActiveFilters}
           />
         }
         sort={

@@ -4,7 +4,7 @@
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 import { Separator } from "@/components/ui/separator";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import StuffList from "../list/StuffList";
 import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
 
@@ -17,10 +17,12 @@ import { IStuff } from "@/lib/prisma.args";
 
 // Reusable Layout and Badge Elements
 import { AdminCategoryButtons } from "@/components/admin-cat-buttons/AdminCategoryButtons";
+import { ActiveFilterBadges } from "@/components/filter-layout/ActiveFilterBadges";
 import {
-  ActiveFilterBadges,
-  IActiveBadge,
-} from "@/components/filter-layout/ActiveFilterBadges";
+  createActiveFilterBadges,
+  type FilterDefinition,
+  resetFilterDefinitions,
+} from "@/components/filter-layout/filterDefinitions";
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 
 interface Props {
@@ -52,30 +54,19 @@ const StuffTabs = ({ stuff }: Props) => {
   const initialCategory: IStuffCategory =
     activeCategory === "all" ? "DECOR" : activeCategory;
 
-  // Build the array of active badges matching your exact configuration schemas
-  const activeBadges = useMemo(() => {
-    const list: IActiveBadge[] = [];
-
-    if (activeCategory && activeCategory !== "all") {
-      const option = FILTER_CONFIGS.stuff.category.options.find(
-        (o) => o.value === activeCategory,
-      );
-      if (option) {
-        list.push({
-          id: "category",
-          label: option.label,
-          icon: option.icon,
-          iconClassName: option.iconClassName,
-          onClear: () => setActiveCategory("all"),
-        });
-      }
-    }
-
-    return list;
-  }, [activeCategory, setActiveCategory]);
+  const filterDefinitions: FilterDefinition[] = [
+    {
+      id: "category",
+      value: activeCategory,
+      defaultValue: "all",
+      options: FILTER_CONFIGS.stuff.category.options,
+      reset: () => setActiveCategory("all"),
+    },
+  ];
+  const activeBadges = createActiveFilterBadges(filterDefinitions);
 
   const onReset = () => {
-    setActiveCategory("all");
+    resetFilterDefinitions(filterDefinitions);
   };
 
   return (
@@ -103,7 +94,7 @@ const StuffTabs = ({ stuff }: Props) => {
         activeFilters={
           <ActiveFilterBadges
             badges={activeBadges}
-            onClearAll={() => setActiveCategory("all")}
+            onClearAll={onReset}
           />
         }
         content={<StuffList stuff={filteredStuff} />}
