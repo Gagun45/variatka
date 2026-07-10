@@ -18,7 +18,7 @@ export const HeroSection = () => {
       <div className="container mx-auto px-4 max-w-6xl flex flex-col items-center text-center gap-8">
         {/* Hero text (UNCHANGED) */}
         <div className="space-y-4 max-w-5xl">
-          <h1 className="text-3xl sm:text-6xl font-black tracking-tight text-foreground leading-[1.15]">
+          <h1 className="text-3xl sm:text-6xl font-black tracking-tight text-foreground text-center leading-[1.15]">
             Відкрийте для себе{" "}
             <span className="bg-linear-to-r from-foreground via-foreground/80 to-muted-foreground bg-clip-text text-transparent">
               справжні смаки
