@@ -1,32 +1,17 @@
-"use client";
-
-import Loader from "@/components/loader/Loader";
-import { useAuth } from "@/hooks/useAuth";
+import { auth } from "@/lib/auth";
 import { frontendUrls } from "@/lib/urls";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 
-export default function ProtectedLayout({
+export default async function ProtectedLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  const { isAdmin, status } = useAuth();
-  const isLoading = status === "loading";
-  const router = useRouter();
+  const session = await auth();
 
-  useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      router.replace(frontendUrls.index);
-    }
-  }, [isLoading, isAdmin, router]);
-
-  if (isLoading) {
-    return <Loader />;
-  }
-
-  if (!isAdmin) {
-    return null;
+  if (session?.user.role !== "ADMIN") {
+    redirect(frontendUrls.index);
   }
 
   return children;
