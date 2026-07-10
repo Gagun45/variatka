@@ -16,6 +16,7 @@ import { useUpdateRecipeFields } from "@/features/recipe/hooks/useUpdateRecipeFi
 import RecipeForm from "@/forms/recipe/RecipeForm";
 import { frontendUrls } from "@/lib/urls";
 import { IRecipeDto } from "@/zod/recipe.schema";
+import { SearchX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeleteRecipe from "./delete-recipe/DeleteRecipe";
 import RecipeIngredientsEdit from "./ing-edit/RecipeIngredientsEdit";
@@ -40,9 +41,21 @@ const RecipeEdit = ({ id }: Props) => {
   const { mutate, isPending } = useUpdateRecipeFields();
   if (isRecipesLoading || isIngredientsLoading) return <Loader />;
   if (isRecipesError || !recipes || !ingredients || isIngredientsError)
-    return <StateScreen />;
+    return (
+      <StateScreen
+        title="We couldn't load the recipe editor"
+        description="Please refresh the page and try again."
+      />
+    );
   const recipe = recipes.find((r) => r.id === id);
-  if (!recipe) return <StateScreen title="Recipe not found" />;
+  if (!recipe)
+    return (
+      <StateScreen
+        title="Recipe not found"
+        description="It may have been removed or the link is incorrect."
+        icon={<SearchX />}
+      />
+    );
   const onSubmit = (dto: IRecipeDto) => {
     mutate(
       {

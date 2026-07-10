@@ -17,7 +17,12 @@ const StuffDashboard = () => {
   }
 
   if (isStuffError || !stuff) {
-    return <StateScreen />;
+    return (
+      <StateScreen
+        title="We couldn't load the stuff"
+        description="Please refresh the page and try again."
+      />
+    );
   }
 
   return <StuffTabs stuff={stuff} />;

@@ -15,7 +15,13 @@ const DeleteIngredient = ({ id }: Props) => {
   const { mutate, isPending } = useDeleteIngredient();
   const router = useRouter();
   if (isLoading) return <Loader />;
-  if (isError || !recipes) return <StateScreen />;
+  if (isError || !recipes)
+    return (
+      <StateScreen
+        title="We couldn't verify ingredient usage"
+        description="Please refresh the page before trying to delete this ingredient."
+      />
+    );
 
   const alertTitle = "Delete ingredient?";
   const alertDescription =

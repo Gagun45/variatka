@@ -13,7 +13,12 @@ const RecipeDashboard = () => {
   }
 
   if (isError || !recipes) {
-    return <StateScreen />;
+    return (
+      <StateScreen
+        title="We couldn't load the recipes"
+        description="Please refresh the page and try again."
+      />
+    );
   }
 
   return <RecipeTabs recipes={recipes} />;

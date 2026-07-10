@@ -3,6 +3,7 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
+import { SearchX } from "lucide-react";
 import RecipeView from "./view/RecipeView";
 
 interface Props {
@@ -17,10 +18,22 @@ const Recipe = ({ id }: Props) => {
   }
 
   if (isError || !recipes) {
-    return <StateScreen />;
+    return (
+      <StateScreen
+        title="We couldn't load this recipe"
+        description="Please refresh the page and try again."
+      />
+    );
   }
   const recipe = recipes.find((r) => r.id === id);
-  if (!recipe) return <StateScreen title="Recipe not found" />;
+  if (!recipe)
+    return (
+      <StateScreen
+        title="Recipe not found"
+        description="It may have been removed or the link is incorrect."
+        icon={<SearchX />}
+      />
+    );
   return (
     <div className="space-y-24">
       <div>

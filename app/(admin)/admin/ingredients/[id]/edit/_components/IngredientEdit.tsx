@@ -7,6 +7,7 @@ import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
 import IngredientForm from "@/forms/add-ingredient/IngredientForm";
 import { frontendUrls } from "@/lib/urls";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
+import { SearchX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeleteIngredient from "./delete-ing/DeleteIngredient";
 
@@ -20,9 +21,22 @@ const IngredientEdit = ({ id }: Props) => {
   const { data: ingredients, isLoading, isError } = useIngredients();
   const { mutate, isPending } = useEditIngredient();
   if (isLoading) return <Loader />;
-  if (isError || !ingredients) return <StateScreen />;
+  if (isError || !ingredients)
+    return (
+      <StateScreen
+        title="We couldn't load this ingredient"
+        description="Please refresh the page and try again."
+      />
+    );
   const ingredient = ingredients.find((ing) => ing.id === id);
-  if (!ingredient) return <StateScreen title="Ingredient not found" />;
+  if (!ingredient)
+    return (
+      <StateScreen
+        title="Ingredient not found"
+        description="It may have been removed or the link is incorrect."
+        icon={<SearchX />}
+      />
+    );
   const onSubmit = (dto: IIngredientFormValues) => {
     mutate(
       {

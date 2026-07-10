@@ -9,7 +9,13 @@ import { Heart } from "lucide-react";
 const Wishlist = () => {
   const { data: recipes, isLoading, isError } = useWishlist();
   if (isLoading) return <Loader />;
-  if (isError || !recipes) return <StateScreen />;
+  if (isError || !recipes)
+    return (
+      <StateScreen
+        title="We couldn't load your wishlist"
+        description="Please refresh the page and try again."
+      />
+    );
   if (recipes.length === 0)
     return (
       <StateScreen

@@ -9,6 +9,7 @@ import { useStuff } from "@/features/stuff/hooks/useStuff";
 import StuffForm from "@/forms/stuff/StuffForm";
 import { frontendUrls } from "@/lib/urls";
 import { ICreateStuffDto } from "@/zod/stuff.schema";
+import { SearchX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeleteStuff from "../../_components/delete/DeleteStuff";
 
@@ -26,9 +27,22 @@ const StuffEdit = ({ id }: Props) => {
   } = useStuff();
   const { mutate, isPending } = useEditStuff();
   if (isStuffLoading) return <Loader />;
-  if (isStuffError || !stuff) return <StateScreen />;
+  if (isStuffError || !stuff)
+    return (
+      <StateScreen
+        title="We couldn't load this item"
+        description="Please refresh the page and try again."
+      />
+    );
   const singleStuff = stuff.find((s) => s.id === id);
-  if (!singleStuff) return <StateScreen title="Stuff not found" />;
+  if (!singleStuff)
+    return (
+      <StateScreen
+        title="Item not found"
+        description="It may have been removed or the link is incorrect."
+        icon={<SearchX />}
+      />
+    );
   const onSubmit = (dto: ICreateStuffDto) => {
     mutate(
       {

@@ -9,7 +9,13 @@ import SavedIngredientsTabs from "./tabs/SavedIngredientsTabs";
 const SavedIngredients = () => {
   const { data: ingredients, isLoading, isError } = useIngredients();
   if (isLoading) return <Loader />;
-  if (isError || !ingredients) return <StateScreen />;
+  if (isError || !ingredients)
+    return (
+      <StateScreen
+        title="We couldn't load the saved ingredients"
+        description="Please refresh the page and try again."
+      />
+    );
   const savedIngredients = ingredients.filter((i) => i.isSaved);
   if (savedIngredients.length === 0)
     return (

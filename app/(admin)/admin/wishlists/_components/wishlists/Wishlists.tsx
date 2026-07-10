@@ -9,7 +9,13 @@ import AdminWishlistsList from "./list/AdminWishlistsList";
 const Wishlists = () => {
   const { data: users, isLoading, isError } = useAdminWishlists();
   if (isLoading) return <Loader />;
-  if (isError || !users) return <StateScreen />;
+  if (isError || !users)
+    return (
+      <StateScreen
+        title="We couldn't load the wishlists"
+        description="Please refresh the page and try again."
+      />
+    );
   if (users.length === 0)
     return (
       <StateScreen

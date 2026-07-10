@@ -19,7 +19,7 @@ const EditIngredientPage = async ({ params }: Props) => {
   const { id } = await params;
   const ingredientId = +id;
   return (
-    <main className="space-y-8">
+    <main>
       <PageBreadcrumb items={BREADCRUMB_ITEMS.ingredients.edit(ingredientId)} />
       <IngredientEdit id={ingredientId} />
     </main>

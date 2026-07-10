@@ -13,7 +13,13 @@ interface Props {
 const IngredientRecipes = ({ id }: Props) => {
   const { data: recipes, isLoading, isError } = useRecipes();
   if (isLoading) return <Loader />;
-  if (isError || !recipes) return <StateScreen />;
+  if (isError || !recipes)
+    return (
+      <StateScreen
+        title="We couldn't load the related recipes"
+        description="Please refresh the page and try again."
+      />
+    );
   const filteredRecipes = recipes.filter((r) =>
     r.ingredients.some((i) => i.ingredientId === id),
   );

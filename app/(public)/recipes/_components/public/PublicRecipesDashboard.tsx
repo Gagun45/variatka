@@ -9,7 +9,13 @@ const PublicRecipesDashboard = () => {
   const { data: recipes, isLoading, isError } = usePublicRecipes();
 
   if (isLoading) return <Loader />;
-  if (isError || !recipes) return <StateScreen />;
+  if (isError || !recipes)
+    return (
+      <StateScreen
+        title="We couldn't load the recipes"
+        description="Please refresh the page and try again."
+      />
+    );
   return <PublicRecipesTabs recipes={recipes} />;
 };
 

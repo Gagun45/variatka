@@ -9,7 +9,13 @@ import SavedRecipesTabs from "./tabs/SavedRecipesTabs";
 const SavedRecipes = () => {
   const { data: recipes, isLoading, isError } = useRecipes();
   if (isLoading) return <Loader />;
-  if (isError || !recipes) return <StateScreen />;
+  if (isError || !recipes)
+    return (
+      <StateScreen
+        title="We couldn't load the saved recipes"
+        description="Please refresh the page and try again."
+      />
+    );
   const savedRecipes = recipes.filter((i) => i.isSaved);
   if (savedRecipes.length === 0)
     return (

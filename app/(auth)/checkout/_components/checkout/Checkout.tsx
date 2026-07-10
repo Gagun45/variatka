@@ -18,7 +18,13 @@ const Checkout = () => {
   const router = useRouter();
   const { mutate, isPending } = useCreateOrder();
   const { user } = useAuth();
-  if (!user) return <StateScreen title="Unauthorized" />;
+  if (!user)
+    return (
+      <StateScreen
+        title="We couldn't verify your account"
+        description="Please refresh the page and try signing in again."
+      />
+    );
   if (items.length === 0)
     return (
       <StateScreen
