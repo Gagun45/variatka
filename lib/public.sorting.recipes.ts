@@ -1,6 +1,13 @@
 import { IPublicRecipe } from "./types";
 
 export const PUBLIC_RECIPE_SORTERS = {
+  recommended: (a: IPublicRecipe, b: IPublicRecipe) => {
+    const availabilityDifference =
+      Number(b.inStock > 0) - Number(a.inStock > 0);
+
+    return availabilityDifference || a.title.localeCompare(b.title);
+  },
+
   "name-asc": (a: IPublicRecipe, b: IPublicRecipe) =>
     a.title.localeCompare(b.title),
 
@@ -9,6 +16,7 @@ export const PUBLIC_RECIPE_SORTERS = {
 } as const;
 
 export const PUBLIC_RECIPE_SORT_LABELS = {
+  recommended: "Recommended",
   "name-asc": "A-Z",
   "name-desc": "Z-A",
 } as const;

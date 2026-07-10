@@ -26,7 +26,7 @@ const DEFAULT_QUERY: IPublicRecipeFilters = {
   searchQuery: "",
   category: "all",
   stock: "all",
-  sort: "name-asc",
+  sort: "recommended",
   series: "all",
 };
 
@@ -108,7 +108,7 @@ export const usePublicRecipeFilters = () => {
 
       // SORT
       if (updates.sort !== undefined) {
-        if (updates.sort === "name-asc") params.delete("sort");
+        if (updates.sort === "recommended") params.delete("sort");
         else params.set("sort", updates.sort);
       }
 
