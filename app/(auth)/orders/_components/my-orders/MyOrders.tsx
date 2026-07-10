@@ -12,41 +12,29 @@ import MyOrdersList from "./list/MyOrdersList";
 const MyOrders = () => {
   const { data: orders, isLoading, isError } = useMyOrders();
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-64 items-center justify-center rounded-md border bg-card/60">
-        <Loader />
-      </div>
-    );
-  }
+  if (isLoading) return <Loader />;
 
   if (!orders || isError) {
     return (
-      <div className="min-h-64 rounded-md border bg-card/60">
-        <StateScreen
-          title="We couldn't load your orders"
-          description="Please refresh the page and try again."
-        />
-      </div>
+      <StateScreen
+        title="We couldn't load your orders"
+        description="Please refresh the page and try again."
+      />
     );
   }
 
   if (orders.length === 0) {
     return (
-      <div className="min-h-64 rounded-md border bg-card/60">
-        <StateScreen
-          title="No orders yet"
-          description="Your completed checkouts will appear here."
-          action={
-            <Button asChild>
-              <Link href={frontendUrls.public.recipes}>
-                <ShoppingBasket />
-                Browse recipes
-              </Link>
-            </Button>
-          }
-        />
-      </div>
+      <StateScreen
+        title="No orders yet"
+        description="Your completed checkouts will appear here."
+        icon={<ShoppingBasket />}
+        action={
+          <Button asChild>
+            <Link href={frontendUrls.public.recipes}>Browse recipes</Link>
+          </Button>
+        }
+      />
     );
   }
 

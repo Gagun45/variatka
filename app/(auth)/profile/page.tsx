@@ -1,6 +1,7 @@
 "use client";
 
 import Loader from "@/components/loader/Loader";
+import StateScreen from "@/components/state-screen/StateScreen";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { signIn } from "next-auth/react";
@@ -13,20 +14,14 @@ export default function ProfilePage() {
 
   if (!session) {
     return (
-      <main className="flex min-h-[60vh] flex-col items-center justify-center">
-        <div className="space-y-2 text-center">
-          <h1>Profile</h1>
-          <p className="text-sm text-muted-foreground">
-            Sign in to view and update your account details.
-          </p>
-        </div>
-        <div className="flex flex-col items-center gap-4">
-          <Button className="w-fit" onClick={() => signIn("google")}>
-            <LogIn />
-            Sign in with Google
-          </Button>
-        </div>
-      </main>
+      <StateScreen
+        title="Sign in required"
+        description="Sign in to view and update your account details."
+        icon={<LogIn />}
+        action={
+          <Button onClick={() => signIn("google")}>Sign in with Google</Button>
+        }
+      />
     );
   }
 

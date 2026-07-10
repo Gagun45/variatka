@@ -8,8 +8,8 @@ import PublicRecipesTabs from "./tabs/PublicRecipesTabs";
 const PublicRecipesDashboard = () => {
   const { data: recipes, isLoading, isError } = usePublicRecipes();
 
-  if (isLoading || !recipes) return <Loader />;
-  if (isError) return <StateScreen />;
+  if (isLoading) return <Loader />;
+  if (isError || !recipes) return <StateScreen />;
   return <PublicRecipesTabs recipes={recipes} />;
 };
 

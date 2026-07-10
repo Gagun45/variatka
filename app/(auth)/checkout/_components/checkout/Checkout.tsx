@@ -10,6 +10,7 @@ import { ICreateOrderFormValues } from "@/zod/order.schema";
 import { IOrderItemDto } from "@/lib/types.order";
 import { useRouter } from "next/navigation";
 import { frontendUrls } from "@/lib/urls";
+import { ShoppingCart } from "lucide-react";
 
 const Checkout = () => {
   const items = useCartStore((s) => selectCartItems(s));
@@ -18,7 +19,14 @@ const Checkout = () => {
   const { mutate, isPending } = useCreateOrder();
   const { user } = useAuth();
   if (!user) return <StateScreen title="Unauthorized" />;
-  if (items.length === 0) return <StateScreen title="Cart is empty" />;
+  if (items.length === 0)
+    return (
+      <StateScreen
+        title="Your cart is empty"
+        description="Add recipes to your cart before continuing to checkout."
+        icon={<ShoppingCart />}
+      />
+    );
   const onSumbit = (formValues: ICreateOrderFormValues) => {
     const orderItems: IOrderItemDto[] = items.map((item) => ({
       amount: item.quantity,

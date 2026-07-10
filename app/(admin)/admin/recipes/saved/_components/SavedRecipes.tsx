@@ -3,6 +3,7 @@
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
+import { Bookmark } from "lucide-react";
 import SavedRecipesTabs from "./tabs/SavedRecipesTabs";
 
 const SavedRecipes = () => {
@@ -11,7 +12,13 @@ const SavedRecipes = () => {
   if (isError || !recipes) return <StateScreen />;
   const savedRecipes = recipes.filter((i) => i.isSaved);
   if (savedRecipes.length === 0)
-    return <StateScreen title="No saved recipes yet" />;
+    return (
+      <StateScreen
+        title="No saved recipes yet"
+        description="Recipes you save will appear here."
+        icon={<Bookmark />}
+      />
+    );
 
   return <SavedRecipesTabs recipes={savedRecipes} />;
 };
