@@ -4,7 +4,7 @@ import Wishlist from "./_components/Wishlist";
 const WishlistPage = () => {
   return (
     <main>
-      <h1>Wishlist</h1>
+      <h1>Обране</h1>
       <Wishlist />
     </main>
   );
