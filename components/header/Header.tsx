@@ -11,7 +11,7 @@ import Search from "./search/Search";
 const Header = () => {
   return (
     <header
-      className="h-app-header sticky justify-between top-0 border-b z-header px-4 w-full bg-sidebar flex items-center gap-4
+      className="h-app-header sticky justify-between top-0 border-b border-sidebar-border/70 z-header px-4 w-full bg-sidebar/85 backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar/75 shadow-surface flex items-center gap-4
   "
     >
       <div className="grid h-full gap-2 grid-cols-[1fr_auto_1fr] items-center w-full max-w-content mx-auto px-2 md:px-8">
