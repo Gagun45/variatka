@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CardHeader } from "@/components/ui/card";
 import ViewItemCategory from "@/components/view-item/ViewItemCategory";
 import ViewItemDescription from "@/components/view-item/ViewItemDescription";
+import { useToggleHiddenRecipe } from "@/features/recipe/hooks/useToggleHiddenRecipe";
 import { useToggleSavedRecipe } from "@/features/recipe/hooks/useToggleSavedRecipe";
 import { SpicyOptions } from "@/forms/recipe/fields/SpicyField";
 import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
@@ -16,9 +17,13 @@ interface Props {
 
 const RecipeHeader = ({ recipe }: Props) => {
   const { mutate } = useToggleSavedRecipe();
+  const { mutate: hiddenMutate } = useToggleHiddenRecipe();
   const { id, isSaved } = recipe;
   const onToggleSaved = () => {
     mutate(id);
+  };
+  const onToggleHidden = () => {
+    hiddenMutate(id);
   };
   const { description, inStock, spicy, series, isHidden, category } = recipe;
   const categoryLabel = RECIPE_CATEGORIES_DATA[category].label;
@@ -42,7 +47,9 @@ const RecipeHeader = ({ recipe }: Props) => {
         </Badge>
       </div>
       <div className="view-item-card-header-row">
-        <Badge>Hidden: {isHidden ? "Yes" : "No"}</Badge>
+        <Badge onClick={onToggleHidden}>
+          Hidden: {isHidden ? "Yes" : "No"}
+        </Badge>
       </div>
     </CardHeader>
   );
