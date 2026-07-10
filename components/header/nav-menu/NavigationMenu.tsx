@@ -61,7 +61,7 @@ export function NavigationMenu() {
                   featured
                 >
                   <PackageOpen />
-                  <span className="flex-1">Вся продукція</span>
+                  <span className="flex-1">Уся продукція</span>
                   <ArrowRight className="text-muted-foreground transition-transform group-hover/catalog-link:translate-x-0.5 group-hover/catalog-link:text-foreground" />
                 </CatalogLink>
               </li>

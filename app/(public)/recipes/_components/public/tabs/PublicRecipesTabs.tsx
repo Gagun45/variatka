@@ -4,7 +4,8 @@
 import { FilterButtons } from "@/components/filter-buttons/FilterButtons";
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 import { SortSelect } from "@/components/sort-select/SortSelect";
-import { Separator } from "@/components/ui/separator";
+import StateScreen from "@/components/state-screen/StateScreen";
+import { Button } from "@/components/ui/button";
 import PublicRecipesList from "../list/PublicRecipesList";
 
 import { usePublicRecipeFilters } from "@/hooks/filtering/public-recipes/usePublicRecipeFilters";
@@ -20,8 +21,8 @@ import {
   IActiveBadge,
 } from "@/components/filter-layout/ActiveFilterBadges";
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
+import { PackageOpen, RotateCcw, SearchX } from "lucide-react";
 import { useMemo } from "react";
-import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 
 interface Props {
   recipes: IPublicRecipe[];
@@ -34,21 +35,6 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
 
   const activeBadges = useMemo(() => {
     const list: IActiveBadge[] = [];
-
-    if (category && category !== "all") {
-      const option = FILTER_CONFIGS.publicRecipes.category.options.find(
-        (o) => o.value === category,
-      );
-      if (option) {
-        list.push({
-          id: "category",
-          label: option.label,
-          icon: option.icon,
-          iconClassName: option.iconClassName,
-          onClear: () => setCategory("all"),
-        });
-      }
-    }
 
     if (series && series !== "all") {
       const option = FILTER_CONFIGS.recipes.series.options.find(
@@ -81,7 +67,7 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
     }
 
     return list;
-  }, [category, series, stock, setCategory, setSeries, setStock]);
+  }, [series, stock, setSeries, setStock]);
 
   const filteredRecipes = usePublicRecipesFilter({
     recipes,
@@ -96,26 +82,59 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
     setCategory("all");
   };
 
+  const resetAdditionalFilters = () => {
+    setSeries("all");
+    setStock("all");
+  };
+
+  const hasActiveCriteria =
+    searchQuery.trim().length > 0 ||
+    category !== "all" ||
+    stock !== "all" ||
+    series !== "all";
+
+  const emptyResults = hasActiveCriteria ? (
+    <StateScreen
+      title="Нічого не знайдено"
+      description={
+        searchQuery.trim()
+          ? `Не знайдено результатів для “${searchQuery.trim()}”. Спробуйте інший запит або змініть фільтри.`
+          : "Спробуйте вибрати іншу категорію або змінити фільтри."
+      }
+      icon={<SearchX />}
+      action={
+        <Button onClick={resetQuery}>
+          <RotateCcw />
+          Скинути пошук і фільтри
+        </Button>
+      }
+    />
+  ) : (
+    <StateScreen
+      title="Продукції поки немає"
+      description="Щойно з’являться доступні рецепти, вони відобразяться тут."
+      icon={<PackageOpen />}
+    />
+  );
+
   return (
     <div className="w-full">
-      <h1>
-        {category === "all"
-          ? "Вся продукція"
-          : RECIPE_CATEGORIES_DATA[category].label}
-      </h1>
       <CategoryNavigation
         onCategoryReset={onCategoryReset}
+        isResetActive={category === "all"}
         value={category}
         onChange={setCategory}
         config={FILTER_CONFIGS.publicRecipes.category}
       />
-      <Separator className="mb-4" />
 
       <FilterLayout
-        onReset={resetQuery}
+        onReset={resetAdditionalFilters}
         activeFilterCount={activeBadges.length}
         activeFilters={
-          <ActiveFilterBadges badges={activeBadges} onClearAll={resetQuery} />
+          <ActiveFilterBadges
+            badges={activeBadges}
+            onClearAll={resetAdditionalFilters}
+          />
         }
         sort={
           <SortSelect
@@ -130,7 +149,13 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
             searchQuery={searchQuery}
           />
         }
-        content={<PublicRecipesList recipes={filteredRecipes} />}
+        content={
+          filteredRecipes.length > 0 ? (
+            <PublicRecipesList recipes={filteredRecipes} />
+          ) : (
+            emptyResults
+          )
+        }
         filters={
           <>
             <FilterButtons

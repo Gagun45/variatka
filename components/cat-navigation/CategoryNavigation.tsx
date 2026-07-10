@@ -1,15 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { IFilterConfig } from "@/lib/enumslist/types";
+import { cn } from "@/lib/utils";
 
 interface Props<T extends string> {
   value: T;
   onChange: (value: T) => void;
   config: IFilterConfig<T>;
   onCategoryReset: () => void;
+  isResetActive: boolean;
+  resetLabel?: string;
 }
 
 export function CategoryNavigation<T extends string>({
@@ -17,14 +18,25 @@ export function CategoryNavigation<T extends string>({
   onChange,
   config,
   onCategoryReset,
+  isResetActive,
+  resetLabel = "Уся продукція",
 }: Props<T>) {
   return (
-    <div className="mx-auto mb-5 w-full max-w-3xl px-2">
-      <p className="pb-2 text-center text-xs text-muted-foreground">
-        Перегляд за категоріями
-      </p>
+    <section className="mb-4" aria-label="Категорії продукції">
+      <nav
+        aria-label="Оберіть категорію"
+        className="grid grid-cols-2 gap-1.5 rounded-xl border bg-card/70 p-1.5 shadow-surface sm:grid-cols-4"
+      >
+        <Button
+          type="button"
+          variant={isResetActive ? "default" : "ghost"}
+          onClick={onCategoryReset}
+          aria-pressed={isResetActive}
+          className="h-10 rounded-lg px-3 text-sm sm:h-11 sm:text-base"
+        >
+          {resetLabel}
+        </Button>
 
-      <nav className="flex flex-wrap justify-center gap-3 sm:gap-4">
         {config.options.map((option) => {
           const isActive = value === option.value;
 
@@ -32,39 +44,16 @@ export function CategoryNavigation<T extends string>({
             <Button
               key={option.value}
               type="button"
-              variant="outline"
-              onClick={() =>
-                isActive ? onCategoryReset() : onChange(option.value)
-              }
-              aria-label={option.label}
-              title={option.label}
-              className={cn(
-                "relative size-24 overflow-hidden rounded-xl p-0 transition-all duration-300 sm:size-28",
-                "hover:scale-[1.02]",
-                isActive && "scale-[1.03] border-primary ring-2 ring-primary",
-              )}
+              variant={isActive ? "default" : "ghost"}
+              onClick={() => onChange(option.value)}
+              aria-pressed={isActive}
+              className="h-10 rounded-lg px-3 text-sm sm:h-11 sm:text-base"
             >
-              <Image
-                src={option.logo ?? "/default-poster-no-text.png"}
-                alt={option.label}
-                fill
-                sizes="112px"
-                className={cn(
-                  "object-contain object-center transition-all duration-300",
-                  isActive ? "brightness-110" : "hover:brightness-105",
-                )}
-              />
-
-              <span
-                className={cn(
-                  "absolute inset-0 transition-colors",
-                  isActive ? "bg-primary/10" : "bg-black/10 hover:bg-black/5",
-                )}
-              />
+              {option.label}
             </Button>
           );
         })}
       </nav>
-    </div>
+    </section>
   );
 }
