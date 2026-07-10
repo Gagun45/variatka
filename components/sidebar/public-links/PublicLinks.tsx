@@ -8,17 +8,15 @@ const PublicLinks = () => {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        <SidebarLink
-          key={frontendUrls.public.recipes}
-          href={frontendUrls.public.recipes}
-          label={"Продукція"}
-        />
+        <SidebarLink href={frontendUrls.public.recipes} label={"Продукція"} />
         {isAuthenticated && (
-          <SidebarLink
-            key={frontendUrls.public.wishlist}
-            href={frontendUrls.public.wishlist}
-            label={"Обране"}
-          />
+          <>
+            <SidebarLink href={frontendUrls.public.wishlist} label={"Обране"} />
+            <SidebarLink
+              href={frontendUrls.public.orders}
+              label={"Замовлення"}
+            />
+          </>
         )}
       </SidebarMenu>
     </SidebarGroup>

@@ -17,10 +17,10 @@ import Search from "./search/Search";
 const Header = () => {
   return (
     <header
-      className="h-app-header sticky justify-between top-0 border-b border-sidebar-border/70 z-header px-4 w-full bg-sidebar/85 backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar/75 shadow-surface flex items-center gap-4
+      className="h-app-header sticky justify-between top-0 border-b border-sidebar-border/70 z-header px-2 w-full bg-sidebar/85 backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar/75 shadow-surface flex items-center gap-4
   "
     >
-      <div className="h-full flex items-center gap-2 w-full max-w-content mx-auto px-0 sm:px-2 md:px-8">
+      <div className="h-full flex items-center gap-2 w-full max-w-content mx-auto md:px-8">
         {/* Left */}
         <div className="flex items-center justify-start gap-1 sm:gap-2 md:gap-4">
           <SidebarTrigger className="dark:text-foreground" />
@@ -42,6 +42,7 @@ const Header = () => {
         <div className="flex items-center justify-end gap-1">
           <div className="items-center gap-1 hidden md:flex">
             <Link
+              title="Замовлення"
               href={frontendUrls.public.orders}
               className={buttonVariants({
                 size: "icon",
@@ -51,6 +52,7 @@ const Header = () => {
               <ClipboardList />
             </Link>
             <Link
+              title="Обране"
               href={frontendUrls.public.wishlist}
               className={buttonVariants({
                 size: "icon",

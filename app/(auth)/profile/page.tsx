@@ -13,8 +13,8 @@ export default function ProfilePage() {
 
   if (!session) {
     return (
-      <main className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-        <div className="space-y-2">
+      <main className="flex min-h-[60vh] flex-col items-center justify-center">
+        <div className="space-y-2 text-center">
           <h1>Profile</h1>
           <p className="text-sm text-muted-foreground">
             Sign in to view and update your account details.
@@ -34,7 +34,7 @@ export default function ProfilePage() {
 
   return (
     <main>
-      <div className="space-y-1 text-center">
+      <div className="space-y-1">
         <h1>Your profile</h1>
         <p className="text-sm text-muted-foreground">
           Manage your account information and checkout contact defaults.

@@ -126,7 +126,7 @@ const IngredientFilterView = ({
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h1>{title}</h1>
         {headerAction}
       </div>

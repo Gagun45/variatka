@@ -80,7 +80,7 @@ const StuffTabs = ({ stuff }: Props) => {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h1>Stuff</h1>
         <StuffFormsDialog initialCategory={initialCategory} />
       </div>

@@ -1,12 +1,12 @@
 "use client";
 
+import IconButton from "@/components/icon-button/IconButton";
+import { Badge } from "@/components/ui/badge";
 import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
 import RecipeForm from "@/forms/recipe/RecipeForm";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useRecipeStore } from "@/zustand/recipe.store";
-import { Badge } from "@/components/ui/badge";
-import IconButton from "@/components/icon-button/IconButton";
-import { ClipboardList, List, PackagePlus, TriangleAlert } from "lucide-react";
+import { ClipboardList, List, PackagePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -63,8 +63,8 @@ const RecipeDraftSheet = () => {
           variant="ghost"
           size="icon"
           className="relative rounded-full text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
-          label={`Open recipe draft, ${items.length} ingredient${items.length !== 1 ? "s" : ""}`}
-          title="Open recipe draft"
+          label={"Конструктор рецепту"}
+          title="Конструктор рецепту"
         >
           <List className="size-4.5" />
 
@@ -114,12 +114,6 @@ const RecipeDraftSheet = () => {
                   <RecipeItemsList items={items} />
                 </div>
               </section>
-              {isAmountNotSet && (
-                <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-                  <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-                  <p>Set an amount for every ingredient before saving.</p>
-                </div>
-              )}
 
               <section className="rounded-xl border bg-card p-4">
                 <h3 className="mb-4 text-sm font-medium">Recipe details</h3>

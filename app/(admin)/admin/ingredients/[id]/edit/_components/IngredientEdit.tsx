@@ -40,7 +40,7 @@ const IngredientEdit = ({ id }: Props) => {
   return (
     <div className="space-y-12">
       <div className="space-y-4">
-        <p className="text-center text-4xl py-4">Edit ingredient</p>
+        <h1>Edit ingredient</h1>
         <IngredientForm
           isPending={isPending}
           onCreate={onSubmit}

@@ -14,7 +14,7 @@ const CartTrigger = () => {
       <IconButton
         variant="ghost"
         size="icon"
-        label={"Open cart"}
+        label={"Кошик"}
         className="relative rounded-full text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
       >
         <ShoppingCart className="size-4.5" />
