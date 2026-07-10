@@ -25,7 +25,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas">
-      <SidebarHeader className="h-24 p-0 flex items-center border-b justify-center">
+      <SidebarHeader className="h-app-header p-0 flex items-center border-b justify-center">
         <Link
           className={buttonVariants({
             className:

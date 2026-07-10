@@ -57,7 +57,7 @@ export const FilterLayout = ({
                     variant="ghost"
                     size="sm"
                     onClick={onReset}
-                    className="h-8 px-2 text-xs text-neutral-500 hover:text-red-500 gap-1.5 transition-colors"
+                    className="h-8 gap-1.5 px-2 text-xs text-muted-foreground transition-colors hover:text-destructive"
                   >
                     <RotateCcw className="size-3" /> Скинути
                   </Button>
@@ -79,7 +79,7 @@ export const FilterLayout = ({
         {/* Static Desktop Left Sidebar Panel */}
         <aside className="hidden 2xl:flex flex-col gap-4 w-60 shrink-0 border-r pr-4 sticky top-32 max-h-[calc(100vh-8rem)] overflow-y-auto pb-6">
           <div className="flex items-center justify-between min-h-9">
-            <span className="text-lg font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50 pl-0.5">
+            <span className="pl-0.5 text-lg font-extrabold tracking-tight text-foreground">
               Фільтри
             </span>
             {showReset && onReset && (
@@ -87,7 +87,7 @@ export const FilterLayout = ({
                 variant="ghost"
                 size="sm"
                 onClick={onReset}
-                className="h-8 px-2.5 text-xs text-neutral-500 hover:text-red-600 dark:hover:text-red-400 font-medium gap-1.5 transition-colors rounded-lg"
+                className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
               >
                 <RotateCcw className="size-3.5 transition-transform group-hover:rotate-180" />
                 Очистити все

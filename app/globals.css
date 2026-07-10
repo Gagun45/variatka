@@ -4,10 +4,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Tailwind-facing design tokens.
+ * Components should consume semantic utilities (for example text-success or
+ * max-w-content) instead of palette colors and repeated arbitrary values.
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-app-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -27,6 +32,12 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-favorite: var(--favorite);
+  --color-spicy: var(--spicy);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -46,9 +57,16 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --shadow-surface: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+  --shadow-raised: 0 10px 30px -12px oklch(0 0 0 / 0.18);
+  --spacing-app-header: 6rem;
+  --container-content: 1440px;
+  --container-filter-badge: 9.375rem;
+  --z-index-header: 20;
 }
 
 :root {
+  /* Surfaces and text */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -64,6 +82,12 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.527 0.154 150.069);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.666 0.179 58.318);
+  --warning-foreground: oklch(0.205 0 0);
+  --favorite: oklch(0.769 0.188 70.08);
+  --spicy: oklch(0.637 0.237 25.331);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -99,6 +123,12 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --success: oklch(0.627 0.194 149.214);
+  --success-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.769 0.188 70.08);
+  --warning-foreground: oklch(0.145 0 0);
+  --favorite: oklch(0.828 0.189 84.429);
+  --spicy: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -128,22 +158,21 @@
     @apply font-sans;
   }
   main {
-    @apply py-4 px-2 md:px-8 max-w-420 w-full mx-auto space-y-4;
+    @apply mx-auto w-full max-w-content space-y-4 px-2 py-4 md:px-8;
   }
   h1 {
-    @apply text-center py-4 text-4xl font-semibold tracking-widest
+    @apply py-4 text-center text-4xl font-semibold tracking-widest;
   }
-
 }
 
 @layer components {
   .view-item-card-header {
-    @apply space-y-3
+    @apply space-y-3;
   }
   .view-item-card-header-row {
-    @apply flex items-center justify-between gap-2 break-all
+    @apply flex items-center justify-between gap-2 break-all;
   }
   .view-item-card-content {
-    @apply flex flex-col gap-3
+    @apply flex flex-col gap-3;
   }
 }

@@ -38,8 +38,7 @@ export const ActiveFilterBadges = ({
             className="
               relative font-medium gap-2 transition-all duration-200 active:scale-95 select-none rounded-lg border
               h-9 px-3.5 text-xs shadow-xs
-              bg-neutral-900 text-white border-transparent shadow-md shadow-neutral-900/10 
-              dark:bg-neutral-50 dark:text-neutral-900
+              border-transparent bg-foreground text-background shadow-md shadow-foreground/10
               group
             "
           >
@@ -53,7 +52,7 @@ export const ActiveFilterBadges = ({
               />
             )}
 
-            <span className="truncate max-w-[150px]">{badge.label}</span>
+            <span className="max-w-filter-badge truncate">{badge.label}</span>
 
             {/* Clear indicator micro-icon built inside style system */}
             <X className="size-3 shrink-0 ml-0.5 opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all" />
@@ -65,7 +64,7 @@ export const ActiveFilterBadges = ({
         variant="ghost"
         size="sm"
         onClick={onClearAll}
-        className="h-9 px-3.5 text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 font-semibold transition-colors rounded-lg"
+        className="h-9 rounded-lg px-3.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
       >
         Очистити все
       </Button>

@@ -29,7 +29,7 @@ const SpicyLevelTooltip = ({ level }: Props) => {
               className={
                 level === 1
                   ? "text-muted-foreground opacity-40"
-                  : "text-red-500"
+                  : "text-spicy"
               }
             />
           ))}

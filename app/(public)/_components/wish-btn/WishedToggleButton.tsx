@@ -15,14 +15,14 @@ const WishedToggleButton = ({ onToggle, isWished, className }: Props) => {
       size="icon"
       onClick={onToggle}
       label={isWished ? "Remove from wishlist" : "Add to wishlist"}
-      className={`${className} group shrink-0 rounded-full hover:bg-red-50`}
+      className={`${className} group shrink-0 rounded-full hover:bg-favorite/10`}
     >
       <Bookmark
         className={clsx(
           "size-5 transition-all duration-200 group-hover:scale-110",
           isWished
-            ? "fill-yellow-400 text-yellow-500"
-            : "text-muted-foreground group-hover:text-yellow-500",
+            ? "fill-favorite text-favorite"
+            : "text-muted-foreground group-hover:text-favorite",
         )}
       />
     </IconButton>

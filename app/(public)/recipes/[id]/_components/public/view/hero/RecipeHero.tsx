@@ -98,7 +98,7 @@ export default function RecipeHero({ recipe }: Props) {
                 />
                 {spicyOption && spicyOption.value > 0 && (
                   <Badge variant="outline" className="h-7 gap-1.5 px-2.5">
-                    <Flame className="size-3.5 text-orange-500" />
+                    <Flame className="size-3.5 text-spicy" />
                     {spicyOption.tooltip}
                   </Badge>
                 )}

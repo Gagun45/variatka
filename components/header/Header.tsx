@@ -15,10 +15,10 @@ import CartTrigger from "./cart-trigger/CartTrigger";
 const Header = () => {
   return (
     <header
-      className="h-24 sticky justify-between top-0 border-b z-20 px-4 w-full bg-sidebar flex items-center gap-4
+      className="h-app-header sticky justify-between top-0 border-b z-header px-4 w-full bg-sidebar flex items-center gap-4
   "
     >
-      <div className="grid h-full gap-2 grid-cols-[1fr_auto_1fr] items-center w-full max-w-420 mx-auto px-2 md:px-8">
+      <div className="grid h-full gap-2 grid-cols-[1fr_auto_1fr] items-center w-full max-w-content mx-auto px-2 md:px-8">
         {/* Left */}
         <div className="flex items-center justify-start gap-4">
           <SidebarTrigger className="dark:text-foreground" />
