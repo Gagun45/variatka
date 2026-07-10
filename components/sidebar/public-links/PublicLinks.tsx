@@ -1,23 +1,14 @@
 import { SidebarGroup, SidebarMenu } from "@/components/ui/sidebar";
-import { useAuth } from "@/hooks/useAuth";
-import { frontendUrls } from "@/lib/urls";
+import { PUBLIC_LINKS } from "@/lib/links";
 import SidebarLink from "../link/SidebarLink";
 
 const PublicLinks = () => {
-  const { isAuthenticated } = useAuth();
   return (
     <SidebarGroup>
       <SidebarMenu>
-        <SidebarLink href={frontendUrls.public.recipes} label={"Продукція"} />
-        {isAuthenticated && (
-          <>
-            <SidebarLink href={frontendUrls.public.wishlist} label={"Обране"} />
-            <SidebarLink
-              href={frontendUrls.public.orders}
-              label={"Замовлення"}
-            />
-          </>
-        )}
+        {PUBLIC_LINKS.map(({ href, label }) => (
+          <SidebarLink key={href} href={href} label={label} />
+        ))}
       </SidebarMenu>
     </SidebarGroup>
   );
