@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
 import {
@@ -33,7 +33,6 @@ const DEFAULT_QUERY: IPublicRecipeFilters = {
 export const usePublicRecipeFilters = () => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
 
   /**
    * 1. READ FROM URL → build typed query
@@ -112,9 +111,15 @@ export const usePublicRecipeFilters = () => {
         else params.set("sort", updates.sort);
       }
 
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      const queryString = params.toString();
+      const destination = queryString ? `${pathname}?${queryString}` : pathname;
+
+      // These filters only affect the already-loaded client-side recipe list.
+      // Native history updates stay in sync with useSearchParams without
+      // triggering an unnecessary server navigation.
+      window.history.pushState(null, "", destination);
     },
-    [searchParams, pathname, router],
+    [searchParams, pathname],
   );
 
   /**
