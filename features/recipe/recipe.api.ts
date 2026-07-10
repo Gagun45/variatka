@@ -13,6 +13,7 @@ import {
   toggleSavedRecipe,
   toggleWishlist,
   updateRecipeFields,
+  updateRecipe,
   updateRecipeIngredients,
   uploadRecipeImage,
 } from "@/lib/actions/recipe.actions";
@@ -39,6 +40,11 @@ export const recipeService = {
 
   updateFields: (id: number, dto: IRecipeDto): Promise<IRecipe> =>
     unwrapAction(() => updateRecipeFields(id, dto)),
+  update: (
+    id: number,
+    dto: IRecipeDto,
+    items: IRecipeIngredient[],
+  ): Promise<IRecipe> => unwrapAction(() => updateRecipe(id, dto, items)),
   updateIngredients: (
     id: number,
     items: IRecipeIngredient[],

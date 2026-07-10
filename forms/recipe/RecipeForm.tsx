@@ -34,6 +34,8 @@ interface Props {
   onReset?: () => void;
   submitLabel?: string;
   layout?: "page" | "sheet";
+  formId?: string;
+  hideActions?: boolean;
 }
 
 const RecipeForm = ({
@@ -45,6 +47,8 @@ const RecipeForm = ({
   onReset,
   submitLabel,
   layout = "page",
+  formId,
+  hideActions = false,
 }: Props) => {
   const schema = zodSchemas.recipe.create;
   const initialCategory: IRecipeCategory = initialValues?.category ?? "SPICES";
@@ -99,7 +103,14 @@ const RecipeForm = ({
   };
   return (
     <FormProvider {...form}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+        id={formId}
+        onSubmit={handleSubmit(onSubmit)}
+        onReset={(event) => {
+          event.preventDefault();
+          handleReset();
+        }}
+      >
         <FieldSet
           disabled={isPending}
           className={cn(isSheetLayout ? "gap-4" : "gap-6")}
@@ -143,7 +154,7 @@ const RecipeForm = ({
             </div>
           </section>
 
-          <div
+          {!hideActions && <div
             className={cn(
               "flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-center",
               isSheetLayout && "mt-1",
@@ -152,7 +163,6 @@ const RecipeForm = ({
             <Button
               type="reset"
               variant="outline"
-              onClick={handleReset}
               className={cn(isSheetLayout ? "sm:w-28" : "sm:w-auto")}
             >
               <RotateCcw className="size-4" />
@@ -176,7 +186,7 @@ const RecipeForm = ({
                 </>
               )}
             </LoadingButton>
-          </div>
+          </div>}
         </FieldSet>
       </form>
     </FormProvider>

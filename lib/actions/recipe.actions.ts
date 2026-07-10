@@ -129,6 +129,38 @@ export const updateRecipeIngredients = async (
   });
 };
 
+export const updateRecipe = async (
+  id: number,
+  dto: IRecipeDto,
+  items: IRecipeIngredient[],
+): Promise<IActionResponse<IRecipe>> => {
+  return safeAction("updateRecipe", async () => {
+    await requireAdmin();
+
+    return prisma.$transaction(async (tx) => {
+      const existingRecipe = await tx.recipe.findFirst({
+        where: { title: dto.title, NOT: { id } },
+        select: { id: true },
+      });
+
+      if (existingRecipe) {
+        throw new AppError("A recipe with this title already exists.");
+      }
+
+      await tx.recipe.update({ where: { id }, data: dto });
+      await recipeIngredientsService.replaceInTransaction(tx, id, items);
+
+      const updatedRecipe = await tx.recipe.findUnique({
+        where: { id },
+        ...recipeArgs,
+      });
+
+      if (!updatedRecipe) throw new AppError("Recipe not found after update");
+      return updatedRecipe;
+    });
+  });
+};
+
 export const deleteRecipe = async (
   recipeId: number,
 ): Promise<IActionResponse<number>> => {

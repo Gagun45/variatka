@@ -2,8 +2,9 @@ import { AppError } from "@/lib/error";
 import { prisma } from "@/lib/prisma";
 import { IRecipe, recipeArgs } from "@/lib/prisma.args";
 import { IRecipeIngredient } from "@/lib/types";
+import { Prisma } from "@prisma/client";
 
-const normalizeRecipeIngredients = (
+export const normalizeRecipeIngredients = (
   items: IRecipeIngredient[],
 ): IRecipeIngredient[] => {
   if (!Array.isArray(items)) throw new AppError("Invalid items payload");
@@ -32,48 +33,51 @@ const normalizeRecipeIngredients = (
 };
 
 export const recipeIngredientsService = {
+  replaceInTransaction: async (
+    tx: Prisma.TransactionClient,
+    recipeId: number,
+    items: IRecipeIngredient[],
+  ): Promise<void> => {
+    const normalizedItems = normalizeRecipeIngredients(items);
+
+    const recipe = await tx.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+
+    if (!recipe) throw new AppError("Recipe not found");
+
+    if (normalizedItems.length > 0) {
+      const ingredients = await tx.ingredient.findMany({
+        where: {
+          id: { in: normalizedItems.map((item) => item.ingredientId) },
+        },
+        select: { id: true },
+      });
+
+      if (ingredients.length !== normalizedItems.length) {
+        throw new AppError("Some ingredients were not found");
+      }
+    }
+
+    await tx.recipeIngredient.deleteMany({ where: { recipeId } });
+
+    if (normalizedItems.length > 0) {
+      await tx.recipeIngredient.createMany({
+        data: normalizedItems.map((item) => ({
+          recipeId,
+          ingredientId: item.ingredientId,
+          amount: item.amount,
+        })),
+      });
+    }
+  },
   replace: async (
     recipeId: number,
     items: IRecipeIngredient[],
   ): Promise<IRecipe> => {
-    const normalizedItems = normalizeRecipeIngredients(items);
-
     return prisma.$transaction(async (tx) => {
-      const recipe = await tx.recipe.findUnique({
-        where: { id: recipeId },
-        select: { id: true },
-      });
-
-      if (!recipe) throw new AppError("Recipe not found");
-
-      if (normalizedItems.length > 0) {
-        const ingredients = await tx.ingredient.findMany({
-          where: {
-            id: {
-              in: normalizedItems.map((item) => item.ingredientId),
-            },
-          },
-          select: { id: true },
-        });
-
-        if (ingredients.length !== normalizedItems.length) {
-          throw new AppError("Some ingredients were not found");
-        }
-      }
-
-      await tx.recipeIngredient.deleteMany({
-        where: { recipeId },
-      });
-
-      if (normalizedItems.length > 0) {
-        await tx.recipeIngredient.createMany({
-          data: normalizedItems.map((item) => ({
-            recipeId,
-            ingredientId: item.ingredientId,
-            amount: item.amount,
-          })),
-        });
-      }
+      await recipeIngredientsService.replaceInTransaction(tx, recipeId, items);
 
       const updated = await tx.recipe.findUnique({
         where: { id: recipeId },

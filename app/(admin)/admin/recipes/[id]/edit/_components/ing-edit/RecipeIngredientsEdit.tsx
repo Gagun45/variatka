@@ -1,32 +1,27 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { useRecipeIngredientsEditor } from "@/hooks/useRecipeIngredientsEditor";
-import { useSaveRecipeIngredients } from "@/hooks/useSaveRecipeIngredients";
-import { IIngredient, IRecipe } from "@/lib/prisma.args";
+import { IIngredient } from "@/lib/prisma.args";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
-import RecipeIngredientsActions from "./RecipeIngredientsActions";
+import { useRecipeIngredientsEditor } from "@/hooks/useRecipeIngredientsEditor";
 import RecipeIngredientsHeader from "./RecipeIngredientsHeader";
 import RecipeIngredientsList from "./RecipeIngredientsList";
 import RecipeIngredientsToolbar from "./RecipeIngredientsToolbar";
 
 interface Props {
-  recipe: IRecipe;
   allIngredients: IIngredient[];
+  editor: ReturnType<typeof useRecipeIngredientsEditor>;
+  isPending: boolean;
 }
 
-const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
+const RecipeIngredientsEdit = ({ allIngredients, editor, isPending }: Props) => {
   const {
     items,
     updateAmount,
     removeItem,
     addItem,
-    reset,
-    toPayload,
-    canSave,
     emptyAmountCount,
     isDirty,
-  } = useRecipeIngredientsEditor(recipe);
-  const { save, isPending } = useSaveRecipeIngredients(recipe.id);
+  } = editor;
 
   const handleCopyIngredients = async () => {
     const text = items
@@ -43,20 +38,6 @@ const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
   const availableIngredients = allIngredients.filter(
     (ing) => !items.some((t) => t.ingredientId === ing.id),
   );
-
-  const onSubmit = () => {
-    if (emptyAmountCount > 0) {
-      toast.error("Set all of the amounts!");
-      return;
-    }
-
-    if (!isDirty) {
-      toast.message("No ingredient changes to save");
-      return;
-    }
-
-    save(toPayload());
-  };
 
   return (
     <Card className={isPending ? "opacity-75" : ""}>
@@ -84,14 +65,6 @@ const RecipeIngredientsEdit = ({ recipe, allIngredients }: Props) => {
           onChangeAmount={updateAmount}
         />
       </CardContent>
-
-      <RecipeIngredientsActions
-        canSave={canSave}
-        isDirty={isDirty}
-        isPending={isPending}
-        onReset={reset}
-        onSave={onSubmit}
-      />
     </Card>
   );
 };
