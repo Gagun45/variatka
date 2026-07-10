@@ -40,7 +40,7 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
     series,
   } = recipe;
 
-  const href = frontendUrls.recipes.view(id);
+  const href = frontendUrls.recipes.edit(id);
   const imageSrc = getImageUrl(imageKey, imageVersion);
   const categoryData = RECIPE_CATEGORIES_DATA[category];
   const seriesData = RECIPE_SERIES_DATA[series];
@@ -56,7 +56,7 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
       <Link
         href={href}
         className="relative min-h-32 overflow-hidden border-r bg-muted/30 sm:min-h-36"
-        aria-label={`View ${title}`}
+        aria-label={`Edit ${title}`}
       >
         <Image
           src={imageSrc}

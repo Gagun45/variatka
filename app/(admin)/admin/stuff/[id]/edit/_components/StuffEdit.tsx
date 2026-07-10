@@ -51,7 +51,7 @@ const StuffEdit = ({ id }: Props) => {
       },
       {
         onSuccess: () => {
-          router.push(frontendUrls.stuff.view(id));
+          router.push(frontendUrls.stuff.index);
         },
       },
     );

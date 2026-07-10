@@ -62,7 +62,7 @@ const IngredientCard = ({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <Link
-              href={frontendUrls.ingredients.view(id)}
+              href={frontendUrls.ingredients.edit(id)}
               className="line-clamp-2 text-sm font-medium leading-5 hover:underline"
             >
               {title}

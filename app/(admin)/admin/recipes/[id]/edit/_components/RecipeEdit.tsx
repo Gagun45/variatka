@@ -80,7 +80,7 @@ const LoadedRecipeEdit = ({ recipe, ingredients }: LoadedRecipeEditProps) => {
       },
       {
         onSuccess: () => {
-          router.push(frontendUrls.recipes.view(recipe.id));
+          router.push(frontendUrls.recipes.index);
         },
       },
     );

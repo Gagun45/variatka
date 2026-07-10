@@ -12,7 +12,7 @@ const StuffCard = ({ stuff }: Props) => {
   const { title, inStock, id } = stuff;
 
   return (
-    <Link href={frontendUrls.stuff.view(id)}>
+    <Link href={frontendUrls.stuff.edit(id)}>
       <Card>
         <CardContent className="flex flex-col gap-4">
           <h3 className="font-medium">{title}</h3>

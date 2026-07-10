@@ -45,7 +45,7 @@ const IngredientEdit = ({ id }: Props) => {
       },
       {
         onSuccess: () => {
-          router.push(frontendUrls.ingredients.view(id));
+          router.push(frontendUrls.ingredients.index);
         },
       },
     );
