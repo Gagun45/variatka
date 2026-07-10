@@ -9,13 +9,13 @@ import {
   SidebarMenu,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { getImageUrl } from "@/lib/image.helper";
 import { MAIN_LINKS } from "@/lib/links";
 import { frontendUrls } from "@/lib/urls";
 import Image from "next/image";
 import Link from "next/link";
 import AuthSidebar from "../auth/AuthSidebar";
 import ThemeToggle from "../theme-toggle/ThemeToggle";
-import { buttonVariants } from "../ui/button";
 import SidebarLink from "./link/SidebarLink";
 import PublicLinks from "./public-links/PublicLinks";
 import SavedLinks from "./saved-links/SavedLinks";
@@ -27,22 +27,21 @@ export function AppSidebar() {
     <Sidebar collapsible="offcanvas">
       <SidebarHeader className="h-app-header p-0 flex items-center border-b justify-center">
         <Link
-          className={buttonVariants({
-            className:
-              "size-full! p-0! border-none flex justify-center text-4xl! rounded-none items-center",
-            variant: "ghost",
-          })}
           href={frontendUrls.index}
+          className="flex justify-center gap-2 size-full items-center text-4xl"
         >
-          <div className="relative size-full">
-            <Image
-              src={"/logo.png"}
-              alt="Logo"
-              sizes="256px"
-              fill
-              className="object-cover"
-            />
+          <div className="p-1 h-full aspect-square">
+            <div className="size-full relative">
+              <Image
+                src={getImageUrl()}
+                alt="Logo"
+                sizes="256px"
+                fill
+                className="object-contain"
+              />
+            </div>
           </div>
+          <span>Nomly</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

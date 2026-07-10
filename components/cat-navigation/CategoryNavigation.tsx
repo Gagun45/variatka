@@ -45,12 +45,12 @@ export function CategoryNavigation<T extends string>({
               )}
             >
               <Image
-                src={option.logo ?? "/default-poster.png"}
+                src={option.logo ?? "/default-poster-no-text.png"}
                 alt={option.label}
                 fill
                 sizes="112px"
                 className={cn(
-                  "object-contain transition-all duration-300",
+                  "object-contain object-center transition-all duration-300",
                   isActive ? "brightness-110" : "hover:brightness-105",
                 )}
               />

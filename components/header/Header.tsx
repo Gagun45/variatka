@@ -1,8 +1,14 @@
 "use client";
 
+import { getImageUrl } from "@/lib/image.helper";
+import { frontendUrls } from "@/lib/urls";
+import { Heart } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
 import Loader from "../loader/Loader";
 import Draft from "../recipe-draft-sheet/Draft";
+import { buttonVariants } from "../ui/button";
 import { SidebarTrigger } from "../ui/sidebar";
 import CartTrigger from "./cart-trigger/CartTrigger";
 import { NavigationMenu } from "./nav-menu/NavigationMenu";
@@ -14,10 +20,14 @@ const Header = () => {
       className="h-app-header sticky justify-between top-0 border-b border-sidebar-border/70 z-header px-4 w-full bg-sidebar/85 backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar/75 shadow-surface flex items-center gap-4
   "
     >
-      <div className="grid h-full gap-2 grid-cols-[1fr_auto_1fr] items-center w-full max-w-content mx-auto px-2 md:px-8">
+      <div className="h-full flex items-center gap-2 w-full max-w-content mx-auto px-0 sm:px-2 md:px-8">
         {/* Left */}
-        <div className="flex items-center justify-start gap-4">
+        <div className="flex items-center justify-start gap-1 sm:gap-2 md:gap-4">
           <SidebarTrigger className="dark:text-foreground" />
+          <Link href={frontendUrls.index} className="relative size-12 block">
+            <Image alt="logo" src={getImageUrl()} fill />
+          </Link>
+
           <NavigationMenu />
         </div>
 
@@ -29,13 +39,16 @@ const Header = () => {
         </Suspense>
 
         {/* Right */}
-        <div className="flex items-center justify-end gap-2">
-          {/* <Link
+        <div className="flex items-center justify-end gap-1">
+          <Link
             href={frontendUrls.public.wishlist}
-            className={buttonVariants({ size: "icon", variant: "ghost" })}
+            className={`hidden! md:flex! ${buttonVariants({
+              size: "icon",
+              variant: "ghost",
+            })}`}
           >
             <Heart />
-          </Link> */}
+          </Link>
           <CartTrigger />
           <Draft />
         </div>

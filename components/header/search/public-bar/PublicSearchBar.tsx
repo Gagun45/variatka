@@ -38,6 +38,7 @@ const PublicSearchBar = ({ initialQuery }: PublicSearchBarProps) => {
       <Input
         placeholder="Search..."
         value={query}
+        className="border-accent"
         onChange={(e) => setQuery(e.target.value)}
       />
     </div>
