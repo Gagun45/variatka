@@ -86,7 +86,7 @@ export const FilterLayout = ({
           </div>
         )}
 
-        <div className="order-3 w-full min-w-0 sm:order-none sm:w-auto">
+        <div className="order-3 w-full min-w-0 sm:order-0 sm:w-auto">
           {results}
         </div>
 

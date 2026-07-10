@@ -45,7 +45,7 @@ const PublicRecipeCard = ({
     <Card className="h-full overflow-hidden py-0 transition-colors hover:ring-foreground/20">
       <div className="relative border-b bg-muted/30">
         <Link href={frontendUrls.public.view(id)} className="block">
-          <div className="relative aspect-[4/3] w-full">
+          <div className="relative aspect-4/3 w-full">
             <Image
               src={imageSrc}
               alt={title}
