@@ -20,7 +20,6 @@ import { ActiveFilterBadges } from "@/components/filter-layout/ActiveFilterBadge
 import {
   createActiveFilterBadges,
   type FilterDefinition,
-  resetFilterDefinitions,
 } from "@/components/filter-layout/filterDefinitions";
 import { FilterLayout } from "@/components/filter-layout/FilterLayout";
 import { PackageOpen, RotateCcw, SearchX } from "lucide-react";
@@ -30,7 +29,15 @@ interface Props {
 }
 
 const PublicRecipesTabs = ({ recipes }: Props) => {
-  const { query, setCategory, setSeries, setSort, setStock, resetQuery } =
+  const {
+    query,
+    setQuery,
+    setCategory,
+    setSeries,
+    setSort,
+    setStock,
+    resetQuery,
+  } =
     usePublicRecipeFilters();
   const { category, searchQuery, series, sort, stock } = query;
 
@@ -66,7 +73,7 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
   };
 
   const resetActiveFilters = () => {
-    resetFilterDefinitions(filterDefinitions);
+    setQuery({ series: "all", stock: "all" });
   };
 
   const hasActiveCriteria =

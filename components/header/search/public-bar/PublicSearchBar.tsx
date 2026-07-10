@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { frontendUrls } from "@/lib/urls";
 import SearchField from "../SearchField";
 
@@ -12,7 +12,6 @@ type PublicSearchBarProps = {
 const PublicSearchBar = ({ initialQuery }: PublicSearchBarProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const [query, setQuery] = useState(initialQuery);
   const [urlQuery, setUrlQuery] = useState(initialQuery);
@@ -27,7 +26,7 @@ const PublicSearchBar = ({ initialQuery }: PublicSearchBarProps) => {
 
     const params =
       pathname === frontendUrls.public.recipes
-        ? new URLSearchParams(searchParams.toString())
+        ? new URLSearchParams(window.location.search)
         : new URLSearchParams();
     const normalizedQuery = query.trim();
 
@@ -41,6 +40,11 @@ const PublicSearchBar = ({ initialQuery }: PublicSearchBarProps) => {
     const destination = queryString
       ? `${frontendUrls.public.recipes}?${queryString}`
       : frontendUrls.public.recipes;
+    if (pathname === frontendUrls.public.recipes) {
+      window.history.pushState(null, "", destination);
+      return;
+    }
+
     router.push(destination);
   };
 
