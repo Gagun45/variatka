@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
 import {
@@ -31,6 +31,7 @@ const DEFAULT_QUERY: IPublicRecipeFilters = {
 };
 
 export const usePublicRecipeFilters = () => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
@@ -114,12 +115,9 @@ export const usePublicRecipeFilters = () => {
       const queryString = params.toString();
       const url = queryString ? `${pathname}?${queryString}` : pathname;
 
-      // These filters only affect an already-loaded client-side list. Using the
-      // History API keeps useSearchParams in sync without starting a server
-      // navigation, which also makes the controls reliable after a hard reload.
-      window.history.pushState(null, "", url);
+      router.replace(url);
     },
-    [searchParams, pathname],
+    [searchParams, pathname, router],
   );
 
   /**

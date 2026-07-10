@@ -40,11 +40,6 @@ const PublicSearchBar = ({ initialQuery }: PublicSearchBarProps) => {
     const destination = queryString
       ? `${frontendUrls.public.recipes}?${queryString}`
       : frontendUrls.public.recipes;
-    if (pathname === frontendUrls.public.recipes) {
-      window.history.pushState(null, "", destination);
-      return;
-    }
-
     router.push(destination);
   };
 
