@@ -7,12 +7,9 @@ interface Props {
 }
 
 const MyOrdersList = ({ orders }: Props) => {
+  console.log(orders);
   return (
-    <Accordion
-      type="single"
-      collapsible
-      className="w-full border px-2 rounded-md"
-    >
+    <Accordion type="single" collapsible className="w-full gap-3">
       {orders.map((order) => (
         <OrderAccordionItem key={order.id} order={order} />
       ))}

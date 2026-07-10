@@ -19,6 +19,7 @@ export interface IPublicOrder {
   customerComment: string | null;
   status: OrderStatus;
   items: IPublicOrderItem[];
+  createdAt: string;
 }
 
 export interface IPublicOrderItem {

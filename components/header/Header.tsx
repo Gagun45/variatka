@@ -2,7 +2,7 @@
 
 import { getImageUrl } from "@/lib/image.helper";
 import { frontendUrls } from "@/lib/urls";
-import { Heart } from "lucide-react";
+import { ClipboardList, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -40,15 +40,27 @@ const Header = () => {
 
         {/* Right */}
         <div className="flex items-center justify-end gap-1">
-          <Link
-            href={frontendUrls.public.wishlist}
-            className={`hidden! md:flex! ${buttonVariants({
-              size: "icon",
-              variant: "ghost",
-            })}`}
-          >
-            <Heart />
-          </Link>
+          <div className="items-center gap-1 hidden md:flex">
+            <Link
+              href={frontendUrls.public.orders}
+              className={buttonVariants({
+                size: "icon",
+                variant: "ghost",
+              })}
+            >
+              <ClipboardList />
+            </Link>
+            <Link
+              href={frontendUrls.public.wishlist}
+              className={buttonVariants({
+                size: "icon",
+                variant: "ghost",
+              })}
+            >
+              <Heart />
+            </Link>
+          </div>
+
           <CartTrigger />
           <Draft />
         </div>

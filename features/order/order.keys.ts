@@ -1,3 +1,3 @@
 export const orderKeys = {
-  orders: ["orders"] as const,
+  orders: ["orders", "v2"] as const,
 };

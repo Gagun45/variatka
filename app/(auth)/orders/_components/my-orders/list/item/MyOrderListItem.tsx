@@ -7,60 +7,147 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { IPublicOrder } from "@/lib/types.order";
+import {
+  CalendarDays,
+  Mail,
+  MessageSquareText,
+  PackageCheck,
+  Phone,
+  ShoppingBag,
+  UserRound,
+} from "lucide-react";
 import { OrderItemRow } from "./OrderItemRow";
 
 interface Props {
   order: IPublicOrder;
 }
 
-export function OrderAccordionItem({ order }: Props) {
-  return (
-    <AccordionItem value={order.id.toString()}>
-      <AccordionTrigger className="py-4 px-2 hover:no-underline flex items-center">
-        <div className="flex w-full items-center justify-between pr-4">
-          <p className="font-medium">Order #{order.id}</p>
+const orderDateFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 
-          <Badge variant="outline">{order.status}</Badge>
+export function OrderAccordionItem({ order }: Props) {
+  const itemCount = order.items.reduce((total, item) => total + item.amount, 0);
+  const createdAt = new Date(order.createdAt);
+  const statusLabel = order.status.toLowerCase().replaceAll("_", " ");
+  const statusClassName =
+    order.status === "COMPLETED"
+      ? "border-success/30 bg-success/10 text-success"
+      : order.status === "CANCELLED"
+        ? "border-destructive/30 bg-destructive/10 text-destructive"
+        : "border-border bg-secondary text-secondary-foreground";
+
+  return (
+    <AccordionItem
+      value={order.id.toString()}
+      className="overflow-hidden rounded-md border bg-card shadow-surface transition-shadow data-[state=open]:shadow-raised"
+    >
+      <AccordionTrigger className="items-center rounded-none px-4 py-4 hover:bg-muted/40 hover:no-underline sm:px-5">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 pr-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
+              <PackageCheck className="size-4" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="font-semibold">Order #{order.id}</p>
+              <time
+                dateTime={createdAt.toISOString()}
+                className="mt-0.5 flex items-center gap-1.5 text-xs font-normal text-muted-foreground"
+              >
+                <CalendarDays className="size-3" aria-hidden="true" />
+                Placed {orderDateFormatter.format(createdAt)}
+              </time>
+              <p className="text-xs font-normal text-muted-foreground">
+                {itemCount} {itemCount === 1 ? "item" : "items"}
+              </p>
+            </div>
+          </div>
+
+          <Badge
+            variant="outline"
+            className={`w-fit px-2.5 font-semibold capitalize shadow-surface ${statusClassName}`}
+          >
+            {statusLabel}
+          </Badge>
         </div>
       </AccordionTrigger>
 
-      <AccordionContent className="space-y-5 pb-4">
-        <div className="space-y-2 rounded-md border p-4">
-          <h4 className="text-sm font-medium">Customer information</h4>
+      <AccordionContent className="border-t bg-muted/15 p-0 [&_p:not(:last-child)]:mb-0">
+        <div className="grid gap-6 px-4 py-5 sm:px-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-8">
+          <section aria-labelledby={`customer-${order.id}`}>
+            <h3
+              id={`customer-${order.id}`}
+              className="mb-3 text-xs font-semibold uppercase text-muted-foreground"
+            >
+              Customer details
+            </h3>
 
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <p>
-              <span className="text-foreground">Name:</span>{" "}
-              {order.customerName}
-            </p>
-
-            <p>
-              <span className="text-foreground">Email:</span>{" "}
-              {order.customerEmail}
-            </p>
-
-            {order.customerPhone && (
-              <p>
-                <span className="text-foreground">Phone:</span>{" "}
-                {order.customerPhone}
-              </p>
-            )}
+            <dl className="grid gap-3 text-sm">
+              <div className="flex min-w-0 items-start gap-3">
+                <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">Name</dt>
+                  <dd className="break-words font-medium">
+                    {order.customerName}
+                  </dd>
+                </div>
+              </div>
+              <div className="flex min-w-0 items-start gap-3">
+                <Mail className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">Email</dt>
+                  <dd className="break-all font-medium">
+                    {order.customerEmail}
+                  </dd>
+                </div>
+              </div>
+              {order.customerPhone && (
+                <div className="flex min-w-0 items-start gap-3">
+                  <Phone className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">Phone</dt>
+                    <dd className="break-words font-medium">
+                      {order.customerPhone}
+                    </dd>
+                  </div>
+                </div>
+              )}
+            </dl>
 
             {order.customerComment && (
-              <div className="pt-2">
-                <p className="text-foreground">Comment</p>
-                <p className="italic">{order.customerComment}</p>
+              <div className="mt-5 flex items-start gap-3 border-t pt-4 text-sm">
+                <MessageSquareText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Order note</p>
+                  <p className="mt-1 break-words leading-relaxed">
+                    {order.customerComment}
+                  </p>
+                </div>
               </div>
             )}
-          </div>
-        </div>
+          </section>
 
-        <div className="space-y-1 border rounded-md p-4">
-          <h4 className="text-sm font-medium">Items</h4>
+          <section aria-labelledby={`items-${order.id}`}>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <h3
+                id={`items-${order.id}`}
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
+                Order items
+              </h3>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <ShoppingBag className="size-3.5" aria-hidden="true" />
+                {itemCount} total
+              </span>
+            </div>
 
-          {order.items.map((item) => (
-            <OrderItemRow key={item.id} item={item} />
-          ))}
+            <div className="divide-y border-y">
+              {order.items.map((item) => (
+                <OrderItemRow key={item.id} item={item} />
+              ))}
+            </div>
+          </section>
         </div>
       </AccordionContent>
     </AccordionItem>

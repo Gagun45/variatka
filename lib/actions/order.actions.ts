@@ -18,6 +18,7 @@ export const getMyOrders = async (): Promise<
       where: {
         userId: user.pid,
       },
+      orderBy: [{ createdAt: "desc" }],
       ...orderArgs,
     });
     const publicOrders = orders.map(orderPresenter.toPublic);
