@@ -282,7 +282,10 @@ export const getPublicRecipes = async (): Promise<
 > => {
   return safeAction("getPublicRecipes", async () => {
     const recipes = await prisma.recipe.findMany({
-      where: { isConfirmed: true },
+      where: {
+        isConfirmed: true,
+        isHidden: false,
+      },
       ...recipeArgs,
     });
     const publicRecipes: IPublicRecipe[] = recipes.map(
