@@ -93,23 +93,21 @@ const StuffTabs = ({ stuff }: Props) => {
 
       <FilterLayout
         onReset={onReset}
-        sortSlot={null} // Left null since this layout does not have an active sorting dropdown
-        resultsSlot={
+        activeFilterCount={activeBadges.length}
+        results={
           <ResultsFoundText
             amount={filteredStuff.length}
             searchQuery={searchQuery}
           />
         }
-        badgesSlot={
+        activeFilters={
           <ActiveFilterBadges
             badges={activeBadges}
             onClearAll={() => setActiveCategory("all")}
           />
         }
-        listSlot={<StuffList stuff={filteredStuff} />}
-      >
-        {null}
-      </FilterLayout>
+        content={<StuffList stuff={filteredStuff} />}
+      />
     </div>
   );
 };

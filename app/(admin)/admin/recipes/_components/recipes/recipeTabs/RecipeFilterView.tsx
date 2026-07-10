@@ -192,54 +192,58 @@ const RecipeFilterView = ({ title, recipes, filters }: Props) => {
 
       <FilterLayout
         onReset={reset}
-        sortSlot={
+        activeFilterCount={activeBadges.length}
+        sort={
           <SortSelect
             value={sort}
             onChange={setSort}
             options={RECIPE_SORT_OPTIONS}
           />
         }
-        resultsSlot={
+        results={
           <ResultsFoundText
             amount={filteredRecipes.length}
             searchQuery={searchQuery}
           />
         }
-        badgesSlot={
+        activeFilters={
           <ActiveFilterBadges badges={activeBadges} onClearAll={reset} />
         }
-        listSlot={<RecipesList recipes={filteredRecipes} />}
-      >
-        <FilterButtons
-          value={stock}
-          onChange={setStock}
-          config={FILTER_CONFIGS.recipes.stock}
-        />
+        content={<RecipesList recipes={filteredRecipes} />}
+        filters={
+          <>
+            <FilterButtons
+              value={stock}
+              onChange={setStock}
+              config={FILTER_CONFIGS.recipes.stock}
+            />
 
-        <FilterButtons
-          value={ready}
-          onChange={setReady}
-          config={FILTER_CONFIGS.recipes.ready}
-        />
+            <FilterButtons
+              value={ready}
+              onChange={setReady}
+              config={FILTER_CONFIGS.recipes.ready}
+            />
 
-        <FilterButtons
-          value={series}
-          onChange={setSeries}
-          config={FILTER_CONFIGS.recipes.series}
-        />
+            <FilterButtons
+              value={series}
+              onChange={setSeries}
+              config={FILTER_CONFIGS.recipes.series}
+            />
 
-        <FilterButtons
-          value={confirmed}
-          onChange={setConfirmed}
-          config={FILTER_CONFIGS.recipes.confirmed}
-        />
+            <FilterButtons
+              value={confirmed}
+              onChange={setConfirmed}
+              config={FILTER_CONFIGS.recipes.confirmed}
+            />
 
-        <FilterButtons
-          value={hidden}
-          onChange={setHidden}
-          config={FILTER_CONFIGS.recipes.hidden}
-        />
-      </FilterLayout>
+            <FilterButtons
+              value={hidden}
+              onChange={setHidden}
+              config={FILTER_CONFIGS.recipes.hidden}
+            />
+          </>
+        }
+      />
     </div>
   );
 };

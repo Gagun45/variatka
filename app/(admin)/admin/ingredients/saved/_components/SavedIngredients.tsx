@@ -2,8 +2,11 @@
 
 import Loader from "@/components/loader/Loader";
 import StateScreen from "@/components/state-screen/StateScreen";
+import { Button } from "@/components/ui/button";
 import { useIngredients } from "@/features/ingredient/hooks/useIngredients";
+import { frontendUrls } from "@/lib/urls";
 import { Bookmark } from "lucide-react";
+import Link from "next/link";
 import SavedIngredientsTabs from "./tabs/SavedIngredientsTabs";
 
 const SavedIngredients = () => {
@@ -23,6 +26,13 @@ const SavedIngredients = () => {
         title="No saved ingredients yet"
         description="Ingredients you save will appear here."
         icon={<Bookmark />}
+        action={
+          <Button asChild>
+            <Link href={frontendUrls.ingredients.index}>
+              Browse ingredients
+            </Link>
+          </Button>
+        }
       />
     );
 

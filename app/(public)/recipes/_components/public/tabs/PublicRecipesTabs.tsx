@@ -113,35 +113,39 @@ const PublicRecipesTabs = ({ recipes }: Props) => {
 
       <FilterLayout
         onReset={resetQuery}
-        badgesSlot={
+        activeFilterCount={activeBadges.length}
+        activeFilters={
           <ActiveFilterBadges badges={activeBadges} onClearAll={resetQuery} />
         }
-        sortSlot={
+        sort={
           <SortSelect
             value={sort}
             onChange={setSort}
             options={PUBLIC_RECIPE_SORT_OPTIONS}
           />
         }
-        resultsSlot={
+        results={
           <ResultsFoundText
             amount={filteredRecipes.length}
             searchQuery={searchQuery}
           />
         }
-        listSlot={<PublicRecipesList recipes={filteredRecipes} />}
-      >
-        <FilterButtons
-          value={stock}
-          onChange={setStock}
-          config={FILTER_CONFIGS.recipes.stock}
-        />
-        <FilterButtons
-          value={series}
-          onChange={setSeries}
-          config={FILTER_CONFIGS.recipes.series}
-        />
-      </FilterLayout>
+        content={<PublicRecipesList recipes={filteredRecipes} />}
+        filters={
+          <>
+            <FilterButtons
+              value={stock}
+              onChange={setStock}
+              config={FILTER_CONFIGS.recipes.stock}
+            />
+            <FilterButtons
+              value={series}
+              onChange={setSeries}
+              config={FILTER_CONFIGS.recipes.series}
+            />
+          </>
+        }
+      />
     </div>
   );
 };

@@ -140,33 +140,35 @@ const IngredientFilterView = ({
 
       <FilterLayout
         onReset={reset}
-        sortSlot={
+        activeFilterCount={activeBadges.length}
+        sort={
           <SortSelect
             value={sort}
             onChange={setSort}
             options={INGREDIENT_SORT_OPTIONS}
           />
         }
-        resultsSlot={
+        results={
           <ResultsFoundText
             amount={filteredIngredients.length}
             searchQuery={searchQuery}
           />
         }
-        badgesSlot={
+        activeFilters={
           <ActiveFilterBadges
             badges={activeBadges}
             onClearAll={clearActiveFilters}
           />
         }
-        listSlot={<IngredienstList ingredients={filteredIngredients} />}
-      >
-        <FilterButtons
-          value={stock}
-          onChange={setStock}
-          config={FILTER_CONFIGS.ingredients.stock}
-        />
-      </FilterLayout>
+        content={<IngredienstList ingredients={filteredIngredients} />}
+        filters={
+          <FilterButtons
+            value={stock}
+            onChange={setStock}
+            config={FILTER_CONFIGS.ingredients.stock}
+          />
+        }
+      />
     </div>
   );
 };

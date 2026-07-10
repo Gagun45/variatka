@@ -1,7 +1,7 @@
-// @/components/filter-layout/FilterLayout.tsx
 "use client";
 
-import { ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -9,102 +9,115 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, RotateCcw } from "lucide-react";
+import { RotateCcw, SlidersHorizontal } from "lucide-react";
+import { useState, type ReactNode } from "react";
 
 interface FilterLayoutProps {
-  sortSlot: ReactNode; // The SortSelect component
-  resultsSlot: ReactNode; // The ResultsFoundText component
-  children: ReactNode; // The active FilterButtons group
-  listSlot: ReactNode; // The product/recipe grid list
-  badgesSlot?: ReactNode; // The ActiveFilterBadges component
-  onReset: () => void; // Function to clear all filters
-  isResetVisible?: boolean; // Optional flag to explicitly control reset button visibility
+  filters?: ReactNode;
+  results: ReactNode;
+  sort?: ReactNode;
+  activeFilters?: ReactNode;
+  content: ReactNode;
+  activeFilterCount: number;
+  onReset: () => void;
 }
 
 export const FilterLayout = ({
-  sortSlot,
-  resultsSlot,
-  badgesSlot,
-  children,
-  listSlot,
+  filters,
+  results,
+  sort,
+  activeFilters,
+  content,
+  activeFilterCount,
   onReset,
-  isResetVisible,
 }: FilterLayoutProps) => {
-  // Automatically show reset if badges exist OR if explicitly forced via prop
-  const showReset = isResetVisible ?? !!badgesSlot;
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const hasActiveFilters = activeFilterCount > 0;
+
+  const resetMobileFilters = () => {
+    onReset();
+    setIsFilterSheetOpen(false);
+  };
 
   return (
-    <div className="flex flex-col gap-4 w-full mx-auto py-4">
-      {/* Top Header Control Row */}
-      <div className="flex items-center justify-between gap-4 w-full">
-        {/* Mobile Filter Button & Overlay Sheet */}
-        <div className="2xl:hidden flex items-center gap-2">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <SlidersHorizontal className="h-4 w-4" /> Фільтри
-              </Button>
-            </SheetTrigger>
-            <SheetContent
-              side="left"
-              className="w-75 px-3 overflow-y-auto py-5"
-            >
-              <div className="flex items-center justify-between mb-4 pr-6">
-                <SheetTitle className="m-0">Фільтри</SheetTitle>
-                {showReset && onReset && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onReset}
-                    className="h-8 gap-1.5 px-2 text-xs text-muted-foreground transition-colors hover:text-destructive"
-                  >
-                    <RotateCcw className="size-3" /> Скинути
-                  </Button>
-                )}
-              </div>
+    <div className="mx-auto flex w-full flex-col gap-4 py-4">
+      <div className="flex w-full flex-wrap items-center gap-3">
+        {filters && (
+          <div className="xl:hidden">
+            <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline">
+                  <SlidersHorizontal />
+                  Filters
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" className="ml-1 min-w-5 px-1.5">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
 
-              <SheetDescription className="sr-only">
-                Оберіть категорії та параметри для фільтрації рецептів
-              </SheetDescription>
+              <SheetContent
+                side="left"
+                className="w-[min(22rem,calc(100vw-2rem))] max-w-none overflow-y-auto px-4 py-5"
+              >
+                <div className="mb-5 flex items-center justify-between gap-3 pr-8">
+                  <SheetTitle>Filters</SheetTitle>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={resetMobileFilters}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <RotateCcw />
+                      Clear all
+                    </Button>
+                  )}
+                </div>
 
-              <div className="flex flex-col gap-4">{children}</div>
-            </SheetContent>
-          </Sheet>
+                <SheetDescription className="sr-only">
+                  Choose filters to narrow the displayed results.
+                </SheetDescription>
+
+                <div className="flex flex-col gap-4">{filters}</div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        )}
+
+        <div className="order-3 w-full min-w-0 sm:order-none sm:w-auto">
+          {results}
         </div>
+
+        {sort && <div className="ml-auto shrink-0">{sort}</div>}
       </div>
 
-      {/* Primary Layout Engine */}
-      <div className="flex items-start gap-6 w-full relative">
-        {/* Static Desktop Left Sidebar Panel */}
-        <aside className="hidden 2xl:flex flex-col gap-4 w-60 shrink-0 border-r pr-4 sticky top-32 max-h-[calc(100vh-8rem)] overflow-y-auto pb-6">
-          <div className="flex items-center justify-between min-h-9">
-            <span className="pl-0.5 text-lg font-extrabold tracking-tight text-foreground">
-              Фільтри
-            </span>
-            {showReset && onReset && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onReset}
-                className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
-              >
-                <RotateCcw className="size-3.5 transition-transform group-hover:rotate-180" />
-                Очистити все
-              </Button>
-            )}
-          </div>
-          {children}
-        </aside>
+      <div className="relative flex w-full items-start gap-6">
+        {filters && (
+          <aside className="sticky top-32 hidden max-h-[calc(100vh-8rem)] w-60 shrink-0 flex-col gap-4 overflow-y-auto border-r pb-6 pr-4 xl:flex">
+            <div className="flex min-h-9 items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold tracking-tight">Filters</h2>
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onReset}
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <RotateCcw className="transition-transform group-hover/button:rotate-180" />
+                  Clear all
+                </Button>
+              )}
+            </div>
 
-        {/* Content Feed Container */}
-        <div className="flex-1 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            {resultsSlot}
-            {sortSlot}
-          </div>
-          {badgesSlot && <div className="w-full">{badgesSlot}</div>}
-          {listSlot}
+            {filters}
+          </aside>
+        )}
+
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          {hasActiveFilters && activeFilters}
+          {content}
         </div>
       </div>
     </div>
