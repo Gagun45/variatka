@@ -3,12 +3,12 @@ import { recipeKeys } from "../recipe.keys";
 import { recipeService } from "../recipe.api";
 import { useAuth } from "@/hooks/useAuth";
 
-export const useWishlist = () => {
+export const useWishlistIds = () => {
   const { isAuthenticated } = useAuth();
 
   return useQuery({
-    queryKey: recipeKeys.wishlist,
-    queryFn: recipeService.getWishlist,
+    queryKey: recipeKeys.wishlistIds,
+    queryFn: recipeService.getWishlistIds,
     enabled: isAuthenticated,
   });
 };

@@ -1,9 +1,9 @@
-import { useWishlist } from "@/features/recipe/hooks/useWishlist";
+import { useWishlistIds } from "@/features/recipe/hooks/useWishlist";
 import { useMemo } from "react";
 
 export const useWishlistIdsSet = () => {
-  const { data } = useWishlist();
+  const { data } = useWishlistIds();
   return useMemo(() => {
-    return new Set(data?.map((r) => r.id) ?? []);
+    return new Set(data ?? []);
   }, [data]);
 };

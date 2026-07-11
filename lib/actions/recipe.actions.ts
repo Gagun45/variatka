@@ -296,23 +296,20 @@ export const getPublicRecipes = async (): Promise<
   });
 };
 
-export const getWishlist = async (): Promise<
-  IActionResponse<IPublicRecipe[]>
-> => {
-  return safeAction("getWishlist", async () => {
+export const getWishlistIds = async (): Promise<IActionResponse<number[]>> => {
+  return safeAction("getWishlistIds", async () => {
     const user = await getCurrentUser();
-    const recipes: IRecipe[] = await prisma.recipe.findMany({
+    const items = await prisma.withlistItem.findMany({
       where: {
-        withlistItems: {
-          some: {
-            userId: user.pid,
-          },
+        userId: user.pid,
+        recipe: {
+          isConfirmed: true,
+          isHidden: false,
         },
       },
-      ...recipeArgs,
+      select: { recipeId: true },
     });
-    const publicRecipes = recipes.map(recipePresenter.toPublic);
-    return publicRecipes;
+    return items.map(({ recipeId }) => recipeId);
   });
 };
 

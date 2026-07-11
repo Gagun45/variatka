@@ -13,7 +13,6 @@ export const useCreateOrder = () => {
       qclient.invalidateQueries({ queryKey: orderKeys.orders });
       qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
       qclient.invalidateQueries({ queryKey: recipeKeys.public });
-      qclient.invalidateQueries({ queryKey: recipeKeys.wishlist });
       toast.success("Order created!");
     },
     onError: (e) => {

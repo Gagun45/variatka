@@ -1,11 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { recipeService } from "../recipe.api";
 import { recipeKeys } from "../recipe.keys";
-import { IPublicRecipe } from "@/lib/types";
 import { toast } from "sonner";
 
 type TContext = {
-  prevWishlist?: IPublicRecipe[];
+  previousIds: number[];
 };
 
 export const useToggleWishlist = () => {
@@ -14,32 +13,24 @@ export const useToggleWishlist = () => {
     mutationFn: recipeService.toggleWishlist,
     onMutate: async (recipeId: number) => {
       await qclient.cancelQueries({
-        queryKey: recipeKeys.wishlist,
+        queryKey: recipeKeys.wishlistIds,
       });
-      const prevWishlist =
-        qclient.getQueryData<IPublicRecipe[]>(recipeKeys.wishlist) || [];
-      const publicRecipes =
-        qclient.getQueryData<IPublicRecipe[]>(recipeKeys.public) || [];
+      const previousIds =
+        qclient.getQueryData<number[]>(recipeKeys.wishlistIds) ?? [];
+      const nextIds = previousIds.includes(recipeId)
+        ? previousIds.filter((id) => id !== recipeId)
+        : [...previousIds, recipeId];
 
-      const recipe = publicRecipes.find((r) => r.id === recipeId);
-
-      const isAlreadyWished = prevWishlist.some((r) => r.id === recipeId);
-
-      const nextWishlist: IPublicRecipe[] = isAlreadyWished
-        ? prevWishlist.filter((r) => r.id !== recipeId)
-        : recipe
-          ? [...prevWishlist, recipe]
-          : prevWishlist;
-      qclient.setQueryData(recipeKeys.wishlist, nextWishlist);
-      return { prevWishlist };
+      qclient.setQueryData(recipeKeys.wishlistIds, nextIds);
+      return { previousIds };
     },
     onSettled: () => {
-      qclient.invalidateQueries({ queryKey: recipeKeys.wishlist });
+      qclient.invalidateQueries({ queryKey: recipeKeys.wishlistIds });
     },
     onError: (e, _, context) => {
       toast.error(e.message);
-      if (context?.prevWishlist) {
-        qclient.setQueryData(recipeKeys.wishlist, context.prevWishlist);
+      if (context) {
+        qclient.setQueryData(recipeKeys.wishlistIds, context.previousIds);
       }
     },
   });

@@ -20,8 +20,8 @@ const QueryPrefetcher = () => {
     });
     if (!isAuthenticated) return;
     qclient.prefetchQuery({
-      queryKey: recipeKeys.wishlist,
-      queryFn: recipeService.getWishlist,
+      queryKey: recipeKeys.wishlistIds,
+      queryFn: recipeService.getWishlistIds,
     });
     if (!isAdmin) return;
 

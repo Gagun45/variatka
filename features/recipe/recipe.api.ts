@@ -6,7 +6,7 @@ import {
   getPublicRecipes,
   getRecipe,
   getRecipes,
-  getWishlist,
+  getWishlistIds,
   removeRecipeImage,
   toggleConfirmedRecipe,
   toggleHiddenRecipe,
@@ -57,8 +57,7 @@ export const recipeService = {
     unwrapAction(() => toggleHiddenRecipe(id)),
   getPublicRecipes: (): Promise<IPublicRecipe[]> =>
     unwrapAction(() => getPublicRecipes()),
-  getWishlist: (): Promise<IPublicRecipe[]> =>
-    unwrapAction(() => getWishlist()),
+  getWishlistIds: (): Promise<number[]> => unwrapAction(() => getWishlistIds()),
   toggleWishlist: (recipeId: number): Promise<boolean> =>
     unwrapAction(() => toggleWishlist(recipeId)),
   getAdminWishlists: (): Promise<IUserWithWishlist[]> =>
