@@ -6,7 +6,7 @@ import { useCreateRecipe } from "@/features/recipe/hooks/useCreateRecipe";
 import RecipeForm from "@/forms/recipe/RecipeForm";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { useRecipeStore } from "@/zustand/recipe.store";
-import { ClipboardList, List, PackagePlus } from "lucide-react";
+import { ClipboardList, NotebookPen, PackagePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -62,16 +62,11 @@ const RecipeDraftSheet = () => {
         <IconButton
           variant="ghost"
           size="icon"
-          className="relative"
+          badge={items.length > 0 ? items.length : undefined}
           label={"Конструктор рецепту"}
         >
-          <List className="size-4.5" />
+          <NotebookPen className="size-4.5" />
 
-          {items.length > 0 && (
-            <span className="absolute -right-1.5 -top-1.5 h-4 min-w-4 rounded-full border-2 border-sidebar bg-primary px-1 text-[10px] leading-none text-primary-foreground shadow-sm">
-              {items.length}
-            </span>
-          )}
         </IconButton>
       </SheetTrigger>
       <SheetContent className="w-full gap-0 bg-background sm:max-w-2xl">

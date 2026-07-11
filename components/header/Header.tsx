@@ -10,7 +10,7 @@ import { Suspense } from "react";
 import Loader from "../loader/Loader";
 import Draft from "../recipe-draft-sheet/Draft";
 import { buttonVariants } from "../ui/button";
-import { Badge } from "../ui/badge";
+import IconButtonBadge from "../icon-button/IconButtonBadge";
 import { SidebarTrigger } from "../ui/sidebar";
 import CartTrigger from "./cart-trigger/CartTrigger";
 import { NavigationMenu } from "./nav-menu/NavigationMenu";
@@ -66,9 +66,9 @@ const Header = () => {
             >
               <Heart />
               {wishlistCount > 0 && (
-                <Badge className="absolute -right-1.5 -top-1.5 h-4 min-w-4 rounded-full border-2 border-sidebar bg-primary px-1 text-[10px] leading-none text-primary-foreground shadow-sm">
+                <IconButtonBadge>
                   {wishlistCount}
-                </Badge>
+                </IconButtonBadge>
               )}
             </Link>
           </div>
