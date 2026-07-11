@@ -2,6 +2,7 @@
 
 import {
   SidebarMenuButton,
+  SidebarMenuBadge,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -9,7 +10,11 @@ import { ILink } from "@/lib/links";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const SidebarLink = ({ href, label }: ILink) => {
+type Props = ILink & {
+  count?: number;
+};
+
+const SidebarLink = ({ href, label, count }: Props) => {
   const { setOpenMobile, openMobile } = useSidebar();
   const pathname = usePathname();
 
@@ -30,6 +35,11 @@ const SidebarLink = ({ href, label }: ILink) => {
           {label}
         </Link>
       </SidebarMenuButton>
+      {count !== undefined && count > 0 && (
+        <SidebarMenuBadge className="bg-primary text-primary-foreground">
+          {count}
+        </SidebarMenuBadge>
+      )}
     </SidebarMenuItem>
   );
 };

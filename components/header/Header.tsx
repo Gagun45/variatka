@@ -2,6 +2,7 @@
 
 import { getImageUrl } from "@/lib/image.helper";
 import { frontendUrls } from "@/lib/urls";
+import { useWishlistIds } from "@/features/recipe/hooks/useWishlistIds";
 import { ClipboardList, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,12 +10,16 @@ import { Suspense } from "react";
 import Loader from "../loader/Loader";
 import Draft from "../recipe-draft-sheet/Draft";
 import { buttonVariants } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { SidebarTrigger } from "../ui/sidebar";
 import CartTrigger from "./cart-trigger/CartTrigger";
 import { NavigationMenu } from "./nav-menu/NavigationMenu";
 import Search from "./search/Search";
 
 const Header = () => {
+  const { data: wishlistIds = [] } = useWishlistIds();
+  const wishlistCount = wishlistIds.length;
+
   return (
     <header
       className="h-app-header sticky justify-between top-0 border-b border-sidebar-border/70 z-header px-2 w-full bg-sidebar/85 backdrop-blur-xl supports-backdrop-filter:bg-sidebar/75 shadow-surface flex items-center gap-4
@@ -57,9 +62,14 @@ const Header = () => {
               className={buttonVariants({
                 size: "icon",
                 variant: "ghost",
-              })}
+              }) + " relative"}
             >
               <Heart />
+              {wishlistCount > 0 && (
+                <Badge className="absolute -right-1.5 -top-1.5 h-4 min-w-4 rounded-full border-2 border-sidebar bg-primary px-1 text-[10px] leading-none text-primary-foreground shadow-sm">
+                  {wishlistCount}
+                </Badge>
+              )}
             </Link>
           </div>
 
