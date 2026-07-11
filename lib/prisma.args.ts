@@ -22,27 +22,11 @@ export const ingredientArgs = {
 
 export const stuffArgs = {} satisfies Omit<Prisma.StuffFindManyArgs, "where">;
 
-export const userWithWishlistArgs = {
-  include: {
-    withlistItems: {
-      include: {
-        recipe: {
-          include: { ingredients: { include: { ingredient: true } } },
-        },
-      },
-    },
-  },
-} satisfies Omit<Prisma.UserFindManyArgs, "where">;
-
 export type IRecipe = Prisma.RecipeGetPayload<typeof recipeArgs>;
 
 export type IIngredient = Prisma.IngredientGetPayload<typeof ingredientArgs>;
 
 export type IStuff = Prisma.StuffGetPayload<typeof stuffArgs>;
-
-export type IUserWithWishlist = Prisma.UserGetPayload<
-  typeof userWithWishlistArgs
->;
 
 export const orderArgs = {
   include: {

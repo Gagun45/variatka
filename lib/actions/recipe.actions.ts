@@ -6,9 +6,7 @@ import { recipeIngredientsService } from "../domain/recipe-ingredients.service";
 import { prisma } from "../prisma";
 import {
   IRecipe,
-  IUserWithWishlist,
   recipeArgs,
-  userWithWishlistArgs,
 } from "../prisma.args";
 import { recipePresenter } from "../recipe.presenter";
 import { uploadHelper } from "../s3/upload.helper";
@@ -347,18 +345,3 @@ export const toggleWishlist = async (
   });
 };
 
-export const getAdminWishlists = async (): Promise<
-  IActionResponse<IUserWithWishlist[]>
-> => {
-  return safeAction("getAdminWishlists", async () => {
-    const wishlistItems = await prisma.user.findMany({
-      where: {
-        withlistItems: {
-          some: {},
-        },
-      },
-      ...userWithWishlistArgs,
-    });
-    return wishlistItems;
-  });
-};

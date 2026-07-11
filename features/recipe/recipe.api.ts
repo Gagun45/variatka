@@ -2,7 +2,6 @@ import { unwrapAction } from "@/lib/actions/action.unwrapper";
 import {
   createRecipe,
   deleteRecipe,
-  getAdminWishlists,
   getPublicRecipes,
   getRecipe,
   getRecipes,
@@ -17,7 +16,7 @@ import {
   updateRecipeIngredients,
   uploadRecipeImage,
 } from "@/lib/actions/recipe.actions";
-import { IRecipe, IUserWithWishlist } from "@/lib/prisma.args";
+import { IRecipe } from "@/lib/prisma.args";
 import {
   ICreateRecipeDto,
   IPublicRecipe,
@@ -60,6 +59,4 @@ export const recipeService = {
   getWishlistIds: (): Promise<number[]> => unwrapAction(() => getWishlistIds()),
   toggleWishlist: (recipeId: number): Promise<boolean> =>
     unwrapAction(() => toggleWishlist(recipeId)),
-  getAdminWishlists: (): Promise<IUserWithWishlist[]> =>
-    unwrapAction(() => getAdminWishlists()),
 };
