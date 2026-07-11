@@ -49,15 +49,17 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
     <Card
       size="sm"
       className={cn(
-        "grid grid-cols-[5.75rem_1fr] gap-0 py-0 transition-colors hover:ring-foreground/20 sm:grid-cols-[7rem_1fr]",
+        "relative grid grid-cols-[5.75rem_1fr] gap-0 py-0 transition-colors hover:ring-foreground/20 sm:grid-cols-[7rem_1fr]",
         isHidden && "bg-muted/30 text-muted-foreground hover:ring-border",
       )}
     >
       <Link
         href={href}
-        className="relative min-h-32 overflow-hidden border-r bg-muted/30 sm:min-h-36"
+        className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label={`Edit ${title}`}
-      >
+      />
+
+      <div className="relative min-h-32 overflow-hidden border-r bg-muted/30 sm:min-h-36">
         <Image
           src={imageSrc}
           alt={title}
@@ -68,22 +70,21 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
             isHidden && "grayscale opacity-50 saturate-50",
           )}
         />
-      </Link>
+      </div>
 
       <div className="flex min-w-0 flex-col justify-between gap-3 p-3">
         <div className="min-w-0 space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <Link
-              href={href}
+            <div
               className={cn(
-                "min-w-0 break-words text-sm font-semibold leading-snug hover:underline",
+                "min-w-0 break-words text-sm font-semibold leading-snug",
                 isHidden && "text-muted-foreground",
               )}
             >
               {title}
-            </Link>
+            </div>
 
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="relative z-20 flex shrink-0 items-center gap-1">
               <SaveToggleButton
                 className="size-7"
                 isSaved={isSaved}
@@ -105,20 +106,22 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
               </Badge>
             )}
 
-            <IconBadge
-              icon={categoryData.icon}
-              iconClassName={categoryData.iconClassName}
-              label={categoryData.label}
-            />
-            <IconBadge
-              icon={seriesData.icon}
-              iconClassName={seriesData.iconClassName}
-              label={seriesData.label}
-            />
+            <div className="relative z-20 flex gap-1.5">
+              <IconBadge
+                icon={categoryData.icon}
+                iconClassName={categoryData.iconClassName}
+                label={categoryData.label}
+              />
+              <IconBadge
+                icon={seriesData.icon}
+                iconClassName={seriesData.iconClassName}
+                label={seriesData.label}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-2">
+        <div className="relative z-20 flex flex-wrap items-center justify-between gap-2 border-t pt-2">
           <ReadyToCookTooltip recipe={recipe} />
 
           <StockBadge isInStock={!!inStock} quantity={inStock} />

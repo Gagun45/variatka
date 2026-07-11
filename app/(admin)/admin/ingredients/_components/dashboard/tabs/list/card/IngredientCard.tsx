@@ -56,17 +56,20 @@ const IngredientCard = ({
   return (
     <Card
       size="sm"
-      className="w-full rounded-lg py-3 transition-colors hover:bg-muted/30"
+      className="relative w-full rounded-lg py-3 transition-colors hover:bg-muted/30"
     >
+      <Link
+        href={frontendUrls.ingredients.edit(id)}
+        className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        aria-label={`Edit ${title}`}
+      />
+
       <CardContent className="flex h-full flex-col gap-3 px-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <Link
-              href={frontendUrls.ingredients.edit(id)}
-              className="line-clamp-2 text-sm font-medium leading-5 hover:underline"
-            >
+            <div className="line-clamp-2 text-sm font-medium leading-5">
               {title}
-            </Link>
+            </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant="secondary" className="max-w-full">
@@ -83,7 +86,7 @@ const IngredientCard = ({
             onClick={onToggleDraft}
             variant={isAdded ? "success" : "outline"}
             size="icon-sm"
-            className="shrink-0"
+            className="relative z-20 shrink-0"
             label={isAdded ? "Remove from recipe draft" : "Add to recipe draft"}
             title={isAdded ? "Remove from draft" : "Add to draft"}
           >
@@ -91,7 +94,7 @@ const IngredientCard = ({
           </IconButton>
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-2">
+        <div className="relative z-20 mt-auto flex items-center justify-between gap-2 border-t pt-2">
           <StockBadge
             isInStock={isInStock}
             onClick={onToggleStock}
