@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  SidebarMenuButton,
   SidebarMenuBadge,
+  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -36,9 +36,7 @@ const SidebarLink = ({ href, label, count }: Props) => {
         </Link>
       </SidebarMenuButton>
       {count !== undefined && count > 0 && (
-        <SidebarMenuBadge className="bg-primary text-primary-foreground">
-          {count}
-        </SidebarMenuBadge>
+        <SidebarMenuBadge>{count}</SidebarMenuBadge>
       )}
     </SidebarMenuItem>
   );

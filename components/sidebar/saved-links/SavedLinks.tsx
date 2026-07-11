@@ -6,22 +6,26 @@ import SidebarLink from "../link/SidebarLink";
 
 const SavedLinks = () => {
   const { data: ingredients = [] } = useIngredients();
-  const savedIngredientsLength = ingredients.filter((i) => i.isSaved).length;
+  const savedIngredientCount = ingredients.filter(
+    (ingredient) => ingredient.isSaved,
+  ).length;
 
   const { data: recipes = [] } = useRecipes();
-  const savedRecipesLength = recipes.filter((r) => r.isSaved).length;
+  const savedRecipeCount = recipes.filter((recipe) => recipe.isSaved).length;
 
   return (
     <SidebarGroup>
       <SidebarMenu>
         <SidebarLink
           href={frontendUrls.ingredients.saved}
-          label={`Saved ingredients${savedIngredientsLength > 0 ? ` (${savedIngredientsLength})` : ""}`}
+          label="Saved ingredients"
+          count={savedIngredientCount}
         />
 
         <SidebarLink
           href={frontendUrls.recipes.saved}
-          label={`Saved recipes${savedRecipesLength > 0 ? ` (${savedRecipesLength})` : ""}`}
+          label="Saved recipes"
+          count={savedRecipeCount}
         />
       </SidebarMenu>
     </SidebarGroup>
