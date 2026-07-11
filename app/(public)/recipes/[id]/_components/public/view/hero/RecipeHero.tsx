@@ -5,7 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
 import { SpicyOptions } from "@/forms/recipe/fields/SpicyField";
 import { useAuth } from "@/hooks/useAuth";
-import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
+import { useWishlistIdSet } from "@/features/recipe/hooks/useWishlistIds";
 import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 import { RECIPE_SERIES_DATA } from "@/lib/enumslist/series.constants";
 import { getImageUrl } from "@/lib/image.helper";
@@ -22,7 +22,7 @@ interface Props {
 
 export default function RecipeHero({ recipe }: Props) {
   const { isAuthenticated, isAdmin } = useAuth();
-  const wishlistIdsSet = useWishlistIdsSet();
+  const wishlistIdSet = useWishlistIdSet();
   const { mutate } = useToggleWishlist();
 
   const { id, title, imageKey, category, series, description, spicy } = recipe;
@@ -33,7 +33,7 @@ export default function RecipeHero({ recipe }: Props) {
   const seriesData = RECIPE_SERIES_DATA[series];
   const CategoryIcon = categoryData.icon;
   const SeriesIcon = seriesData.icon;
-  const isWished = wishlistIdsSet.has(id);
+  const isWished = wishlistIdSet.has(id);
 
   return (
     <section className="border-b">

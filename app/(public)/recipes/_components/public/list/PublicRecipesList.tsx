@@ -1,6 +1,6 @@
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
 import { useAuth } from "@/hooks/useAuth";
-import { useWishlistIdsSet } from "@/hooks/useWishlistIds";
+import { useWishlistIdSet } from "@/features/recipe/hooks/useWishlistIds";
 import { IPublicRecipe } from "@/lib/types";
 import PublicRecipeCard from "./card/PublicRecipeCard";
 
@@ -9,7 +9,7 @@ interface Props {
 }
 
 const PublicRecipesList = ({ recipes }: Props) => {
-  const wishlistIdsSet = useWishlistIdsSet();
+  const wishlistIdSet = useWishlistIdSet();
   const { mutate } = useToggleWishlist();
   const { isAuthenticated } = useAuth();
   return (
@@ -22,7 +22,7 @@ const PublicRecipesList = ({ recipes }: Props) => {
           <PublicRecipeCard
             isAuthenticated={isAuthenticated}
             onToggleWished={onToggleWished}
-            wishlistIdsSet={wishlistIdsSet}
+            wishlistIdSet={wishlistIdSet}
             recipe={r}
             key={r.id}
           />

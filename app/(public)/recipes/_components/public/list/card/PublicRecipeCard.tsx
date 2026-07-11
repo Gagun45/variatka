@@ -17,20 +17,20 @@ import PublicRecipeCardCartButton from "./cart-btn/PublicRecipeCardCartButton";
 
 interface Props {
   recipe: IPublicRecipe;
-  wishlistIdsSet: Set<number>;
+  wishlistIdSet: Set<number>;
   onToggleWished: () => void;
   isAuthenticated: boolean;
 }
 
 const PublicRecipeCard = ({
   recipe,
-  wishlistIdsSet,
+  wishlistIdSet,
   onToggleWished,
   isAuthenticated,
 }: Props) => {
   const { id, imageKey, title, description, category, series, spicy } = recipe;
 
-  const isWished = wishlistIdsSet.has(id);
+  const isWished = wishlistIdSet.has(id);
   const imageSrc = getImageUrl(imageKey);
   const { icon, iconClassName, label } = RECIPE_SERIES_DATA[series];
   const Icon = icon;
