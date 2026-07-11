@@ -12,38 +12,38 @@ import { useEffect } from "react";
 
 const QueryPrefetcher = () => {
   const { isAdmin, isAuthenticated } = useAuth();
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   useEffect(() => {
-    qclient.prefetchQuery({
+    queryClient.prefetchQuery({
       queryKey: recipeKeys.public,
       queryFn: recipeService.getPublicRecipes,
     });
     if (!isAuthenticated) return;
-    qclient.prefetchQuery({
+    queryClient.prefetchQuery({
       queryKey: recipeKeys.wishlistIds,
       queryFn: recipeService.getWishlistIds,
     });
     if (!isAdmin) return;
 
-    qclient.prefetchQuery({
+    queryClient.prefetchQuery({
       queryKey: ingredientKeys.ingredients,
       queryFn: ingredientService.get,
     });
 
-    qclient.prefetchQuery({
+    queryClient.prefetchQuery({
       queryKey: recipeKeys.recipes,
       queryFn: recipeService.get,
     });
 
-    qclient.prefetchQuery({
+    queryClient.prefetchQuery({
       queryKey: stuffKeys.stuff,
       queryFn: stuffService.get,
     });
-    // qclient.prefetchQuery({
+    // queryClient.prefetchQuery({
     //   queryKey: recipeKeys.adminWishlists,
     //   queryFn: recipeService.getAdminWishlists,
     // });
-  }, [qclient, isAdmin, isAuthenticated]);
+  }, [queryClient, isAdmin, isAuthenticated]);
   return null;
 };
 

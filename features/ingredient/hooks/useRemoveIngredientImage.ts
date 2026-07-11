@@ -5,12 +5,12 @@ import { IIngredient } from "@/lib/prisma.args";
 import { toast } from "sonner";
 
 export const useRemoveIngredientImage = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IIngredient, Error, number>({
     mutationFn: ingredientService.removeImage,
 
     onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
       toast.success("Image removed!");
     },
     onError: (e) => {

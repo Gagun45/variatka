@@ -8,7 +8,7 @@ import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
 import { toast } from "sonner";
 
 export const useUpdateRecipeIngredients = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<
     IRecipe,
     Error,
@@ -17,14 +17,14 @@ export const useUpdateRecipeIngredients = () => {
     mutationFn: ({ recipeId, items }) =>
       recipeService.updateIngredients(recipeId, items),
     onSuccess: (updatedRecipe) => {
-      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
+      queryClient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
         old.map((recipe) =>
           recipe.id === updatedRecipe.id ? updatedRecipe : recipe,
         ),
       );
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
-      qclient.invalidateQueries({ queryKey: recipeKeys.public });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
       toast.success("Recipe edited!");
     },
     onError: (e) => {

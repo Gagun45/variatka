@@ -8,17 +8,14 @@ import { recipeKeys } from "@/features/recipe/recipe.keys";
 
 type TVariables = { id: number; dto: IIngredientFormValues };
 
-type TContext = {
-  prevIngredients?: IIngredient[];
-};
-
 export const useEditIngredient = () => {
-  const qclient = useQueryClient();
-  const mutation = useMutation<IIngredient, Error, TVariables, TContext>({
+  const queryClient = useQueryClient();
+
+  return useMutation<IIngredient, Error, TVariables>({
     mutationFn: ({ dto, id }) => ingredientService.edit(id, dto),
 
     onSuccess: (updatedIngredient) => {
-      qclient.setQueryData<IIngredient[]>(
+      queryClient.setQueryData<IIngredient[]>(
         ingredientKeys.ingredients,
         (old = []) =>
           old.map((ingredient) =>
@@ -27,13 +24,11 @@ export const useEditIngredient = () => {
               : ingredient,
           ),
       );
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
       toast.success("Ingredient edited successfully!");
     },
     onError: (e) => {
       toast.error(e.message);
     },
   });
-  return mutation;
 };

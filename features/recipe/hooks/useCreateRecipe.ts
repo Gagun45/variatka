@@ -8,15 +8,15 @@ import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
 import { toast } from "sonner";
 
 export const useCreateRecipe = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IRecipe, Error, ICreateRecipeDto>({
     mutationFn: recipeService.create,
     onSuccess: (newRecipe) => {
-      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) => [
+      queryClient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) => [
         newRecipe,
         ...old,
       ]);
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
       toast.success("Recipe created!");
     },
     onError: (e) => {

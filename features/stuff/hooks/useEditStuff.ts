@@ -7,7 +7,7 @@ import { stuffService } from "../stuff.api";
 import { stuffKeys } from "../stuff.keys";
 
 export const useEditStuff = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<
     IStuff,
     Error,
@@ -15,7 +15,7 @@ export const useEditStuff = () => {
   >({
     mutationFn: ({ dto, id }) => stuffService.edit(id, dto),
     onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: stuffKeys.stuff });
+      queryClient.invalidateQueries({ queryKey: stuffKeys.stuff });
       toast.success("Stuff edited successfully!");
     },
     onError: (e) => {

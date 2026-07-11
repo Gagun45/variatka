@@ -6,13 +6,13 @@ import { orderKeys } from "../order.keys";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 
 export const useCreateOrder = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IPublicOrder, Error, ICreateOrderDto>({
     mutationFn: orderService.createOrder,
     onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: orderKeys.orders });
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
-      qclient.invalidateQueries({ queryKey: recipeKeys.public });
+      queryClient.invalidateQueries({ queryKey: orderKeys.orders });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
       toast.success("Order created!");
     },
     onError: (e) => {

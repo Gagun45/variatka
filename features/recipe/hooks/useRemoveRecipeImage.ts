@@ -6,12 +6,12 @@ import { recipeService } from "../recipe.api";
 import { recipeKeys } from "../recipe.keys";
 
 export const useRemoveRecipeImage = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IRecipe, Error, number>({
     mutationFn: recipeService.removeImage,
 
     onSuccess: () => {
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
       toast.success("Image removed!");
     },
     onError: (e) => {

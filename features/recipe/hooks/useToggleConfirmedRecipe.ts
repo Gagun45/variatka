@@ -9,14 +9,14 @@ type TContext = {
 };
 
 export const useToggleConfirmedRecipe = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IRecipe, Error, number, TContext>({
     mutationFn: (recipeId) => recipeService.toggleConfirmed(recipeId),
     onMutate: async (recipeId) => {
-      await qclient.cancelQueries({ queryKey: recipeKeys.recipes });
+      await queryClient.cancelQueries({ queryKey: recipeKeys.recipes });
 
-      const prevRecipes = qclient.getQueryData<IRecipe[]>(recipeKeys.recipes);
-      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
+      const prevRecipes = queryClient.getQueryData<IRecipe[]>(recipeKeys.recipes);
+      queryClient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
         old.map((rec) =>
           rec.id === recipeId ? { ...rec, isConfirmed: !rec.isConfirmed } : rec,
         ),
@@ -25,13 +25,13 @@ export const useToggleConfirmedRecipe = () => {
       return { prevRecipes };
     },
     onSettled: () => {
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
-      qclient.invalidateQueries({ queryKey: recipeKeys.public });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
     },
     onError: (e, _, context) => {
       toast.error(e.message);
       if (context?.prevRecipes) {
-        qclient.setQueryData(recipeKeys.recipes, context.prevRecipes);
+        queryClient.setQueryData(recipeKeys.recipes, context.prevRecipes);
       }
     },
   });

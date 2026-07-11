@@ -6,12 +6,12 @@ import { stuffKeys } from "../stuff.keys";
 import { toast } from "sonner";
 
 export const useCreateStuff = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IStuff, Error, ICreateStuffDto>({
     mutationFn: stuffService.create,
 
     onSuccess: (newStuff) => {
-      qclient.setQueryData<IStuff[]>(stuffKeys.stuff, (old = []) => [
+      queryClient.setQueryData<IStuff[]>(stuffKeys.stuff, (old = []) => [
         newStuff,
         ...old,
       ]);

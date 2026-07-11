@@ -16,25 +16,25 @@ type TContext = {
 };
 
 export const useToggleIngredientStock = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IIngredient, Error, TVariables, TContext>({
     mutationFn: ({ isInStock, ingredientId }) =>
       ingredientService.toggleStock(ingredientId, !isInStock),
     onMutate: async ({ ingredientId, isInStock }) => {
-      await qclient.cancelQueries({ queryKey: ingredientKeys.ingredients });
-      await qclient.cancelQueries({ queryKey: recipeKeys.recipes });
-      const prevIngredients = qclient.getQueryData<IIngredient[]>(
+      await queryClient.cancelQueries({ queryKey: ingredientKeys.ingredients });
+      await queryClient.cancelQueries({ queryKey: recipeKeys.recipes });
+      const prevIngredients = queryClient.getQueryData<IIngredient[]>(
         ingredientKeys.ingredients,
       );
-      const prevRecipes = qclient.getQueryData<IRecipe[]>(recipeKeys.recipes);
-      qclient.setQueryData<IIngredient[]>(
+      const prevRecipes = queryClient.getQueryData<IRecipe[]>(recipeKeys.recipes);
+      queryClient.setQueryData<IIngredient[]>(
         ingredientKeys.ingredients,
         (old = []) =>
           old.map((ing) =>
             ing.id === ingredientId ? { ...ing, isInStock: !isInStock } : ing,
           ),
       );
-      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
+      queryClient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
         old.map((recipe) => ({
           ...recipe,
           ingredients: recipe.ingredients.map((ing) =>
@@ -50,8 +50,8 @@ export const useToggleIngredientStock = () => {
       return { prevIngredients, prevRecipes };
     },
     onSettled: () => {
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
     },
     onSuccess: ({ title, isInStock }) => {
       toast.success(title, {
@@ -61,13 +61,13 @@ export const useToggleIngredientStock = () => {
     onError: (e, _variables, context) => {
       toast.error(e.message);
       if (context?.prevIngredients) {
-        qclient.setQueryData(
+        queryClient.setQueryData(
           ingredientKeys.ingredients,
           context.prevIngredients,
         );
       }
       if (context?.prevRecipes) {
-        qclient.setQueryData(recipeKeys.recipes, context.prevRecipes);
+        queryClient.setQueryData(recipeKeys.recipes, context.prevRecipes);
       }
     },
   });

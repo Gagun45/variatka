@@ -6,11 +6,11 @@ import { IIngredient } from "@/lib/prisma.args";
 import { toast } from "sonner";
 
 export const useCreateIngredient = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IIngredient, Error, IIngredientFormValues>({
     mutationFn: ingredientService.create,
     onSuccess: (newIngredient) => {
-      qclient.setQueryData<IIngredient[]>(
+      queryClient.setQueryData<IIngredient[]>(
         ingredientKeys.ingredients,
         (old = []) => [newIngredient, ...old],
       );

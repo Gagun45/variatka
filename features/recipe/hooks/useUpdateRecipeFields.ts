@@ -13,28 +13,28 @@ type TContext = {
 };
 
 export const useUpdateRecipeFields = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IRecipe, Error, TVariables, TContext>({
     mutationFn: ({ dto, id }) => recipeService.updateFields(id, dto),
 
     onSuccess: (updatedRecipe) => {
-      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
+      queryClient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
         old.map((recipe) =>
           recipe.id === updatedRecipe.id ? updatedRecipe : recipe,
         ),
       );
 
-      qclient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: recipeKeys.recipes,
       });
-      qclient.invalidateQueries({ queryKey: recipeKeys.public });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
 
       toast.success("Recipe edited successfully!");
     },
     onError: (e, _, context) => {
       toast.error(e.message);
       if (context?.prevRecipes) {
-        qclient.setQueryData(recipeKeys.recipes, context.prevRecipes);
+        queryClient.setQueryData(recipeKeys.recipes, context.prevRecipes);
       }
     },
   });

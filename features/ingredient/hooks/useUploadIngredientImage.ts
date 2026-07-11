@@ -5,7 +5,7 @@ import { IIngredient } from "@/lib/prisma.args";
 import { toast } from "sonner";
 
 export const useUploadIngredientImage = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<
     IIngredient,
     Error,
@@ -15,7 +15,7 @@ export const useUploadIngredientImage = () => {
       ingredientService.uploadImage(ingredientId, file),
     onSuccess: () => {
       toast.success("Upload success!");
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
     },
 
     onError: (e) => {

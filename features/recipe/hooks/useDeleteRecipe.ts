@@ -5,14 +5,14 @@ import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
 import { toast } from "sonner";
 
 export const useDeleteRecipe = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<number, Error, number>({
     mutationFn: recipeService.delete,
 
     onSuccess: () => {
       toast.success("Recipe deleted!");
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
-      qclient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
     },
     onError: (e: Error) => {
       toast.error(e.message);

@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { ingredientKeys } from "../ingredient.keys";
 import { ingredientService } from "../ingredient.api";
+import { ingredientKeys } from "../ingredient.keys";
 
-export const useIngredients = () => {
-  return useQuery({
+export const useIngredients = () =>
+  useQuery({
     queryKey: ingredientKeys.ingredients,
     queryFn: ingredientService.get,
   });
-};

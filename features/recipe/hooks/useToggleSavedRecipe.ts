@@ -9,13 +9,13 @@ type TContext = {
 };
 
 export const useToggleSavedRecipe = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<IRecipe, Error, number, TContext>({
     mutationFn: (recipeId) => recipeService.toggle(recipeId),
     onMutate: async (recipeId) => {
-      await qclient.cancelQueries({ queryKey: recipeKeys.recipes });
-      const prevRecipes = qclient.getQueryData<IRecipe[]>(recipeKeys.recipes);
-      qclient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
+      await queryClient.cancelQueries({ queryKey: recipeKeys.recipes });
+      const prevRecipes = queryClient.getQueryData<IRecipe[]>(recipeKeys.recipes);
+      queryClient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
         old.map((rec) =>
           rec.id === recipeId ? { ...rec, isSaved: !rec.isSaved } : rec,
         ),
@@ -24,12 +24,12 @@ export const useToggleSavedRecipe = () => {
       return { prevRecipes };
     },
     onSettled: () => {
-      qclient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
     },
     onError: (e, recipeId, context) => {
       toast.error(e.message);
       if (context?.prevRecipes) {
-        qclient.setQueryData(recipeKeys.recipes, context.prevRecipes);
+        queryClient.setQueryData(recipeKeys.recipes, context.prevRecipes);
       }
     },
   });

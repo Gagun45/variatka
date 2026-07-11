@@ -8,29 +8,29 @@ type TContext = {
 };
 
 export const useToggleWishlist = () => {
-  const qclient = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation<boolean, Error, number, TContext>({
     mutationFn: recipeService.toggleWishlist,
     onMutate: async (recipeId: number) => {
-      await qclient.cancelQueries({
+      await queryClient.cancelQueries({
         queryKey: recipeKeys.wishlistIds,
       });
       const previousIds =
-        qclient.getQueryData<number[]>(recipeKeys.wishlistIds) ?? [];
+        queryClient.getQueryData<number[]>(recipeKeys.wishlistIds) ?? [];
       const nextIds = previousIds.includes(recipeId)
         ? previousIds.filter((id) => id !== recipeId)
         : [...previousIds, recipeId];
 
-      qclient.setQueryData(recipeKeys.wishlistIds, nextIds);
+      queryClient.setQueryData(recipeKeys.wishlistIds, nextIds);
       return { previousIds };
     },
     onSettled: () => {
-      qclient.invalidateQueries({ queryKey: recipeKeys.wishlistIds });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.wishlistIds });
     },
     onError: (e, _, context) => {
       toast.error(e.message);
       if (context) {
-        qclient.setQueryData(recipeKeys.wishlistIds, context.previousIds);
+        queryClient.setQueryData(recipeKeys.wishlistIds, context.previousIds);
       }
     },
   });
