@@ -1,5 +1,6 @@
 import { IRecipeIngredientEditorItem } from "@/lib/types";
 import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleSavedIngredient";
+import { useToggleIngredientStock } from "@/features/ingredient/hooks/useToggleIngredientStock";
 import RecipeIngredientRow from "./ing-row/RecipeInredientRow";
 
 type RecipeIngredientsListProps = {
@@ -8,6 +9,7 @@ type RecipeIngredientsListProps = {
   onRemove: (id: number) => void;
   onChangeAmount: (id: number, value: string) => void;
   onChangeSaved: (id: number, isSaved: boolean) => void;
+  onChangeStock: (id: number, isInStock: boolean) => void;
 };
 
 const RecipeIngredientsList = ({
@@ -16,8 +18,10 @@ const RecipeIngredientsList = ({
   onRemove,
   onChangeAmount,
   onChangeSaved,
+  onChangeStock,
 }: RecipeIngredientsListProps) => {
-  const { mutate } = useToggleSavedIngredient();
+  const { mutate: mutateSaved } = useToggleSavedIngredient();
+  const { mutate: mutateStock } = useToggleIngredientStock();
 
   if (items.length === 0) {
     return (
@@ -32,10 +36,20 @@ const RecipeIngredientsList = ({
       {items.map((item, index) => {
         const handleSavedToggle = () => {
           onChangeSaved(item.ingredientId, !item.isSaved);
-          mutate(
+          mutateSaved(
             { ingredientId: item.ingredientId, isSaved: item.isSaved },
             {
               onError: () => onChangeSaved(item.ingredientId, item.isSaved),
+            },
+          );
+        };
+        const handleStockToggle = () => {
+          onChangeStock(item.ingredientId, !item.isInStock);
+          mutateStock(
+            { ingredientId: item.ingredientId, isInStock: item.isInStock },
+            {
+              onError: () =>
+                onChangeStock(item.ingredientId, item.isInStock),
             },
           );
         };
@@ -49,6 +63,7 @@ const RecipeIngredientsList = ({
             onRemove={onRemove}
             onChangeAmount={onChangeAmount}
             onSavedToggle={handleSavedToggle}
+            onStockToggle={handleStockToggle}
           />
         );
       })}

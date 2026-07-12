@@ -10,10 +10,7 @@ type AdminSearchBarProps = {
   placeholder: string;
 };
 
-const AdminSearchBar = ({
-  initialQuery,
-  placeholder,
-}: AdminSearchBarProps) => {
+const AdminSearchBar = ({ initialQuery, placeholder }: AdminSearchBarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -39,7 +36,7 @@ const AdminSearchBar = ({
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
       scroll: false,
     });
-  }, 250);
+  }, 500);
 
   return (
     <div className="mx-auto w-full max-w-md">

@@ -121,7 +121,7 @@ const LoadedRecipeEdit = ({ recipe, ingredients }: LoadedRecipeEditProps) => {
         isPending={isPending}
       />
 
-      <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 rounded-xl border bg-background/90 p-2 shadow-lg backdrop-blur-md sm:static sm:flex sm:justify-end sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
+      <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 rounded-xl border bg-background/90 p-2 shadow-lg backdrop-blur-md sm:flex sm:justify-end">
         <Button
           type="reset"
           form={formId}

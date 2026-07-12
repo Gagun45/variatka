@@ -1,9 +1,12 @@
 import IconButton from "@/components/icon-button/IconButton";
 import SaveToggleButton from "@/components/save-button/SaveToggleButton";
+import StockBadge from "@/components/stock-badge/StockBadge";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IRecipeIngredientEditorItem } from "@/lib/types";
+import { frontendUrls } from "@/lib/urls";
+import Link from "next/link";
 
 type RecipeIngredientRowProps = {
   item: IRecipeIngredientEditorItem;
@@ -12,6 +15,7 @@ type RecipeIngredientRowProps = {
   onChangeAmount: (id: number, value: string) => void;
   onRemove: (id: number) => void;
   onSavedToggle: () => void;
+  onStockToggle: () => void;
 };
 
 const RecipeIngredientRow = ({
@@ -21,13 +25,14 @@ const RecipeIngredientRow = ({
   onChangeAmount,
   onRemove,
   onSavedToggle,
+  onStockToggle,
 }: RecipeIngredientRowProps) => {
   const isInvalid = !item.amount.trim();
 
   return (
     <div
       className={cn(
-        "grid grid-cols-[2rem_minmax(0,1fr)] gap-2 rounded-lg border bg-background p-2 sm:grid-cols-[2rem_minmax(0,1fr)_minmax(9rem,14rem)_2rem_2rem] sm:items-center",
+        "grid grid-cols-[2rem_minmax(0,1fr)] gap-2 rounded-lg border bg-background p-2 md:grid-cols-[2rem_minmax(0,1fr)_minmax(8rem,11rem)_6rem_2rem_2rem] md:items-center",
         isInvalid && "border-destructive/50 bg-destructive/5",
       )}
     >
@@ -36,13 +41,18 @@ const RecipeIngredientRow = ({
       </div>
 
       <div className="min-w-0">
-        <div className="truncate font-medium">{item.title}</div>
+        <Link
+          href={frontendUrls.ingredients.edit(item.ingredientId)}
+          className="block truncate font-medium hover:underline"
+        >
+          {item.title}
+        </Link>
         {isInvalid ? (
           <div className="text-xs text-destructive">Amount is required</div>
         ) : null}
       </div>
 
-      <div className="col-span-2 flex gap-2 sm:col-span-1">
+      <div className="col-span-2 flex gap-2 md:col-span-1">
         <Input
           value={item.amount}
           placeholder="Amount"
@@ -53,7 +63,8 @@ const RecipeIngredientRow = ({
         />
       </div>
 
-      <div className="col-start-2 flex justify-self-end sm:col-start-auto sm:contents">
+      <div className="col-start-2 flex justify-self-end md:col-start-auto md:contents">
+        <StockBadge isInStock={item.isInStock} onClick={onStockToggle} />
         <SaveToggleButton isSaved={item.isSaved} onToggle={onSavedToggle} />
         <IconButton
           variant="destructive"
