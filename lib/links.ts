@@ -9,6 +9,7 @@ export const MAIN_LINKS: ILink[] = [
   { href: frontendUrls.ingredients.index, label: "Ingredients" },
   { href: frontendUrls.recipes.index, label: "Recipes" },
   { href: frontendUrls.stuff.index, label: "Stuff" },
+  { href: frontendUrls.orders.index, label: "Orders" },
 ];
 
 export const PUBLIC_LINKS: ILink[] = [

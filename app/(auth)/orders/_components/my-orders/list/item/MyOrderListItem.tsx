@@ -6,7 +6,17 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useUpdateOrderStatus } from "@/features/order/hooks/useUpdateOrderStatus";
+import { ORDER_STATUS_FILTER_OPTIONS } from "@/lib/enumslist/order.constants";
 import { IPublicOrder } from "@/lib/types.order";
+import { OrderStatus } from "@prisma/client";
 import {
   CalendarDays,
   Mail,
@@ -20,6 +30,7 @@ import { OrderItemRow } from "./OrderItemRow";
 
 interface Props {
   order: IPublicOrder;
+  canUpdateStatus?: boolean;
 }
 
 const orderDateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -27,7 +38,8 @@ const orderDateFormatter = new Intl.DateTimeFormat("en-US", {
   timeStyle: "short",
 });
 
-export function OrderAccordionItem({ order }: Props) {
+export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
+  const { mutate: updateStatus, isPending } = useUpdateOrderStatus();
   const itemCount = order.items.reduce((total, item) => total + item.amount, 0);
   const createdAt = new Date(order.createdAt);
   const statusLabel = order.status.toLowerCase().replaceAll("_", " ");
@@ -74,6 +86,34 @@ export function OrderAccordionItem({ order }: Props) {
       </AccordionTrigger>
 
       <AccordionContent className="border-t bg-muted/15 p-0 [&_p:not(:last-child)]:mb-0">
+        {canUpdateStatus && (
+          <div className="flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-5">
+            <div>
+              <p className="text-sm font-medium">Order status</p>
+              <p className="text-xs text-muted-foreground">
+                Update the current stage of this order.
+              </p>
+            </div>
+            <Select
+              value={order.status}
+              disabled={isPending}
+              onValueChange={(status) =>
+                updateStatus({ id: order.id, status: status as OrderStatus })
+              }
+            >
+              <SelectTrigger aria-label={`Status for order ${order.id}`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="grid gap-6 px-4 py-5 sm:px-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-8">
           <section aria-labelledby={`customer-${order.id}`}>
             <h3

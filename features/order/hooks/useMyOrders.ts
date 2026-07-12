@@ -4,7 +4,7 @@ import { orderService } from "../order.api";
 
 export const useMyOrders = () => {
   return useQuery({
-    queryKey: orderKeys.orders,
+    queryKey: orderKeys.myOrders,
     queryFn: orderService.myOrders,
   });
 };

@@ -5,9 +5,48 @@ import { orderPresenter } from "../presenters/order.presenter";
 import { prisma } from "../prisma";
 import { orderArgs, publicRecipeWhere } from "../prisma.args";
 import { IActionResponse } from "../types";
-import { ICreateOrderDto, IPublicOrder } from "../types.order";
+import {
+  ICreateOrderDto,
+  IPublicOrder,
+  IUpdateOrderStatusDto,
+} from "../types.order";
 import { safeAction } from "./action.wrapper";
-import { getCurrentUser } from "./user.actions";
+import { getCurrentUser, requireAdmin } from "./user.actions";
+
+export const getAllOrders = async (): Promise<
+  IActionResponse<IPublicOrder[]>
+> => {
+  return safeAction("getAllOrders", async () => {
+    await requireAdmin();
+
+    const orders = await prisma.order.findMany({
+      orderBy: [{ createdAt: "desc" }],
+      ...orderArgs,
+    });
+
+    return orders.map(orderPresenter.toPublic);
+  });
+};
+
+export const updateOrderStatus = async ({
+  id,
+  status,
+}: IUpdateOrderStatusDto): Promise<IActionResponse<IPublicOrder>> => {
+  return safeAction("updateOrderStatus", async () => {
+    await requireAdmin();
+
+    const existingOrder = await prisma.order.findUnique({ where: { id } });
+    if (!existingOrder) throw new AppError("Order not found");
+
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status },
+      ...orderArgs,
+    });
+
+    return orderPresenter.toPublic(order);
+  });
+};
 
 export const getMyOrders = async (): Promise<
   IActionResponse<IPublicOrder[]>

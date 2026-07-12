@@ -26,10 +26,15 @@ const QueryPrefetcher = () => {
       queryFn: recipeService.getWishlistIds,
     });
     queryClient.prefetchQuery({
-      queryKey: orderKeys.orders,
+      queryKey: orderKeys.myOrders,
       queryFn: orderService.myOrders,
     });
     if (!isAdmin) return;
+
+    queryClient.prefetchQuery({
+      queryKey: orderKeys.allOrders,
+      queryFn: orderService.allOrders,
+    });
 
     queryClient.prefetchQuery({
       queryKey: ingredientKeys.ingredients,

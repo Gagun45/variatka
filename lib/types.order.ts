@@ -11,6 +11,11 @@ export interface ICreateOrderDto {
   orderItems: IOrderItemDto[];
 }
 
+export interface IUpdateOrderStatusDto {
+  id: number;
+  status: OrderStatus;
+}
+
 export interface IPublicOrder {
   id: number;
   customerEmail: string;

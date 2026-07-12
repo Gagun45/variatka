@@ -16,6 +16,9 @@ export const frontendUrls = {
     view: (id: number) => `/admin/stuff/${id}`,
     edit: (id: number) => `/admin/stuff/${id}/edit`,
   },
+  orders: {
+    index: "/admin/orders",
+  },
   index: "/",
   public: {
     recipes: "/recipes",
