@@ -4,9 +4,9 @@ const CheckoutPage = () => {
   return (
     <main>
       <div className="space-y-1">
-        <h1>Checkout</h1>
+        <h1>Оформлення замовлення</h1>
         <p className="text-sm text-muted-foreground">
-          Review your cart and add the contact details for this order.
+          Перевірте кошик і вкажіть контактні дані для замовлення.
         </p>
       </div>
       <Checkout />

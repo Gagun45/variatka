@@ -13,7 +13,7 @@ export const useCreateOrder = () => {
       queryClient.invalidateQueries({ queryKey: orderKeys.orders });
       queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
       queryClient.invalidateQueries({ queryKey: recipeKeys.public });
-      toast.success("Order created!");
+      toast.success("Замовлення створено!");
     },
     onError: (e) => {
       toast.error(e.message);

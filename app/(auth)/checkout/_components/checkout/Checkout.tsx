@@ -21,15 +21,15 @@ const Checkout = () => {
   if (!user)
     return (
       <StateScreen
-        title="We couldn't verify your account"
-        description="Please refresh the page and try signing in again."
+        title="Не вдалося перевірити ваш обліковий запис"
+        description="Оновіть сторінку та спробуйте увійти ще раз."
       />
     );
   if (items.length === 0)
     return (
       <StateScreen
-        title="Your cart is empty"
-        description="Add recipes to your cart before continuing to checkout."
+        title="Ваш кошик порожній"
+        description="Додайте товари до кошика, перш ніж оформлювати замовлення."
         icon={<ShoppingCart />}
       />
     );

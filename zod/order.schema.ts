@@ -1,25 +1,25 @@
 import { z } from "zod";
 
 export const createOrderSchema = z.object({
-  customerEmail: z.email("Invalid email address").trim(),
+  customerEmail: z.email("Введіть коректну адресу електронної пошти").trim(),
 
   customerName: z
     .string()
     .trim()
-    .min(2, "Name must be at least 2 characters")
-    .max(100, "Name is too long"),
+    .min(2, "Ім’я має містити щонайменше 2 символи")
+    .max(100, "Ім’я надто довге"),
 
   customerPhone: z
     .string()
     .trim()
-    .max(30, "Phone number is too long")
+    .max(30, "Номер телефону надто довгий")
     .optional()
     .or(z.literal("")),
 
   customerComment: z
     .string()
     .trim()
-    .max(1000, "Comment is too long")
+    .max(1000, "Коментар надто довгий")
     .optional()
     .or(z.literal("")),
 });

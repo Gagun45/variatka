@@ -73,7 +73,7 @@ export const createOrder = async ({
     const user = await getCurrentUser();
 
     if (orderItems.length === 0) {
-      throw new AppError("Your cart is empty.");
+      throw new AppError("Ваш кошик порожній.");
     }
 
     // Prevent invalid amounts

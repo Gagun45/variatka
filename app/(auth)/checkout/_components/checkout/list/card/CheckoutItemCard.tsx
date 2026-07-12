@@ -59,11 +59,11 @@ const CheckoutItemCard = ({ item }: Props) => {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary" className="gap-1">
                     <PackageCheck className="size-3" />
-                    {item.inStock} available
+                    У наявності: {item.inStock}
                   </Badge>
                   {isMaxReached && (
                     <Badge variant="outline" className="text-muted-foreground">
-                      Max selected
+                      Обрано максимум
                     </Badge>
                   )}
                 </div>
@@ -74,8 +74,8 @@ const CheckoutItemCard = ({ item }: Props) => {
                 variant="ghost"
                 className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                 onClick={() => removeItem(item.recipeId)}
-                label={`Remove ${item.name} from checkout`}
-                title="Remove from checkout"
+                label={`Видалити ${item.name} із замовлення`}
+                title="Видалити із замовлення"
               >
                 <Trash2 className="size-4" />
               </IconButton>
@@ -92,8 +92,8 @@ const CheckoutItemCard = ({ item }: Props) => {
                 disabled={item.quantity === 1}
                 className="size-8"
                 onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
-                label={`Decrease ${item.name} quantity`}
-                title="Decrease quantity"
+                label={`Зменшити кількість ${item.name}`}
+                title="Зменшити кількість"
               >
                 <Minus className="size-3.5" />
               </IconButton>
@@ -108,8 +108,8 @@ const CheckoutItemCard = ({ item }: Props) => {
                 disabled={isMaxReached}
                 className="size-8"
                 onClick={() => updateQuantity(item.recipeId, item.quantity + 1)}
-                label={`Increase ${item.name} quantity`}
-                title="Increase quantity"
+                label={`Збільшити кількість ${item.name}`}
+                title="Збільшити кількість"
               >
                 <Plus className="size-3.5" />
               </IconButton>

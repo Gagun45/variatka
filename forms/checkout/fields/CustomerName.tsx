@@ -13,9 +13,9 @@ const CustomerName = () => {
       render={({ field, fieldState }) => (
         <Field>
           <FieldLabel>
-            Name <RequiredLabelMark />
+            Ім’я <RequiredLabelMark />
           </FieldLabel>
-          <Input {...field} placeholder="Enter your name" />
+          <Input {...field} placeholder="Введіть ваше ім’я" />
           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
         </Field>
       )}

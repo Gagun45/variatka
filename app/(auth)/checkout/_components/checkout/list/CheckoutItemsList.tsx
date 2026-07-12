@@ -19,21 +19,21 @@ const CheckoutItemsList = ({ items }: Props) => {
             <div className="space-y-1">
               <CardTitle className="flex items-center gap-2">
                 <ClipboardList className="size-4 text-muted-foreground" />
-                Order review
+                Перевірка замовлення
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Check quantities before placing the order.
+                Перевірте кількість товарів перед оформленням.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary" className="gap-1">
                 <ShoppingBasket className="size-3" />
-                {items.length} products
+                Товарів: {items.length}
               </Badge>
               <Badge variant="secondary" className="gap-1">
                 <PackageCheck className="size-3" />
-                {totalQuantity} items
+                Одиниць: {totalQuantity}
               </Badge>
             </div>
           </div>

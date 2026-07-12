@@ -47,16 +47,16 @@ const CheckoutForm = ({
       <form onSubmit={handleSubmit(onSubmit)}>
         <Card className="sticky top-28">
           <CardHeader>
-            <CardTitle>Contact details</CardTitle>
+            <CardTitle>Контактні дані</CardTitle>
             <p className="text-sm text-muted-foreground">
-              We will use these details to confirm your order.
+              Ми використаємо ці дані для підтвердження замовлення.
             </p>
           </CardHeader>
 
           <CardContent>
             <FieldSet disabled={isPending} className="space-y-4">
               <Field>
-                <FieldLabel>Email</FieldLabel>
+                <FieldLabel>Електронна пошта</FieldLabel>
                 <Input value={customerEmail} readOnly />
               </Field>
 
@@ -67,8 +67,8 @@ const CheckoutForm = ({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel>Phone</FieldLabel>
-                    <Input {...field} placeholder="Phone number" />
+                    <FieldLabel>Телефон</FieldLabel>
+                    <Input {...field} placeholder="Номер телефону" />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
                     )}
@@ -81,10 +81,10 @@ const CheckoutForm = ({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel>Comment</FieldLabel>
+                    <FieldLabel>Коментар</FieldLabel>
                     <Textarea
                       {...field}
-                      placeholder="Pickup notes, timing, or anything we should know"
+                      placeholder="Побажання щодо отримання, часу або інша важлива інформація"
                       className="min-h-24"
                     />
                     {fieldState.invalid && (
@@ -103,10 +103,10 @@ const CheckoutForm = ({
               className="flex-1"
               onClick={() => reset()}
             >
-              Reset
+              Скинути
             </Button>
             <LoadingButton type="submit" isPending={isPending} className="flex-1">
-              Place order
+              Оформити
             </LoadingButton>
           </CardFooter>
         </Card>
