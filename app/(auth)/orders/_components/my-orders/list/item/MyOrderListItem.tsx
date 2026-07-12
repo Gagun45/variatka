@@ -46,6 +46,8 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
   const { mutate: updateStatus, isPending } = useUpdateOrderStatus();
   const itemCount = order.items.reduce((total, item) => total + item.amount, 0);
   const createdAt = new Date(order.createdAt);
+  const isTerminal =
+    order.status === "COMPLETED" || order.status === "CANCELLED";
   const statusLabel = ORDER_STATUS_LABELS[order.status];
   const statusClassName =
     order.status === "COMPLETED"
@@ -100,7 +102,7 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
             </div>
             <Select
               value={order.status}
-              disabled={isPending}
+              disabled={isPending || isTerminal}
               onValueChange={(status) =>
                 updateStatus({ id: order.id, status: status as OrderStatus })
               }

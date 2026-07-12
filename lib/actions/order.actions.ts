@@ -35,13 +35,59 @@ export const updateOrderStatus = async ({
   return safeAction("updateOrderStatus", async () => {
     await requireAdmin();
 
-    const existingOrder = await prisma.order.findUnique({ where: { id } });
-    if (!existingOrder) throw new AppError("Order not found");
+    const order = await prisma.$transaction(async (tx) => {
+      const existingOrder = await tx.order.findUnique({
+        where: { id },
+        ...orderArgs,
+      });
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { status },
-      ...orderArgs,
+      if (!existingOrder) throw new AppError("Order not found.");
+
+      if (existingOrder.status !== "PROCESSING") {
+        throw new AppError(
+          `${existingOrder.status === "COMPLETED" ? "Completed" : "Cancelled"} orders cannot be changed.`,
+        );
+      }
+
+      if (status === "PROCESSING") {
+        throw new AppError("Order is already processing.");
+      }
+
+      // Claim the transition before changing stock. A concurrent request will
+      // update zero rows and cannot decrement the same order twice.
+      const transition = await tx.order.updateMany({
+        where: { id, status: "PROCESSING" },
+        data: { status },
+      });
+
+      if (transition.count === 0) {
+        throw new AppError("Order status has already been changed.");
+      }
+
+      if (status === "COMPLETED") {
+        for (const item of existingOrder.items) {
+          const stockUpdate = await tx.recipe.updateMany({
+            where: {
+              id: item.recipeId,
+              inStock: { gte: item.amount },
+            },
+            data: {
+              inStock: { decrement: item.amount },
+            },
+          });
+
+          if (stockUpdate.count === 0) {
+            throw new AppError(
+              `"${item.recipeTitle}" has only ${item.recipe.inStock} items left in stock.`,
+            );
+          }
+        }
+      }
+
+      return tx.order.findUniqueOrThrow({
+        where: { id },
+        ...orderArgs,
+      });
     });
 
     return orderPresenter.toPublic(order);
@@ -81,13 +127,18 @@ export const createOrder = async ({
       throw new AppError("Invalid item quantity.");
     }
 
+    const recipeIds = orderItems.map((item) => item.id);
+    if (new Set(recipeIds).size !== recipeIds.length) {
+      throw new AppError("Each product may only appear once in an order.");
+    }
+
     const order = await prisma.$transaction(async (tx) => {
       // Load recipes inside the transaction
       const recipes = await tx.recipe.findMany({
         where: {
           ...publicRecipeWhere,
           id: {
-            in: orderItems.map((item) => item.id),
+            in: recipeIds,
           },
         },
       });
@@ -97,32 +148,6 @@ export const createOrder = async ({
       }
 
       const recipeMap = new Map(recipes.map((recipe) => [recipe.id, recipe]));
-
-      // Atomically reserve stock
-      for (const item of orderItems) {
-        const recipe = recipeMap.get(item.id)!;
-
-        const result = await tx.recipe.updateMany({
-          where: {
-            ...publicRecipeWhere,
-            id: item.id,
-            inStock: {
-              gte: item.amount,
-            },
-          },
-          data: {
-            inStock: {
-              decrement: item.amount,
-            },
-          },
-        });
-
-        if (result.count === 0) {
-          throw new AppError(
-            `"${recipe.title}" has only ${recipe.inStock} items left in stock.`,
-          );
-        }
-      }
 
       // Create order
       return tx.order.create({
