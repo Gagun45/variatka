@@ -16,7 +16,7 @@ export const RECIPE_SERIES_DATA: Record<RecipeSeries, IOptionListType> = {
     icon: ChefHat,
   },
   NOMLYGOLD: {
-    label: "Nomly Gold Premium",
+    label: "Nomly Gold",
     icon: Crown,
     iconClassName: "text-yellow-500",
   },

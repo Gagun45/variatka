@@ -44,12 +44,15 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
   const imageSrc = getImageUrl(imageKey, imageVersion);
   const categoryData = RECIPE_CATEGORIES_DATA[category];
   const seriesData = RECIPE_SERIES_DATA[series];
+  const isNomlyGold = series === "NOMLYGOLD";
 
   return (
     <Card
       size="sm"
       className={cn(
         "relative grid grid-cols-[5.75rem_1fr] gap-0 py-0 transition-colors hover:ring-foreground/20 sm:grid-cols-[7rem_1fr]",
+        isNomlyGold &&
+          "border-amber-400/60 bg-linear-to-r from-amber-50/70 via-card to-card shadow-[0_8px_30px_-16px_rgba(245,158,11,0.65)] ring-1 ring-amber-400/20 hover:border-amber-400 hover:ring-amber-400/40 dark:from-amber-950/20",
         isHidden && "bg-muted/30 text-muted-foreground hover:ring-border",
       )}
     >
@@ -59,7 +62,13 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
         aria-label={`Edit ${title}`}
       />
 
-      <div className="relative min-h-32 overflow-hidden border-r bg-muted/30 sm:min-h-36">
+      <div
+        className={cn(
+          "relative min-h-32 overflow-hidden border-r bg-muted/30 sm:min-h-36",
+          isNomlyGold &&
+            "border-amber-400/30 bg-amber-50/30 dark:bg-amber-950/10",
+        )}
+      >
         <Image
           src={imageSrc}
           alt={title}

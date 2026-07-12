@@ -11,6 +11,7 @@ import { RECIPE_SERIES_DATA } from "@/lib/enumslist/series.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
 import { frontendUrls } from "@/lib/urls";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import PublicRecipeCardCartButton from "./cart-btn/PublicRecipeCardCartButton";
@@ -31,6 +32,7 @@ const PublicRecipeCard = ({
   const { id, imageKey, title, description, category, series, spicy } = recipe;
 
   const isWished = wishlistIdSet.has(id);
+  const isNomlyGold = series === "NOMLYGOLD";
   const imageSrc = getImageUrl(imageKey);
   const { icon, iconClassName, label } = RECIPE_SERIES_DATA[series];
   const Icon = icon;
@@ -42,8 +44,19 @@ const PublicRecipeCard = ({
   const CategoryIcon = categoryIcon;
 
   return (
-    <Card className="h-full overflow-hidden py-0 transition-colors hover:ring-foreground/20">
-      <div className="relative border-b bg-muted/30">
+    <Card
+      className={cn(
+        "group/card h-full overflow-hidden py-0 transition-all hover:ring-foreground/20",
+        isNomlyGold &&
+          "border-amber-400/60 bg-linear-to-b from-amber-50/70 via-card to-card shadow-[0_8px_30px_-16px_rgba(245,158,11,0.65)] ring-1 ring-amber-400/20 hover:border-amber-400 hover:ring-amber-400/40 dark:from-amber-950/20",
+      )}
+    >
+      <div
+        className={cn(
+          "relative border-b bg-muted/30",
+          isNomlyGold && "border-amber-400/30 bg-amber-50/30 dark:bg-amber-950/10",
+        )}
+      >
         <Link href={frontendUrls.public.view(id)} className="block">
           <div className="relative aspect-4/3 w-full">
             <Image
