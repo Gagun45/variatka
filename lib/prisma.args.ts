@@ -1,5 +1,10 @@
 import { Prisma } from "@prisma/client";
 
+export const publicRecipeWhere = {
+  isConfirmed: true,
+  isHidden: false,
+} satisfies Prisma.RecipeWhereInput;
+
 export const recipeArgs = {
   include: {
     ingredients: {

@@ -6,6 +6,7 @@ import { recipeIngredientsService } from "../domain/recipe-ingredients.service";
 import { prisma } from "../prisma";
 import {
   IRecipe,
+  publicRecipeWhere,
   recipeArgs,
 } from "../prisma.args";
 import { recipePresenter } from "../recipe.presenter";
@@ -280,10 +281,7 @@ export const getPublicRecipes = async (): Promise<
 > => {
   return safeAction("getPublicRecipes", async () => {
     const recipes = await prisma.recipe.findMany({
-      where: {
-        isConfirmed: true,
-        isHidden: false,
-      },
+      where: publicRecipeWhere,
       ...recipeArgs,
     });
     const publicRecipes: IPublicRecipe[] = recipes.map(
@@ -305,8 +303,7 @@ export const getPublicRecipe = async (
     const recipe = await prisma.recipe.findFirst({
       where: {
         id,
-        isConfirmed: true,
-        isHidden: false,
+        ...publicRecipeWhere,
       },
       ...recipeArgs,
     });
@@ -322,10 +319,7 @@ export const getWishlistIds = async (): Promise<IActionResponse<number[]>> => {
     const items = await prisma.withlistItem.findMany({
       where: {
         userId: user.pid,
-        recipe: {
-          isConfirmed: true,
-          isHidden: false,
-        },
+        recipe: publicRecipeWhere,
       },
       select: { recipeId: true },
     });

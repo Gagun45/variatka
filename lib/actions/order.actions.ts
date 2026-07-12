@@ -3,7 +3,7 @@
 import { AppError } from "../error";
 import { orderPresenter } from "../presenters/order.presenter";
 import { prisma } from "../prisma";
-import { orderArgs } from "../prisma.args";
+import { orderArgs, publicRecipeWhere } from "../prisma.args";
 import { IActionResponse } from "../types";
 import { ICreateOrderDto, IPublicOrder } from "../types.order";
 import { safeAction } from "./action.wrapper";
@@ -46,6 +46,7 @@ export const createOrder = async ({
       // Load recipes inside the transaction
       const recipes = await tx.recipe.findMany({
         where: {
+          ...publicRecipeWhere,
           id: {
             in: orderItems.map((item) => item.id),
           },
@@ -64,6 +65,7 @@ export const createOrder = async ({
 
         const result = await tx.recipe.updateMany({
           where: {
+            ...publicRecipeWhere,
             id: item.id,
             inStock: {
               gte: item.amount,
