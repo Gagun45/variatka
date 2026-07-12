@@ -3,6 +3,7 @@ import {
   createRecipe,
   deleteRecipe,
   getPublicRecipes,
+  getPublicRecipe,
   getRecipe,
   getRecipes,
   getWishlistIds,
@@ -56,6 +57,8 @@ export const recipeService = {
     unwrapAction(() => toggleHiddenRecipe(id)),
   getPublicRecipes: (): Promise<IPublicRecipe[]> =>
     unwrapAction(() => getPublicRecipes()),
+  getPublicRecipe: (id: number): Promise<IPublicRecipe> =>
+    unwrapAction(() => getPublicRecipe(id)),
   getWishlistIds: (): Promise<number[]> => unwrapAction(() => getWishlistIds()),
   toggleWishlist: (recipeId: number): Promise<boolean> =>
     unwrapAction(() => toggleWishlist(recipeId)),

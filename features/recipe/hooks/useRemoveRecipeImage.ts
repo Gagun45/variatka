@@ -12,6 +12,7 @@ export const useRemoveRecipeImage = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
       toast.success("Image removed!");
     },
     onError: (e) => {

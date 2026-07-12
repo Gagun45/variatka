@@ -25,6 +25,7 @@ export const useEditIngredient = () => {
           ),
       );
       queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
       toast.success("Ingredient edited successfully!");
     },
     onError: (e) => {

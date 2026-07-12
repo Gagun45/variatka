@@ -294,6 +294,28 @@ export const getPublicRecipes = async (): Promise<
   });
 };
 
+export const getPublicRecipe = async (
+  id: number,
+): Promise<IActionResponse<IPublicRecipe>> => {
+  return safeAction("getPublicRecipe", async () => {
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw new AppError("Recipe not found");
+    }
+
+    const recipe = await prisma.recipe.findFirst({
+      where: {
+        id,
+        isConfirmed: true,
+        isHidden: false,
+      },
+      ...recipeArgs,
+    });
+
+    if (!recipe) throw new AppError("Recipe not found");
+    return recipePresenter.toPublic(recipe);
+  });
+};
+
 export const getWishlistIds = async (): Promise<IActionResponse<number[]>> => {
   return safeAction("getWishlistIds", async () => {
     const user = await getCurrentUser();

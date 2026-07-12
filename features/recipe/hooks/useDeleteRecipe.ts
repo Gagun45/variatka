@@ -12,6 +12,7 @@ export const useDeleteRecipe = () => {
     onSuccess: () => {
       toast.success("Recipe deleted!");
       queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
       queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
     },
     onError: (e: Error) => {

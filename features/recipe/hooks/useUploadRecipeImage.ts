@@ -17,6 +17,7 @@ export const useUploadRecipeImage = () => {
     onSuccess: () => {
       toast.success("Upload success!");
       queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
     },
 
     onError: (e) => {
