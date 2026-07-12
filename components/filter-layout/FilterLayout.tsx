@@ -48,7 +48,7 @@ export const FilterLayout = ({
               <SheetTrigger asChild>
                 <Button variant="outline">
                   <SlidersHorizontal />
-                  Filters
+                  Фільтри
                   {hasActiveFilters && (
                     <Badge variant="secondary" className="ml-1 min-w-5 px-1.5">
                       {activeFilterCount}
@@ -62,7 +62,7 @@ export const FilterLayout = ({
                 className="w-[min(22rem,calc(100vw-2rem))] max-w-none overflow-y-auto px-4 py-5"
               >
                 <div className="mb-5 flex items-center justify-between gap-3 pr-8">
-                  <SheetTitle>Filters</SheetTitle>
+                  <SheetTitle>Фільтри</SheetTitle>
                   {hasActiveFilters && (
                     <Button
                       variant="ghost"
@@ -71,13 +71,13 @@ export const FilterLayout = ({
                       className="text-muted-foreground hover:text-destructive"
                     >
                       <RotateCcw />
-                      Clear all
+                      Очистити все
                     </Button>
                   )}
                 </div>
 
                 <SheetDescription className="sr-only">
-                  Choose filters to narrow the displayed results.
+                  Виберіть фільтри, щоб звузити результати пошуку.
                 </SheetDescription>
 
                 <div className="flex flex-col gap-4">{filters}</div>
@@ -97,7 +97,7 @@ export const FilterLayout = ({
         {filters && (
           <aside className="sticky top-32 hidden max-h-[calc(100vh-8rem)] w-60 shrink-0 flex-col gap-4 overflow-y-auto border-r pb-6 pr-4 xl:flex">
             <div className="flex min-h-9 items-center justify-between gap-2">
-              <h2 className="text-lg font-semibold tracking-tight">Filters</h2>
+              <h2 className="text-lg font-semibold tracking-tight">Фільтри</h2>
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
@@ -106,7 +106,7 @@ export const FilterLayout = ({
                   className="text-muted-foreground hover:text-destructive"
                 >
                   <RotateCcw className="transition-transform group-hover/button:rotate-180" />
-                  Clear all
+                  Очистити все
                 </Button>
               )}
             </div>

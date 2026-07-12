@@ -19,7 +19,7 @@ export const FILTER_CONFIGS = {
       options: RECIPE_CATEGORY_FILTER_OPTIONS,
     },
     stock: {
-      label: "Availability",
+      label: "Наявність",
       options: STOCK_OPTIONS,
     },
     ready: {
@@ -27,7 +27,7 @@ export const FILTER_CONFIGS = {
       options: READY_TO_MAKE_OPTIONS,
     },
     series: {
-      label: "Series",
+      label: "Серія",
       options: RECIPE_SERIES_FILTER_OPTIONS,
     },
     confirmed: {
@@ -57,7 +57,7 @@ export const FILTER_CONFIGS = {
   },
   publicRecipes: {
     category: {
-      label: "Category",
+      label: "Категорія",
       options: RECIPE_CATEGORY_PUBLIC_FILTER_OPTIONS,
     },
   },

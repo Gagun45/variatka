@@ -14,7 +14,7 @@ const WishedToggleButton = ({ onToggle, isWished, className }: Props) => {
       variant="ghost"
       size="icon"
       onClick={onToggle}
-      label={isWished ? "Remove from wishlist" : "Add to wishlist"}
+      label={isWished ? "Видалити з обраного" : "Додати до обраного"}
       className={`${className} group shrink-0 rounded-full hover:bg-favorite/10`}
     >
       <Bookmark

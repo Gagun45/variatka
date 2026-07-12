@@ -16,9 +16,9 @@ export const PUBLIC_RECIPE_SORTERS = {
 } as const;
 
 export const PUBLIC_RECIPE_SORT_LABELS = {
-  recommended: "Recommended",
-  "name-asc": "A-Z",
-  "name-desc": "Z-A",
+  recommended: "Рекомендовані",
+  "name-asc": "За назвою: А → Я",
+  "name-desc": "За назвою: Я → А",
 } as const;
 
 export type IPublicRecipeSortType = keyof typeof PUBLIC_RECIPE_SORTERS;

@@ -6,8 +6,8 @@ interface Props {
 const ResultsFoundText = ({ amount, searchQuery }: Props) => {
   return (
     <p className="text-sm text-muted-foreground">
-      {amount} results found
-      {searchQuery.trim() && <span> including &quot;{searchQuery}&quot;</span>}
+      Знайдено: {amount}
+      {searchQuery.trim() && <span> за запитом &quot;{searchQuery}&quot;</span>}
     </p>
   );
 };

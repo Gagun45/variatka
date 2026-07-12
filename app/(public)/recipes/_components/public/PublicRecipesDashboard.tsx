@@ -8,12 +8,17 @@ import PublicRecipesTabs from "./tabs/PublicRecipesTabs";
 const PublicRecipesDashboard = () => {
   const { data: recipes, isLoading, isError } = usePublicRecipes();
 
-  if (isLoading) return <Loader />;
+  if (isLoading)
+    return (
+      <div role="status" aria-label="Завантаження продукції">
+        <Loader />
+      </div>
+    );
   if (isError || !recipes)
     return (
       <StateScreen
-        title="We couldn't load the recipes"
-        description="Please refresh the page and try again."
+        title="Не вдалося завантажити продукцію"
+        description="Оновіть сторінку та спробуйте ще раз."
       />
     );
   return <PublicRecipesTabs recipes={recipes} />;

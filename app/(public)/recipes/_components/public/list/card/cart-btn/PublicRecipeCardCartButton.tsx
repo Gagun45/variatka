@@ -25,14 +25,14 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
       <div className="space-y-2">
         <p className="flex min-h-4 items-center justify-center gap-1 text-xs text-muted-foreground">
           <PackageCheck className="size-3.5" />
-          Currently unavailable
+          Наразі недоступно
         </p>
         <Button
           className="h-10 w-full justify-center gap-2"
           variant="destructive"
           disabled
         >
-          Out of stock
+          Немає в наявності
         </Button>
       </div>
     );
@@ -43,14 +43,14 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
       <div className="space-y-2">
         <p className="flex min-h-4 items-center justify-center gap-1 text-xs text-muted-foreground">
           <PackageCheck className="size-3.5" />
-          {recipe.inStock} available
+          У наявності: {recipe.inStock}
         </p>
         <Button
           className="h-10 w-full justify-center gap-2"
           onClick={() => addItem(recipe)}
         >
           <ShoppingCart className="size-4" />
-          Add to cart
+          Додати до кошика
         </Button>
       </div>
     );
@@ -60,7 +60,9 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
     <div className="space-y-2">
       <p className="flex min-h-4 items-center justify-center gap-1 text-xs text-muted-foreground">
         <PackageCheck className="size-3.5" />
-        {isMaxReached ? "Maximum selected" : `${recipe.inStock} available`}
+        {isMaxReached
+          ? "Обрано максимум"
+          : `У наявності: ${recipe.inStock}`}
       </p>
 
       <div className="grid h-10 w-full grid-cols-[2.25rem_1fr_2.25rem] items-center rounded-lg border bg-background p-1">
@@ -71,10 +73,12 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
           onClick={() => updateQuantity(recipe.id, quantity - 1)}
           label={
             isRemovingNext
-              ? `Remove ${recipe.title} from cart`
-              : `Decrease ${recipe.title} quantity`
+              ? `Видалити ${recipe.title} з кошика`
+              : `Зменшити кількість ${recipe.title}`
           }
-          title={isRemovingNext ? "Remove from cart" : "Decrease quantity"}
+          title={
+            isRemovingNext ? "Видалити з кошика" : "Зменшити кількість"
+          }
         >
           <DecreaseIcon className="size-4" />
         </IconButton>
@@ -82,7 +86,7 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
         <div className="flex min-w-0 items-center justify-center gap-1.5 px-2 text-sm font-semibold tabular-nums">
           <ShoppingCart className="size-4 text-muted-foreground" />
           <span>{quantity}</span>
-          <span className="text-muted-foreground">in cart</span>
+          <span className="text-muted-foreground">у кошику</span>
         </div>
 
         <IconButton
@@ -91,8 +95,8 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
           className="size-8 rounded-md"
           disabled={isMaxReached}
           onClick={() => updateQuantity(recipe.id, quantity + 1)}
-          label={`Increase ${recipe.title} quantity`}
-          title={isMaxReached ? "Maximum selected" : "Increase quantity"}
+          label={`Збільшити кількість ${recipe.title}`}
+          title={isMaxReached ? "Обрано максимум" : "Збільшити кількість"}
         >
           <Plus className="size-4" />
         </IconButton>

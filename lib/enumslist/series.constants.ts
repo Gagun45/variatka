@@ -12,7 +12,7 @@ export type IRecipeSeries = RecipeSeries;
 
 export const RECIPE_SERIES_DATA: Record<RecipeSeries, IOptionListType> = {
   DEFAULT: {
-    label: "Standard",
+    label: "Стандарт",
     icon: ChefHat,
   },
   NOMLYGOLD: {
@@ -33,7 +33,7 @@ export const RECIPE_SERIES_ONLY_OPTIONS: IOption<IRecipeSeries>[] =
   );
 
 export const RECIPE_SERIES_FILTER_OPTIONS: IOption<IRecipeSeriesFilter>[] = [
-  { value: "all", label: "All", icon: UtensilsCrossed },
+  { value: "all", label: "Усі", icon: UtensilsCrossed },
   ...RECIPE_SERIES_ONLY_OPTIONS,
 ];
 

@@ -6,18 +6,18 @@ export type IStockType = "all" | "in" | "out";
 export const STOCK_OPTIONS: IOption<IStockType>[] = [
   {
     value: "all",
-    label: "All",
+    label: "Усі",
     icon: Layers,
   },
   {
     value: "in",
-    label: "In stock",
+    label: "У наявності",
     icon: CheckCircle2,
     iconClassName: "text-green-500",
   },
   {
     value: "out",
-    label: "Out of stock",
+    label: "Немає в наявності",
     icon: XCircle,
     iconClassName: "text-red-500",
   },

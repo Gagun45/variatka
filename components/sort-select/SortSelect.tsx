@@ -25,7 +25,7 @@ export function SortSelect<T extends string>({
   value,
   onChange,
   options,
-  placeholder = "Sort by",
+  placeholder = "Сортувати за",
   className = "w-45",
 }: Props<T>) {
   return (
