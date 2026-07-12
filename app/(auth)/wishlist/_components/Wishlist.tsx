@@ -17,19 +17,24 @@ const Wishlist = () => {
   }, [publicRecipes.data, wishlistIdsQuery.data]);
   const isLoading = publicRecipes.isLoading || wishlistIdsQuery.isLoading;
   const isError = publicRecipes.isError || wishlistIdsQuery.isError;
-  if (isLoading) return <Loader />;
+  if (isLoading)
+    return (
+      <div role="status" aria-label="Завантаження обраного">
+        <Loader />
+      </div>
+    );
   if (isError)
     return (
       <StateScreen
-        title="We couldn't load your wishlist"
-        description="Please refresh the page and try again."
+        title="Не вдалося завантажити обране"
+        description="Оновіть сторінку та спробуйте ще раз."
       />
     );
   if (recipes.length === 0)
     return (
       <StateScreen
-        title="Your wishlist is empty"
-        description="Recipes you save will appear here."
+        title="В обраному поки нічого немає"
+        description="Збережені товари з’являться тут."
         icon={<Heart />}
       />
     );

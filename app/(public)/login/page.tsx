@@ -6,9 +6,9 @@ import { signIn } from "next-auth/react";
 const LoginPage = () => {
   return (
     <main>
-      <h1>Sign In</h1>
+      <h1>Вхід</h1>
       <div className="flex justify-center">
-        <Button onClick={() => signIn("google")}>Continue with Google</Button>
+        <Button onClick={() => signIn("google")}>Продовжити через Google</Button>
       </div>
     </main>
   );

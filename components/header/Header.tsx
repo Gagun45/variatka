@@ -30,7 +30,7 @@ const Header = () => {
         <div className="flex items-center justify-start gap-1 sm:gap-2 md:gap-4">
           <SidebarTrigger className="dark:text-foreground" />
           <Link href={frontendUrls.index} className="relative size-12 block">
-            <Image alt="logo" src={getImageUrl()} fill />
+            <Image alt="Логотип Nomly" src={getImageUrl()} fill />
           </Link>
 
           <NavigationMenu />

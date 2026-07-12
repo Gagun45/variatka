@@ -8,14 +8,14 @@ export default function NotFound() {
   return (
     <main>
       <StateScreen
-        title="Page not found"
-        description="The page you are looking for doesn't exist or has moved."
+        title="Сторінку не знайдено"
+        description="Сторінка, яку ви шукаєте, не існує або її було переміщено."
         icon={<SearchX />}
         action={
           <Button asChild>
             <Link href={frontendUrls.index}>
               <House />
-              Go back home
+              Повернутися на головну
             </Link>
           </Button>
         }
