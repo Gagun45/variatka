@@ -18,14 +18,14 @@ const CartSheetFooter = ({ closeSheet }: Props) => {
     <SheetFooter className="border-t bg-card/80 p-4">
       <Button asChild className="h-10 w-full">
         <Link href="/checkout" onClick={closeSheet}>
-          Proceed to checkout
+          Оформити замовлення
           <ArrowRight className="size-4" />
         </Link>
       </Button>
 
       <Button onClick={closeSheet} variant="outline" className="h-10 w-full">
         <ShoppingBag className="size-4" />
-        Continue shopping
+        Продовжити покупки
       </Button>
     </SheetFooter>
   );

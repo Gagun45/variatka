@@ -52,14 +52,14 @@ export function CartSheetItem({ item, closeSheet }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="gap-1 px-1.5 text-[11px]">
               <PackageCheck className="size-3" />
-              {item.inStock} available
+              У наявності: {item.inStock}
             </Badge>
             {isMaxReached && (
               <Badge
                 variant="outline"
                 className="text-[11px] text-muted-foreground"
               >
-                Max selected
+                Обрано максимум
               </Badge>
             )}
           </div>
@@ -70,8 +70,8 @@ export function CartSheetItem({ item, closeSheet }: Props) {
           variant="ghost"
           className="-mr-1 -mt-1 size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           onClick={() => removeItem(item.recipeId)}
-          label={`Remove ${item.name} from cart`}
-          title="Remove from cart"
+          label={`Видалити ${item.name} з кошика`}
+          title="Видалити з кошика"
         >
           <Trash2 className="size-4" />
         </IconButton>
@@ -81,7 +81,7 @@ export function CartSheetItem({ item, closeSheet }: Props) {
 
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-medium text-muted-foreground">
-          Quantity
+          Кількість
         </span>
 
         <div className="flex items-center gap-2">
@@ -91,8 +91,8 @@ export function CartSheetItem({ item, closeSheet }: Props) {
             disabled={item.quantity === 1}
             className="size-8 rounded-full"
             onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
-            label={`Decrease ${item.name} quantity`}
-            title="Decrease quantity"
+            label={`Зменшити кількість ${item.name}`}
+            title="Зменшити кількість"
           >
             <Minus className="size-3.5" />
           </IconButton>
@@ -107,8 +107,8 @@ export function CartSheetItem({ item, closeSheet }: Props) {
             className="size-8 rounded-full"
             disabled={isMaxReached}
             onClick={() => updateQuantity(item.recipeId, item.quantity + 1)}
-            label={`Increase ${item.name} quantity`}
-            title="Increase quantity"
+            label={`Збільшити кількість ${item.name}`}
+            title="Збільшити кількість"
           >
             <Plus className="size-3.5" />
           </IconButton>

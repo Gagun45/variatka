@@ -18,15 +18,15 @@ const CartSheetHeader = () => {
         <div className="space-y-1">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <ShoppingBag className="size-5 text-muted-foreground" />
-            Shopping cart
+            Кошик
           </SheetTitle>
           <SheetDescription className="sr-only">
-            Review your recipes before checkout.
+            Перегляньте вибрані товари перед оформленням замовлення.
           </SheetDescription>
         </div>
 
         <Badge variant="secondary" className="shrink-0">
-          {itemsCount} item{itemsCount !== 1 && "s"}
+          {itemsCount} шт.
         </Badge>
       </div>
     </SheetHeader>

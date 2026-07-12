@@ -20,13 +20,13 @@ const CartSheetItems = ({ closeSheet }: Props) => {
         <div className="mb-4 grid size-14 place-items-center rounded-full bg-muted text-muted-foreground">
           <ShoppingCart className="size-6" />
         </div>
-        <h3 className="text-base font-medium">Your cart is empty</h3>
+        <h3 className="text-base font-medium">Ваш кошик порожній</h3>
         <p className="mt-1 max-w-64 text-sm text-muted-foreground">
-          Add recipes to your cart and they will appear here.
+          Додайте товари до кошика, і вони з’являться тут.
         </p>
         <Button asChild className="mt-5">
           <Link href={frontendUrls.public.recipes} onClick={closeSheet}>
-            Browse recipes
+            Переглянути продукцію
           </Link>
         </Button>
       </div>
