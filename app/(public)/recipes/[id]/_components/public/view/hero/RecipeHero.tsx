@@ -1,9 +1,8 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
 import PublicRecipeCardCartButton from "@/app/(public)/recipes/_components/public/list/card/cart-btn/PublicRecipeCardCartButton";
-import { Badge } from "@/components/ui/badge";
+import SpicyLevelBadge from "@/components/spicy-level-badge/SpicyLevelBadge";
 import { buttonVariants } from "@/components/ui/button";
 import { useToggleWishlist } from "@/features/recipe/hooks/useToggleWishlist";
-import { SpicyOptions } from "@/forms/recipe/fields/SpicyField";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlistIdSet } from "@/features/recipe/hooks/useWishlistIds";
 import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
@@ -11,7 +10,7 @@ import { RECIPE_SERIES_DATA } from "@/lib/enumslist/series.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IPublicRecipe } from "@/lib/types";
 import { frontendUrls } from "@/lib/urls";
-import { ArrowLeft, Flame, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import IconBadge from "../shared/IconBadge";
@@ -28,7 +27,6 @@ export default function RecipeHero({ recipe }: Props) {
   const { id, title, imageKey, category, series, description, spicy } = recipe;
 
   const imageSrc = getImageUrl(imageKey);
-  const spicyOption = SpicyOptions.find((s) => s.value === spicy);
   const categoryData = RECIPE_CATEGORIES_DATA[category];
   const seriesData = RECIPE_SERIES_DATA[series];
   const CategoryIcon = categoryData.icon;
@@ -44,7 +42,7 @@ export default function RecipeHero({ recipe }: Props) {
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             <ArrowLeft className="size-4" />
-            Recipes
+            До продукції
           </Link>
 
           <div className="flex items-center gap-2">
@@ -54,7 +52,7 @@ export default function RecipeHero({ recipe }: Props) {
                 href={frontendUrls.recipes.edit(id)}
               >
                 <Pencil className="size-4" />
-                Edit
+                Редагувати
               </Link>
             )}
 
@@ -96,12 +94,7 @@ export default function RecipeHero({ recipe }: Props) {
                   iconClassName={seriesData.iconClassName}
                   label={seriesData.label}
                 />
-                {spicyOption && spicyOption.value > 0 && (
-                  <Badge variant="outline" className="h-7 gap-1.5 px-2.5">
-                    <Flame className="size-3.5 text-spicy" />
-                    {spicyOption.tooltip}
-                  </Badge>
-                )}
+                <SpicyLevelBadge level={spicy} showLabel />
               </div>
 
               <div className="min-w-0 space-y-4">
@@ -118,9 +111,9 @@ export default function RecipeHero({ recipe }: Props) {
 
             <div className="mt-8 border-t pt-5">
               <div className="mb-4">
-                <p className="text-sm font-medium">Add to order</p>
+                <p className="text-sm font-medium">Додати до замовлення</p>
                 <p className="text-xs text-muted-foreground">
-                  Quantity controls handle stock limits.
+                  Кількість обмежена наявністю товару.
                 </p>
               </div>
               <PublicRecipeCardCartButton recipe={recipe} />

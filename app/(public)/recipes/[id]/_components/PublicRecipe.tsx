@@ -13,17 +13,24 @@ interface Props {
 const PublicRecipe = ({ id }: Props) => {
   const { data: recipe, isLoading, isError, error } = usePublicRecipe(id);
 
-  if (isLoading) return <Loader />;
+  if (isLoading)
+    return (
+      <div role="status" aria-label="Завантаження інформації про товар">
+        <Loader />
+      </div>
+    );
 
   if (isError) {
     const isNotFound = error.message === "Recipe not found";
     return (
       <StateScreen
-        title={isNotFound ? "Recipe not found" : "We couldn't load this recipe"}
+        title={
+          isNotFound ? "Товар не знайдено" : "Не вдалося завантажити товар"
+        }
         description={
           isNotFound
-            ? "It may have been removed or the link is incorrect."
-            : "Please refresh the page and try again."
+            ? "Можливо, товар видалено або посилання неправильне."
+            : "Оновіть сторінку та спробуйте ще раз."
         }
         icon={isNotFound ? <SearchX /> : undefined}
       />

@@ -20,26 +20,19 @@ export default function RecipeDetailsSection({ recipe, hasNotes }: Props) {
       )}
     >
       <ContentBlock
-        title={`Ingredients (${ingredients.length})`}
-        description="Everything inside this recipe."
+        title={`Інгредієнти (${ingredients.length})`}
+        description="Усе, що входить до складу цього товару."
       >
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {ingredients.map((ingredient) => (
-            <IngredientItem
-              key={ingredient.id}
-              title={ingredient.title}
-            />
+            <IngredientItem key={ingredient.id} title={ingredient.title} />
           ))}
         </div>
       </ContentBlock>
 
       {hasNotes && (
         <div className="space-y-6">
-          <ContentBlock
-            title="Notes"
-            description="Extra context from the kitchen."
-            icon={NotebookText}
-          >
+          <ContentBlock title="Додаткова інформація" icon={NotebookText}>
             <p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
               {notes.trim()}
             </p>

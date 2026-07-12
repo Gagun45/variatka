@@ -1,5 +1,5 @@
 import WishedToggleButton from "@/app/(public)/_components/wish-btn/WishedToggleButton";
-import SpicyLevelTooltip from "@/components/spicy-tooltip/SpicyLevelTooltip";
+import SpicyLevelBadge from "@/components/spicy-level-badge/SpicyLevelBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
@@ -87,7 +87,7 @@ const PublicRecipeCard = ({
         </div>
 
         <div className="absolute bottom-3 left-3 flex min-h-8 items-center">
-          <SpicyLevelTooltip level={spicy} />
+          <SpicyLevelBadge level={spicy} />
         </div>
 
         {isAuthenticated && (
