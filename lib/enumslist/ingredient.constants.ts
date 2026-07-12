@@ -2,23 +2,16 @@ import { Boxes, Package } from "lucide-react";
 import { GiSaltShaker } from "react-icons/gi";
 import { IOption } from "../types";
 import { IOptionListType } from "./types";
-// frontend/constants.ts
+import type { IngredientCategories } from "@prisma/client";
 
-// 1. Create a browser-safe pseudo-enum
-export const INGREDIENT_CATEGORIES = {
-  SPICES: "SPICES",
-  OTHER: "OTHER",
-} as const;
+export const INGREDIENT_CATEGORIES = [
+  "SPICES",
+  "OTHER",
+] as const satisfies readonly IngredientCategories[];
 
-// 2. Derive the type from the object
-export type IIngredientCategory =
-  (typeof INGREDIENT_CATEGORIES)[keyof typeof INGREDIENT_CATEGORIES];
+export type IIngredientCategory = IngredientCategories;
 
-// 3. Map your labels safely
-export const INGREDIENT_CATEGORIES_DATA: Record<
-  IIngredientCategory,
-  IOptionListType
-> = {
+export const INGREDIENT_CATEGORIES_DATA = {
   SPICES: {
     label: "Спеції",
     icon: GiSaltShaker,
@@ -29,18 +22,15 @@ export const INGREDIENT_CATEGORIES_DATA: Record<
     icon: Package,
     iconClassName: "text-muted-foreground",
   },
-};
+} satisfies Record<IngredientCategories, IOptionListType>;
 
 export type IIngredientCategoryFilter = "all" | IIngredientCategory;
 
 export const INGREDIENT_CATEGORY_ONLY_OPTIONS: IOption<IIngredientCategory>[] =
-  Object.values(INGREDIENT_CATEGORIES).map(
+  INGREDIENT_CATEGORIES.map(
     (category): IOption<IIngredientCategory> => ({
       value: category,
-      label: INGREDIENT_CATEGORIES_DATA[category].label,
-      icon: INGREDIENT_CATEGORIES_DATA[category].icon,
-      className: INGREDIENT_CATEGORIES_DATA[category].className,
-      iconClassName: INGREDIENT_CATEGORIES_DATA[category].iconClassName,
+      ...INGREDIENT_CATEGORIES_DATA[category],
     }),
   );
 

@@ -1,20 +1,16 @@
-// frontend/constants.ts
-
+import type { RecipeSeries } from "@prisma/client";
 import { ChefHat, Crown, UtensilsCrossed } from "lucide-react";
 import { IOption } from "../types";
 import { IOptionListType } from "./types";
 
-// 1. Create a browser-safe pseudo-enum
-export const RECIPE_SERIES = {
-  DEFAULT: "DEFAULT",
-  NOMLYGOLD: "NOMLYGOLD",
-} as const;
+export const RECIPE_SERIES = [
+  "DEFAULT",
+  "NOMLYGOLD",
+] as const satisfies readonly RecipeSeries[];
 
-// 2. Derive the type from the object
-export type IRecipeSeries = (typeof RECIPE_SERIES)[keyof typeof RECIPE_SERIES];
+export type IRecipeSeries = RecipeSeries;
 
-// 3. Map your labels safely
-export const RECIPE_SERIES_DATA: Record<IRecipeSeries, IOptionListType> = {
+export const RECIPE_SERIES_DATA: Record<RecipeSeries, IOptionListType> = {
   DEFAULT: {
     label: "Standard",
     icon: ChefHat,
@@ -29,13 +25,10 @@ export const RECIPE_SERIES_DATA: Record<IRecipeSeries, IOptionListType> = {
 export type IRecipeSeriesFilter = "all" | IRecipeSeries;
 
 export const RECIPE_SERIES_ONLY_OPTIONS: IOption<IRecipeSeries>[] =
-  Object.values(RECIPE_SERIES).map(
+  RECIPE_SERIES.map(
     (category): IOption<IRecipeSeries> => ({
       value: category,
-      label: RECIPE_SERIES_DATA[category].label,
-      icon: RECIPE_SERIES_DATA[category].icon,
-      className: RECIPE_SERIES_DATA[category].className,
-      iconClassName: RECIPE_SERIES_DATA[category].iconClassName,
+      ...RECIPE_SERIES_DATA[category],
     }),
   );
 

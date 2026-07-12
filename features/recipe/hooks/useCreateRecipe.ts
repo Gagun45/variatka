@@ -17,6 +17,8 @@ export const useCreateRecipe = () => {
         ...old,
       ]);
       queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      queryClient.invalidateQueries({ queryKey: recipeKeys.public });
       toast.success("Recipe created!");
     },
     onError: (e) => {

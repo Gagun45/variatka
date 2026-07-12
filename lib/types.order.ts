@@ -1,5 +1,5 @@
 import { ICreateOrderFormValues } from "@/zod/order.schema";
-import { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@prisma/client";
 
 export interface IOrderItemDto {
   id: number;

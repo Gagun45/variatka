@@ -16,7 +16,7 @@ import {
 import { useUpdateOrderStatus } from "@/features/order/hooks/useUpdateOrderStatus";
 import { ORDER_STATUS_FILTER_OPTIONS } from "@/lib/enumslist/order.constants";
 import { IPublicOrder } from "@/lib/types.order";
-import { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@prisma/client";
 import {
   CalendarDays,
   Mail,
