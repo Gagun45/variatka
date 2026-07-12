@@ -6,30 +6,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useUpdateOrderStatus } from "@/features/order/hooks/useUpdateOrderStatus";
-import {
-  ORDER_STATUS_FILTER_OPTIONS,
-  ORDER_STATUS_LABELS,
-} from "@/lib/enumslist/order.constants";
-import { IPublicOrder } from "@/lib/types.order";
-import type { OrderStatus } from "@prisma/client";
-import {
-  CalendarDays,
-  Mail,
-  MessageSquareText,
-  PackageCheck,
-  Phone,
-  ShoppingBag,
-  UserRound,
-} from "lucide-react";
-import { OrderItemRow } from "./OrderItemRow";
+import { ORDER_STATUS_LABELS } from "@/lib/enumslist/order.constants";
+import type { IPublicOrder } from "@/lib/types.order";
+import { CalendarDays, PackageCheck } from "lucide-react";
+import { OrderDetails } from "./OrderDetails";
+import { OrderStatusEditor } from "./OrderStatusEditor";
 
 interface Props {
   order: IPublicOrder;
@@ -43,12 +24,8 @@ const orderDateFormatter = new Intl.DateTimeFormat("uk-UA", {
 });
 
 export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
-  const { mutate: updateStatus, isPending } = useUpdateOrderStatus();
   const itemCount = order.items.reduce((total, item) => total + item.amount, 0);
   const createdAt = new Date(order.createdAt);
-  const isTerminal =
-    order.status === "COMPLETED" || order.status === "CANCELLED";
-  const statusLabel = ORDER_STATUS_LABELS[order.status];
   const statusClassName =
     order.status === "COMPLETED"
       ? "border-success/30 bg-success/10 text-success"
@@ -81,124 +58,20 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
               </p>
             </div>
           </div>
-
           <Badge
             variant="outline"
             className={`w-fit px-2.5 font-semibold capitalize shadow-surface ${statusClassName}`}
           >
-            {statusLabel}
+            {ORDER_STATUS_LABELS[order.status]}
           </Badge>
         </div>
       </AccordionTrigger>
 
       <AccordionContent className="border-t bg-muted/15 p-0 [&_p:not(:last-child)]:mb-0">
         {canUpdateStatus && (
-          <div className="flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-5">
-            <div>
-              <p className="text-sm font-medium">Order status</p>
-              <p className="text-xs text-muted-foreground">
-                Update the current stage of this order.
-              </p>
-            </div>
-            <Select
-              value={order.status}
-              disabled={isPending || isTerminal}
-              onValueChange={(status) =>
-                updateStatus({ id: order.id, status: status as OrderStatus })
-              }
-            >
-              <SelectTrigger aria-label={`Status for order ${order.id}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <OrderStatusEditor orderId={order.id} status={order.status} />
         )}
-        <div className="grid gap-6 px-4 py-5 sm:px-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-8">
-          <section aria-labelledby={`customer-${order.id}`}>
-            <h3
-              id={`customer-${order.id}`}
-              className="mb-3 text-xs font-semibold uppercase text-muted-foreground"
-            >
-              Контактні дані
-            </h3>
-
-            <dl className="grid gap-3 text-sm">
-              <div className="flex min-w-0 items-start gap-3">
-                <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0">
-                  <dt className="text-xs text-muted-foreground">Ім’я</dt>
-                  <dd className="break-words font-medium">
-                    {order.customerName}
-                  </dd>
-                </div>
-              </div>
-              <div className="flex min-w-0 items-start gap-3">
-                <Mail className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0">
-                  <dt className="text-xs text-muted-foreground">
-                    Електронна пошта
-                  </dt>
-                  <dd className="break-all font-medium">
-                    {order.customerEmail}
-                  </dd>
-                </div>
-              </div>
-              {order.customerPhone && (
-                <div className="flex min-w-0 items-start gap-3">
-                  <Phone className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <dt className="text-xs text-muted-foreground">Телефон</dt>
-                    <dd className="break-words font-medium">
-                      {order.customerPhone}
-                    </dd>
-                  </div>
-                </div>
-              )}
-            </dl>
-
-            {order.customerComment && (
-              <div className="mt-5 flex items-start gap-3 border-t pt-4 text-sm">
-                <MessageSquareText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">
-                    Коментар до замовлення
-                  </p>
-                  <p className="mt-1 break-words leading-relaxed">
-                    {order.customerComment}
-                  </p>
-                </div>
-              </div>
-            )}
-          </section>
-
-          <section aria-labelledby={`items-${order.id}`}>
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <h3
-                id={`items-${order.id}`}
-                className="text-xs font-semibold uppercase text-muted-foreground"
-              >
-                Товари в замовленні
-              </h3>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <ShoppingBag className="size-3.5" aria-hidden="true" />
-                Усього: {itemCount}
-              </span>
-            </div>
-
-            <div className="divide-y border-y">
-              {order.items.map((item) => (
-                <OrderItemRow key={item.id} item={item} />
-              ))}
-            </div>
-          </section>
-        </div>
+        <OrderDetails order={order} itemCount={itemCount} />
       </AccordionContent>
     </AccordionItem>
   );
