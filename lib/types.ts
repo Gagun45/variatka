@@ -16,6 +16,7 @@ export interface IRecipeIngredient {
 
 export type IRecipeIngredientEditorItem = IRecipeIngredient & {
   title: string;
+  isSaved: boolean;
 };
 
 export type ICreateRecipeDto = IRecipeDto & {

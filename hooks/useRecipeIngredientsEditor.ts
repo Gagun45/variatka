@@ -10,6 +10,7 @@ const getInitialItems = (recipe: IRecipe): IRecipeIngredientEditorItem[] =>
     amount: ing.amount,
     ingredientId: ing.ingredientId,
     title: ing.ingredient.title,
+    isSaved: ing.ingredient.isSaved,
   }));
 
 const serializeItems = (items: IRecipeIngredientEditorItem[]) =>
@@ -66,7 +67,20 @@ export const useRecipeIngredientsEditor = (recipe: IRecipe) => {
     }));
   }, []);
 
-  const addItem = useCallback((ingredient: { id: number; title: string }) => {
+  const updateSaved = useCallback((id: number, isSaved: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      items: prev.items.map((i) =>
+        i.ingredientId === id ? { ...i, isSaved } : i,
+      ),
+    }));
+  }, []);
+
+  const addItem = useCallback((ingredient: {
+    id: number;
+    title: string;
+    isSaved: boolean;
+  }) => {
     setState((prev) => {
       if (prev.items.some((i) => i.ingredientId === ingredient.id)) {
         return prev;
@@ -79,6 +93,7 @@ export const useRecipeIngredientsEditor = (recipe: IRecipe) => {
           {
             ingredientId: ingredient.id,
             title: ingredient.title,
+            isSaved: ingredient.isSaved,
             amount: "",
           },
         ],
@@ -106,6 +121,7 @@ export const useRecipeIngredientsEditor = (recipe: IRecipe) => {
     items,
     updateAmount,
     removeItem,
+    updateSaved,
     addItem,
     reset,
     toPayload,

@@ -17,6 +17,7 @@ const RecipeIngredientsEdit = ({ allIngredients, editor, isPending }: Props) => 
   const {
     items,
     updateAmount,
+    updateSaved,
     removeItem,
     addItem,
     emptyAmountCount,
@@ -63,6 +64,7 @@ const RecipeIngredientsEdit = ({ allIngredients, editor, isPending }: Props) => 
           disabled={isPending}
           onRemove={removeItem}
           onChangeAmount={updateAmount}
+          onChangeSaved={updateSaved}
         />
       </CardContent>
     </Card>

@@ -3,7 +3,7 @@ import { IIngredient } from "@/lib/prisma.args";
 import { ClipboardCopy } from "lucide-react";
 import IngredientCombobox from "./combobox/RecipeIngredientCombobox";
 
-type IngredientOption = Pick<IIngredient, "id" | "title">;
+type IngredientOption = Pick<IIngredient, "id" | "title" | "isSaved">;
 
 type RecipeIngredientsToolbarProps = {
   availableIngredients: IIngredient[];

@@ -1,4 +1,5 @@
 import IconButton from "@/components/icon-button/IconButton";
+import SaveToggleButton from "@/components/save-button/SaveToggleButton";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ type RecipeIngredientRowProps = {
   disabled?: boolean;
   onChangeAmount: (id: number, value: string) => void;
   onRemove: (id: number) => void;
+  onSavedToggle: () => void;
 };
 
 const RecipeIngredientRow = ({
@@ -18,13 +20,14 @@ const RecipeIngredientRow = ({
   disabled,
   onChangeAmount,
   onRemove,
+  onSavedToggle,
 }: RecipeIngredientRowProps) => {
   const isInvalid = !item.amount.trim();
 
   return (
     <div
       className={cn(
-        "grid grid-cols-[2rem_minmax(0,1fr)] gap-2 rounded-lg border bg-background p-2 sm:grid-cols-[2rem_minmax(0,1fr)_minmax(9rem,14rem)_2rem] sm:items-center",
+        "grid grid-cols-[2rem_minmax(0,1fr)] gap-2 rounded-lg border bg-background p-2 sm:grid-cols-[2rem_minmax(0,1fr)_minmax(9rem,14rem)_2rem_2rem] sm:items-center",
         isInvalid && "border-destructive/50 bg-destructive/5",
       )}
     >
@@ -50,17 +53,19 @@ const RecipeIngredientRow = ({
         />
       </div>
 
-      <IconButton
-        variant="destructive"
-        size="icon"
-        disabled={disabled}
-        onClick={() => onRemove(item.ingredientId)}
-        label={`Remove ${item.title}`}
-        title="Remove ingredient"
-        className="col-start-2 justify-self-end sm:col-start-auto"
-      >
-        <Trash2 className="size-4" />
-      </IconButton>
+      <div className="col-start-2 flex justify-self-end sm:col-start-auto sm:contents">
+        <SaveToggleButton isSaved={item.isSaved} onToggle={onSavedToggle} />
+        <IconButton
+          variant="destructive"
+          size="icon"
+          disabled={disabled}
+          onClick={() => onRemove(item.ingredientId)}
+          label={`Remove ${item.title}`}
+          title="Remove ingredient"
+        >
+          <Trash2 className="size-4" />
+        </IconButton>
+      </div>
     </div>
   );
 };

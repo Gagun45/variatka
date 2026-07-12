@@ -22,6 +22,7 @@ import {
 type Ingredient = {
   id: number;
   title: string;
+  isSaved: boolean;
 };
 
 interface Props {
