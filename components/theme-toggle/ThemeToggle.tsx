@@ -14,8 +14,8 @@ const ThemeToggle = () => {
   return (
     <IconButton
       size="icon"
-      label="Theme toggle"
-      title="Toggle theme"
+      label="Змінити тему"
+      title="Змінити тему"
       onClick={toggleTheme}
       className="bg-foreground rounded-full text-background hover:bg-foreground"
     >

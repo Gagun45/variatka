@@ -34,7 +34,7 @@ export function AppSidebar() {
             <div className="size-full relative">
               <Image
                 src={getImageUrl()}
-                alt="Logo"
+                alt="Логотип Nomly"
                 sizes="256px"
                 fill
                 className="object-contain"

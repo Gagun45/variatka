@@ -23,7 +23,7 @@ const AuthSidebar = () => {
   if (!session) {
     return (
       <Button value={"outline"} onClick={() => signIn("google")}>
-        Login
+        Увійти
       </Button>
     );
   }
@@ -51,14 +51,14 @@ const AuthSidebar = () => {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Link href="/profile">Profile</Link>
+          <Link href="/profile">Профіль</Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={() => signOut()}>
           <LogOut />
-          Logout
+          Вийти
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
