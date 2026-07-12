@@ -48,15 +48,15 @@ const UserProfileForm = ({ onSubmit, isPending, user }: Props) => {
         <fieldset disabled={isPending} className="space-y-6">
           <section className="space-y-4">
             <SectionHeader
-              title="Account details"
-              description="Update the name shown around the app."
+              title="Дані облікового запису"
+              description="Оновіть ім’я, яке відображається в застосунку."
             />
 
             <div className="overflow-hidden rounded-lg border border-border/70">
               <div className="grid gap-2 p-4 sm:grid-cols-[minmax(10rem,0.75fr)_1fr] sm:items-center">
                 <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <Mail className="size-4" />
-                  Email address
+                  Електронна пошта
                 </span>
                 <span className="break-words text-sm font-medium text-muted-foreground sm:text-right">
                   {user.email}
@@ -71,8 +71,8 @@ const UserProfileForm = ({ onSubmit, isPending, user }: Props) => {
 
           <section className="space-y-4 rounded-lg border border-border/70 bg-muted/30 p-4">
             <SectionHeader
-              title="Checkout defaults"
-              description="Save contact details that should appear first on new orders."
+              title="Контакти для замовлень"
+              description="Збережіть контактні дані для автоматичного заповнення нових замовлень."
             />
 
             <div className="space-y-4 rounded-lg border border-border/70 bg-background p-4">
@@ -88,14 +88,14 @@ const UserProfileForm = ({ onSubmit, isPending, user }: Props) => {
               variant="outline"
               onClick={() => reset()}
             >
-              Reset
+              Скинути
             </Button>
             <LoadingButton
               disabled={!isDirty}
               isPending={isPending}
               type="submit"
             >
-              Save changes
+              Зберегти зміни
             </LoadingButton>
           </div>
         </fieldset>

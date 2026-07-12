@@ -12,7 +12,7 @@ const OrderPhoneField = () => {
       control={control}
       render={({ field, fieldState }) => (
         <Field>
-          <FieldLabel className="text-sm">Phone number</FieldLabel>
+          <FieldLabel className="text-sm">Номер телефону</FieldLabel>
 
           <Input {...field} placeholder="+380 50 123 45 67" />
 

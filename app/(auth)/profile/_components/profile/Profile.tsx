@@ -41,7 +41,7 @@ const Profile = ({ user }: Props) => {
 
           <div className="min-w-0 space-y-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Account profile
+              Профіль облікового запису
             </p>
             <h2 className="truncate text-xl font-semibold leading-tight">
               {user.name}
@@ -60,7 +60,7 @@ const Profile = ({ user }: Props) => {
             disabled={isPending}
           >
             {isEditing ? <X /> : <Pencil />}
-            {isEditing ? "Cancel" : "Edit profile"}
+            {isEditing ? "Скасувати" : "Редагувати профіль"}
           </Button>
         </CardAction>
       </CardHeader>

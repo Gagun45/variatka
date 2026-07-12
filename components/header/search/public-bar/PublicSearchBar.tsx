@@ -50,7 +50,7 @@ const PublicSearchBar = ({ initialQuery }: PublicSearchBarProps) => {
       onSubmit={handleSubmit}
     >
       <SearchField
-        placeholder="Search recipes..."
+        placeholder="Пошук продукції..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         submitButton

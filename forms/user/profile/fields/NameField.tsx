@@ -11,8 +11,8 @@ const NameField = () => {
       control={control}
       render={({ field, fieldState }) => (
         <Field>
-          <FieldLabel className="text-sm">Display name</FieldLabel>
-          <Input {...field} placeholder="How your name should appear" />
+          <FieldLabel className="text-sm">Публічне ім’я</FieldLabel>
+          <Input {...field} placeholder="Як має відображатися ваше ім’я" />
           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
         </Field>
       )}

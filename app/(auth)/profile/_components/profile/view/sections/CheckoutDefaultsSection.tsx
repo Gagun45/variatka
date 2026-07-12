@@ -12,23 +12,23 @@ export default function CheckoutDefaultsSection({ user }: Props) {
   return (
     <section className="space-y-4 rounded-lg border border-border/70 bg-muted/30 p-4">
       <SectionHeader
-        title="Checkout defaults"
-        description="Saved contact details used to pre-fill new orders."
+        title="Контакти для замовлень"
+        description="Збережені контактні дані для автоматичного заповнення нових замовлень."
       />
 
       <dl className="overflow-hidden rounded-lg border border-border/70 bg-background">
         <InfoRow
           icon={ShoppingBag}
-          label="Recipient name"
+          label="Ім’я отримувача"
           value={user.orderName}
-          fallback="Not set yet"
+          fallback="Ще не вказано"
         />
         <Separator />
         <InfoRow
           icon={Phone}
-          label="Phone number"
+          label="Номер телефону"
           value={user.orderPhone}
-          fallback="Not set yet"
+          fallback="Ще не вказано"
         />
       </dl>
     </section>

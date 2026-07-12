@@ -14,7 +14,7 @@ export const useUpdateProfile = () => {
     },
     onSuccess: async () => {
       await update();
-      toast.success("Profile updated");
+      toast.success("Профіль оновлено");
     },
   });
   return mutation;

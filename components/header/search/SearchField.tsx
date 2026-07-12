@@ -14,13 +14,13 @@ type SearchFieldProps = ComponentProps<typeof InputGroupInput> & {
 const SearchField = ({ submitButton = false, ...props }: SearchFieldProps) => {
   return (
     <InputGroup className="h-9 border-accent bg-background/80 shadow-surface">
-      <InputGroupInput type="search" aria-label="Search" {...props} />
+      <InputGroupInput type="search" aria-label="Пошук" {...props} />
       <InputGroupAddon align="inline-end">
         {submitButton ? (
           <InputGroupButton
             type="submit"
             size="icon-xs"
-            aria-label="Submit search"
+            aria-label="Виконати пошук"
           >
             <Search />
           </InputGroupButton>

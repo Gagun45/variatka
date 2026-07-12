@@ -4,16 +4,20 @@ export const updateUserProfileSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Name must be at least 2 characters.")
-    .max(100, "Name must be at most 100 characters."),
+    .min(2, "Ім’я має містити щонайменше 2 символи.")
+    .max(100, "Ім’я має містити не більше 100 символів."),
 
   orderName: z
     .string()
     .trim()
-    .max(100, "Order name must be at most 100 characters.")
+    .max(100, "Ім’я отримувача має містити не більше 100 символів.")
     .optional(),
 
-  orderPhone: z.string().trim().max(30, "Phone number is too long.").optional(),
+  orderPhone: z
+    .string()
+    .trim()
+    .max(30, "Номер телефону надто довгий.")
+    .optional(),
 });
 
 export const userSchemas = {

@@ -12,14 +12,14 @@ export default function AccountDetailsSection({ user }: Props) {
   return (
     <section className="space-y-4">
       <SectionHeader
-        title="Account details"
-        description="Your sign-in email and public display name."
+        title="Дані облікового запису"
+        description="Ваша електронна пошта для входу та публічне ім’я."
       />
 
       <dl className="overflow-hidden rounded-lg border border-border/70">
-        <InfoRow icon={Mail} label="Email address" value={user.email} />
+        <InfoRow icon={Mail} label="Електронна пошта" value={user.email} />
         <Separator />
-        <InfoRow icon={UserRound} label="Display name" value={user.name} />
+        <InfoRow icon={UserRound} label="Публічне ім’я" value={user.name} />
       </dl>
     </section>
   );

@@ -10,16 +10,21 @@ import { LogIn } from "lucide-react";
 
 export default function ProfilePage() {
   const { status, session } = useAuth();
-  if (status === "loading") return <Loader />;
+  if (status === "loading")
+    return (
+      <div role="status" aria-label="Завантаження профілю">
+        <Loader />
+      </div>
+    );
 
   if (!session) {
     return (
       <StateScreen
-        title="Sign in required"
-        description="Sign in to view and update your account details."
+        title="Потрібно увійти"
+        description="Увійдіть, щоб переглядати та оновлювати дані облікового запису."
         icon={<LogIn />}
         action={
-          <Button onClick={() => signIn("google")}>Sign in with Google</Button>
+          <Button onClick={() => signIn("google")}>Увійти через Google</Button>
         }
       />
     );
@@ -30,9 +35,9 @@ export default function ProfilePage() {
   return (
     <main>
       <div className="space-y-1">
-        <h1>Your profile</h1>
+        <h1>Ваш профіль</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your account information and checkout contact defaults.
+          Керуйте даними облікового запису та контактами для замовлень.
         </p>
       </div>
       <Profile user={user} />
