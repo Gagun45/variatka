@@ -12,13 +12,18 @@ import MyOrdersList from "./list/MyOrdersList";
 const MyOrders = () => {
   const { data: orders, isLoading, isError } = useMyOrders();
 
-  if (isLoading) return <Loader />;
+  if (isLoading)
+    return (
+      <div role="status" aria-label="Завантаження замовлень">
+        <Loader />
+      </div>
+    );
 
   if (!orders || isError) {
     return (
       <StateScreen
-        title="We couldn't load your orders"
-        description="Please refresh the page and try again."
+        title="Не вдалося завантажити ваші замовлення"
+        description="Оновіть сторінку та спробуйте ще раз."
       />
     );
   }
@@ -26,12 +31,12 @@ const MyOrders = () => {
   if (orders.length === 0) {
     return (
       <StateScreen
-        title="No orders yet"
-        description="Your completed checkouts will appear here."
+        title="Замовлень поки немає"
+        description="Ваші оформлені замовлення з’являться тут."
         icon={<ShoppingBasket />}
         action={
           <Button asChild>
-            <Link href={frontendUrls.public.recipes}>Browse recipes</Link>
+            <Link href={frontendUrls.public.recipes}>Переглянути продукцію</Link>
           </Button>
         }
       />
@@ -39,7 +44,7 @@ const MyOrders = () => {
   }
 
   return (
-    <section aria-label="Order history" className="w-full">
+    <section aria-label="Історія замовлень" className="w-full">
       <MyOrdersList orders={orders} />
     </section>
   );

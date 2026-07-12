@@ -4,9 +4,9 @@ const OrdersPage = () => {
   return (
     <main>
       <div className="space-y-1">
-        <h1>My orders</h1>
+        <h1>Мої замовлення</h1>
         <p className="text-sm text-muted-foreground">
-          Review your orders, delivery details, and the recipes in each order.
+          Переглядайте свої замовлення, контактні дані та товари в кожному з них.
         </p>
       </div>
       <MyOrders />

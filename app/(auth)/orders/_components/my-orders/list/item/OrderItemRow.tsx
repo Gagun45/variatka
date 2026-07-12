@@ -21,7 +21,7 @@ export function OrderItemRow({ item }: Props) {
       </Link>
 
       <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-        Qty <span className="font-semibold text-foreground">{item.amount}</span>
+        Кількість: <span className="font-semibold text-foreground">{item.amount}</span>
       </span>
     </div>
   );

@@ -9,10 +9,10 @@ export const ORDER_STATUSES = [
   "CANCELLED",
 ] as const satisfies readonly OrderStatus[];
 
-const ORDER_STATUS_LABELS = {
-  PROCESSING: "Processing",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
+export const ORDER_STATUS_LABELS = {
+  PROCESSING: "Опрацьовується",
+  COMPLETED: "Виконано",
+  CANCELLED: "Скасовано",
 } satisfies Record<OrderStatus, string>;
 
 export const ORDER_STATUS_FILTER_OPTIONS: IOption<OrderStatus>[] =

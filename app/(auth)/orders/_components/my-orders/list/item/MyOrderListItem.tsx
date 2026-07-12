@@ -14,7 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUpdateOrderStatus } from "@/features/order/hooks/useUpdateOrderStatus";
-import { ORDER_STATUS_FILTER_OPTIONS } from "@/lib/enumslist/order.constants";
+import {
+  ORDER_STATUS_FILTER_OPTIONS,
+  ORDER_STATUS_LABELS,
+} from "@/lib/enumslist/order.constants";
 import { IPublicOrder } from "@/lib/types.order";
 import type { OrderStatus } from "@prisma/client";
 import {
@@ -33,16 +36,17 @@ interface Props {
   canUpdateStatus?: boolean;
 }
 
-const orderDateFormatter = new Intl.DateTimeFormat("en-US", {
+const orderDateFormatter = new Intl.DateTimeFormat("uk-UA", {
   dateStyle: "medium",
   timeStyle: "short",
+  timeZone: "Europe/Kyiv",
 });
 
 export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
   const { mutate: updateStatus, isPending } = useUpdateOrderStatus();
   const itemCount = order.items.reduce((total, item) => total + item.amount, 0);
   const createdAt = new Date(order.createdAt);
-  const statusLabel = order.status.toLowerCase().replaceAll("_", " ");
+  const statusLabel = ORDER_STATUS_LABELS[order.status];
   const statusClassName =
     order.status === "COMPLETED"
       ? "border-success/30 bg-success/10 text-success"
@@ -62,16 +66,16 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
               <PackageCheck className="size-4" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="font-semibold">Order #{order.id}</p>
+              <p className="font-semibold">Замовлення №{order.id}</p>
               <time
                 dateTime={createdAt.toISOString()}
                 className="mt-0.5 flex items-center gap-1.5 text-xs font-normal text-muted-foreground"
               >
                 <CalendarDays className="size-3" aria-hidden="true" />
-                Placed {orderDateFormatter.format(createdAt)}
+                Оформлено {orderDateFormatter.format(createdAt)}
               </time>
               <p className="text-xs font-normal text-muted-foreground">
-                {itemCount} {itemCount === 1 ? "item" : "items"}
+                {itemCount} од.
               </p>
             </div>
           </div>
@@ -120,14 +124,14 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
               id={`customer-${order.id}`}
               className="mb-3 text-xs font-semibold uppercase text-muted-foreground"
             >
-              Customer details
+              Контактні дані
             </h3>
 
             <dl className="grid gap-3 text-sm">
               <div className="flex min-w-0 items-start gap-3">
                 <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0">
-                  <dt className="text-xs text-muted-foreground">Name</dt>
+                  <dt className="text-xs text-muted-foreground">Ім’я</dt>
                   <dd className="break-words font-medium">
                     {order.customerName}
                   </dd>
@@ -136,7 +140,9 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
               <div className="flex min-w-0 items-start gap-3">
                 <Mail className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0">
-                  <dt className="text-xs text-muted-foreground">Email</dt>
+                  <dt className="text-xs text-muted-foreground">
+                    Електронна пошта
+                  </dt>
                   <dd className="break-all font-medium">
                     {order.customerEmail}
                   </dd>
@@ -146,7 +152,7 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
                 <div className="flex min-w-0 items-start gap-3">
                   <Phone className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0">
-                    <dt className="text-xs text-muted-foreground">Phone</dt>
+                    <dt className="text-xs text-muted-foreground">Телефон</dt>
                     <dd className="break-words font-medium">
                       {order.customerPhone}
                     </dd>
@@ -159,7 +165,9 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
               <div className="mt-5 flex items-start gap-3 border-t pt-4 text-sm">
                 <MessageSquareText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">Order note</p>
+                  <p className="text-xs text-muted-foreground">
+                    Коментар до замовлення
+                  </p>
                   <p className="mt-1 break-words leading-relaxed">
                     {order.customerComment}
                   </p>
@@ -174,11 +182,11 @@ export function OrderAccordionItem({ order, canUpdateStatus = false }: Props) {
                 id={`items-${order.id}`}
                 className="text-xs font-semibold uppercase text-muted-foreground"
               >
-                Order items
+                Товари в замовленні
               </h3>
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <ShoppingBag className="size-3.5" aria-hidden="true" />
-                {itemCount} total
+                Усього: {itemCount}
               </span>
             </div>
 
