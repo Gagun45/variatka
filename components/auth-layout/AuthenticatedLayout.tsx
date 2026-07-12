@@ -9,10 +9,10 @@ import { signIn } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
 const protectedPageDescriptions: Record<string, string> = {
-  "/wishlist": "view your wishlist",
-  "/orders": "view your orders",
-  "/checkout": "continue to checkout",
-  "/profile": "view your profile",
+  "/wishlist": "переглянути обране",
+  "/orders": "переглянути свої замовлення",
+  "/checkout": "продовжити оформлення замовлення",
+  "/profile": "переглянути свій профіль",
 };
 
 export default function AuthenticatedLayout({
@@ -32,12 +32,12 @@ export default function AuthenticatedLayout({
 
     return (
       <StateScreen
-        title="Sign in required"
-        description={`Please sign in to ${pageDescription ?? "access this page"}.`}
+        title="Потрібно увійти"
+        description={`Увійдіть, щоб ${pageDescription ?? "переглянути цю сторінку"}.`}
         icon={<LogIn />}
         action={
           <Button onClick={() => signIn("google")}>
-            Continue with Google
+            Продовжити через Google
           </Button>
         }
       />

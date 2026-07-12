@@ -10,7 +10,7 @@ import { recipeKeys } from "../recipe.keys";
 type TVariables = {
   id: number;
   dto: IRecipeDto;
-  items: IRecipeIngredient[];
+  items?: IRecipeIngredient[];
 };
 
 export const useUpdateRecipe = () => {
@@ -18,7 +18,7 @@ export const useUpdateRecipe = () => {
 
   return useMutation<IRecipe, Error, TVariables>({
     mutationFn: ({ id, dto, items }) => recipeService.update(id, dto, items),
-    onSuccess: (updatedRecipe) => {
+    onSuccess: (updatedRecipe, { items }) => {
       queryClient.setQueryData<IRecipe[]>(recipeKeys.recipes, (old = []) =>
         old.map((recipe) =>
           recipe.id === updatedRecipe.id ? updatedRecipe : recipe,
@@ -26,7 +26,9 @@ export const useUpdateRecipe = () => {
       );
       queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
       queryClient.invalidateQueries({ queryKey: recipeKeys.public });
-      queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      if (items !== undefined) {
+        queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      }
       toast.success("Recipe edited successfully!");
     },
     onError: (error) => toast.error(error.message),

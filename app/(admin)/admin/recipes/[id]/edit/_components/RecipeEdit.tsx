@@ -76,7 +76,7 @@ const LoadedRecipeEdit = ({ recipe, ingredients }: LoadedRecipeEditProps) => {
       {
         dto,
         id: recipe.id,
-        items: editor.toPayload(),
+        items: editor.isDirty ? editor.toPayload() : undefined,
       },
       {
         onSuccess: () => {

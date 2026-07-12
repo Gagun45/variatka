@@ -131,7 +131,7 @@ export const updateRecipeIngredients = async (
 export const updateRecipe = async (
   id: number,
   dto: IRecipeDto,
-  items: IRecipeIngredient[],
+  items?: IRecipeIngredient[],
 ): Promise<IActionResponse<IRecipe>> => {
   return safeAction("updateRecipe", async () => {
     await requireAdmin();
@@ -147,7 +147,9 @@ export const updateRecipe = async (
       }
 
       await tx.recipe.update({ where: { id }, data: dto });
-      await recipeIngredientsService.replaceInTransaction(tx, id, items);
+      if (items !== undefined) {
+        await recipeIngredientsService.replaceInTransaction(tx, id, items);
+      }
 
       const updatedRecipe = await tx.recipe.findUnique({
         where: { id },

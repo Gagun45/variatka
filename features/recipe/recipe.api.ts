@@ -43,7 +43,7 @@ export const recipeService = {
   update: (
     id: number,
     dto: IRecipeDto,
-    items: IRecipeIngredient[],
+    items?: IRecipeIngredient[],
   ): Promise<IRecipe> => unwrapAction(() => updateRecipe(id, dto, items)),
   updateIngredients: (
     id: number,
