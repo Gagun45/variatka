@@ -2,6 +2,8 @@
 
 import { ingredientService } from "@/features/ingredient/ingredient.api";
 import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
+import { orderService } from "@/features/order/order.api";
+import { orderKeys } from "@/features/order/order.keys";
 import { recipeService } from "@/features/recipe/recipe.api";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 import { stuffService } from "@/features/stuff/stuff.api";
@@ -22,6 +24,10 @@ const QueryPrefetcher = () => {
     queryClient.prefetchQuery({
       queryKey: recipeKeys.wishlistIds,
       queryFn: recipeService.getWishlistIds,
+    });
+    queryClient.prefetchQuery({
+      queryKey: orderKeys.orders,
+      queryFn: orderService.myOrders,
     });
     if (!isAdmin) return;
 
