@@ -59,7 +59,7 @@ const IngredientCard = ({
       className="relative w-full rounded-lg py-3 transition-colors hover:bg-muted/30"
     >
       <Link
-        href={frontendUrls.ingredients.edit(id)}
+        href={frontendUrls.ingredients.view(id)}
         className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label={`Edit ${title}`}
       />
