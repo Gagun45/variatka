@@ -11,10 +11,9 @@ import ViewItemDescription from "@/components/view-item/ViewItemDescription";
 import ViewItemEditLink from "@/components/view-item/ViewItemEditLink";
 import { useToggleIngredientStock } from "@/features/ingredient/hooks/useToggleIngredientStock";
 import { useToggleSavedIngredient } from "@/features/ingredient/hooks/useToggleSavedIngredient";
+import { INGREDIENT_CATEGORIES_DATA } from "@/lib/enumslist/ingredient.constants";
 import { frontendUrls } from "@/lib/urls";
 import { useRecipeStore } from "@/zustand/recipe.store";
-import IngredientImageViewAdmin from "./img-admin/IngredientImageViewAdmin";
-import { INGREDIENT_CATEGORIES_DATA } from "@/lib/enumslist/ingredient.constants";
 
 interface Props {
   ingredient: IIngredient;
@@ -62,7 +61,9 @@ const IngredientView = ({ ingredient }: Props) => {
       </CardHeader>
 
       <CardContent className="view-item-card-content">
+        {/* 
         <IngredientImageViewAdmin ingredient={ingredient} />
+         */}
         <ViewItemEditLink href={frontendUrls.ingredients.edit(id)} />
 
         <Separator />
