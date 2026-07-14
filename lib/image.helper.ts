@@ -1,5 +1,7 @@
 export const getImageUrl = (imageKey?: string | null, version?: number) => {
   if (!imageKey) return "/default-poster-new.png";
 
-  return `${process.env.NEXT_PUBLIC_CDN_URL}/${imageKey}?v=${version ?? 0}`;
+  const publicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL?.replace(/\/$/, "");
+
+  return `${publicUrl}/${imageKey}?v=${version ?? 0}`;
 };

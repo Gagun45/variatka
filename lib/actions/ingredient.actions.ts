@@ -4,7 +4,7 @@ import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IIngredient, ingredientArgs } from "../prisma.args";
-import { uploadHelper } from "../s3/upload.helper";
+import { storageHelper } from "../r2/storage.helper";
 import { IActionResponse } from "../types";
 import { safeAction } from "./action.wrapper";
 import { requireAdmin } from "./user.actions";
@@ -72,6 +72,7 @@ export const deleteIngredient = async (
     const ingredient = await prisma.ingredient.findUnique({
       where: { id },
       select: {
+        imageKey: true,
         _count: {
           select: {
             recipeIngredients: true,
@@ -83,6 +84,9 @@ export const deleteIngredient = async (
 
     if (ingredient._count.recipeIngredients > 0)
       throw new AppError("Cannot delete ingredients used in recipes");
+    if (ingredient.imageKey) {
+      await storageHelper.delete(ingredient.imageKey);
+    }
     await prisma.ingredient.delete({
       where: { id },
     });
@@ -116,7 +120,7 @@ export const uploadIngredientImage = async (
 ): Promise<IActionResponse<IIngredient>> => {
   return safeAction("uploadIngredientImage", async () => {
     await requireAdmin();
-    const imageKey = await uploadHelper.image({
+    const imageKey = await storageHelper.image({
       entity: "ingredients",
       file,
       id: ingredientId,
@@ -138,6 +142,12 @@ export const removeIngredientImage = async (
 ): Promise<IActionResponse<IIngredient>> => {
   return safeAction("removeIngredientImage", async () => {
     await requireAdmin();
+    const ingredient = await prisma.ingredient.findUnique({
+      where: { id: ingredientId },
+      select: { imageKey: true },
+    });
+    if (!ingredient) throw new AppError("Ingredient not found");
+    if (ingredient.imageKey) await storageHelper.delete(ingredient.imageKey);
     const updatedIngredient = await prisma.ingredient.update({
       where: { id: ingredientId },
       data: {

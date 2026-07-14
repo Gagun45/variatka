@@ -10,7 +10,7 @@ import {
   recipeArgs,
 } from "../prisma.args";
 import { recipePresenter } from "../recipe.presenter";
-import { uploadHelper } from "../s3/upload.helper";
+import { storageHelper } from "../r2/storage.helper";
 import {
   IActionResponse,
   ICreateRecipeDto,
@@ -169,10 +169,12 @@ export const deleteRecipe = async (
     await requireAdmin();
     const recipe = await prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true },
+      select: { id: true, imageKey: true },
     });
 
     if (!recipe) throw new AppError("Recipe not found");
+
+    if (recipe.imageKey) await storageHelper.delete(recipe.imageKey);
 
     await prisma.recipe.delete({
       where: { id: recipeId },
@@ -244,7 +246,7 @@ export const uploadRecipeImage = async (
 ): Promise<IActionResponse<IRecipe>> => {
   return safeAction("uploadRecipeImage", async () => {
     await requireAdmin();
-    const imageKey = await uploadHelper.image({
+    const imageKey = await storageHelper.image({
       entity: "recipes",
       file,
       id: recipeId,
@@ -266,6 +268,12 @@ export const removeRecipeImage = async (
 ): Promise<IActionResponse<IRecipe>> => {
   return safeAction("removeRecipeImage", async () => {
     await requireAdmin();
+    const recipe = await prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { imageKey: true },
+    });
+    if (!recipe) throw new AppError("Recipe not found");
+    if (recipe.imageKey) await storageHelper.delete(recipe.imageKey);
     const updatedRecipe = await prisma.recipe.update({
       where: { id: recipeId },
       data: {
