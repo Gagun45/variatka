@@ -1,9 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 type RecipeIngredientsHeaderProps = {

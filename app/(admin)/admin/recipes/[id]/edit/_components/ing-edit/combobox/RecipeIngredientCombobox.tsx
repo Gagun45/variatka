@@ -48,7 +48,7 @@ export default function IngredientCombobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled || !hasIngredients}
-          className="h-9 w-full justify-between"
+          className="h-9 flex-1 justify-between"
         >
           <span className="inline-flex min-w-0 items-center gap-2">
             <Plus className="size-4" />

@@ -88,6 +88,11 @@ const LoadedRecipeEdit = ({ recipe, ingredients }: LoadedRecipeEditProps) => {
 
   return (
     <div className="space-y-8">
+      <RecipeIngredientsEdit
+        allIngredients={ingredients}
+        editor={editor}
+        isPending={isPending}
+      />
       <Card className="gap-0">
         <CardHeader className="p-4 sm:p-6">
           <div className="space-y-1">
@@ -114,12 +119,6 @@ const LoadedRecipeEdit = ({ recipe, ingredients }: LoadedRecipeEditProps) => {
           />
         </CardContent>
       </Card>
-
-      <RecipeIngredientsEdit
-        allIngredients={ingredients}
-        editor={editor}
-        isPending={isPending}
-      />
 
       <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 rounded-xl border bg-background/90 p-2 shadow-lg backdrop-blur-md sm:flex sm:justify-end">
         <Button
