@@ -12,6 +12,9 @@ export const recipeArgs = {
         ingredient: true,
       },
     },
+    variants: {
+      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    },
   },
 } satisfies Omit<Prisma.RecipeFindManyArgs, "where">;
 
