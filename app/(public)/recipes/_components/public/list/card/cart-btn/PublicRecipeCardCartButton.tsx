@@ -2,6 +2,13 @@
 
 import IconButton from "@/components/icon-button/IconButton";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { IPublicRecipe } from "@/lib/types";
 import { selectItemQuantity, useCartStore } from "@/zustand/cart.store";
 import { Minus, PackageCheck, Plus, ShoppingCart, Trash2 } from "lucide-react";
@@ -21,9 +28,7 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
   const selectedVariant =
     recipe.variants.find((variant) => variant.id === selectedVariantId) ??
     defaultVariant;
-  const quantity = useCartStore(
-    selectItemQuantity(selectedVariant?.id ?? 0),
-  );
+  const quantity = useCartStore(selectItemQuantity(selectedVariant?.id ?? 0));
   const addItem = useCartStore((state) => state.addItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
 
@@ -34,22 +39,26 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
   const DecreaseIcon = isRemovingNext ? Trash2 : Minus;
 
   const variantSelector = (
-    <label className="block space-y-1 text-xs text-muted-foreground">
-      <span>Варіант</span>
-      <select
-        className="h-9 w-full rounded-md border bg-background px-3 text-sm text-foreground"
-        value={selectedVariant?.id ?? ""}
-        onChange={(event) => setSelectedVariantId(Number(event.target.value))}
-        disabled={recipe.variants.length === 0}
+    <Select
+      value={selectedVariant ? String(selectedVariant.id) : undefined}
+      onValueChange={(value) => setSelectedVariantId(Number(value))}
+      disabled={recipe.variants.length === 0}
+    >
+      <SelectTrigger
+        className="w-full"
+        aria-label="Оберіть варіант рецепта"
       >
+        <SelectValue placeholder="Оберіть варіант" />
+      </SelectTrigger>
+      <SelectContent>
         {recipe.variants.map((variant) => (
-          <option key={variant.id} value={variant.id}>
+          <SelectItem key={variant.id} value={String(variant.id)}>
             {variant.label}
             {variant.inStock === 0 ? " — немає в наявності" : ""}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-    </label>
+      </SelectContent>
+    </Select>
   );
 
   if (isOutOfStock) {
@@ -102,17 +111,13 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
           variant="ghost"
           size="icon"
           className={`size-8 rounded-md ${isRemovingNext ? "text-muted-foreground hover:bg-destructive/10 hover:text-destructive" : ""}`}
-          onClick={() =>
-            updateQuantity(selectedVariant!.id, quantity - 1)
-          }
+          onClick={() => updateQuantity(selectedVariant!.id, quantity - 1)}
           label={
             isRemovingNext
               ? `Видалити ${recipe.title} з кошика`
               : `Зменшити кількість ${recipe.title}`
           }
-          title={
-            isRemovingNext ? "Видалити з кошика" : "Зменшити кількість"
-          }
+          title={isRemovingNext ? "Видалити з кошика" : "Зменшити кількість"}
         >
           <DecreaseIcon className="size-4" />
         </IconButton>
@@ -128,9 +133,7 @@ const PublicRecipeCardCartButton = ({ recipe }: Props) => {
           size="icon"
           className="size-8 rounded-md"
           disabled={isMaxReached}
-          onClick={() =>
-            updateQuantity(selectedVariant!.id, quantity + 1)
-          }
+          onClick={() => updateQuantity(selectedVariant!.id, quantity + 1)}
           label={`Збільшити кількість ${recipe.title}`}
           title={isMaxReached ? "Обрано максимум" : "Збільшити кількість"}
         >
