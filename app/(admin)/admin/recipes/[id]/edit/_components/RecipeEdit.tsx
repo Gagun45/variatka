@@ -24,6 +24,7 @@ import DeleteRecipe from "./delete-recipe/DeleteRecipe";
 import RecipeIngredientsEdit from "./ing-edit/RecipeIngredientsEdit";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/loading-btn/LoadingButton";
+import RecipeVariantsEditor from "./variants/RecipeVariantsEditor";
 
 interface Props {
   id: number;
@@ -92,6 +93,10 @@ const LoadedRecipeEdit = ({ recipe, ingredients }: LoadedRecipeEditProps) => {
         allIngredients={ingredients}
         editor={editor}
         isPending={isPending}
+      />
+      <RecipeVariantsEditor
+        recipeId={recipe.id}
+        variants={recipe.variants}
       />
       <Card className="gap-0">
         <CardHeader className="p-4 sm:p-6">
