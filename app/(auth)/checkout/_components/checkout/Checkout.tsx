@@ -36,7 +36,8 @@ const Checkout = () => {
   const onSumbit = (formValues: ICreateOrderFormValues) => {
     const orderItems: IOrderItemDto[] = items.map((item) => ({
       amount: item.quantity,
-      id: item.recipeId,
+      recipeId: item.recipeId,
+      variantId: item.variantId,
     }));
     mutate(
       { formValues, orderItems },

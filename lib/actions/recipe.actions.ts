@@ -53,7 +53,6 @@ export const createRecipe = async (
       confirmationNotes,
       isConfirmed,
       category,
-      inStock,
       isHidden,
       series,
       spicy,
@@ -71,7 +70,6 @@ export const createRecipe = async (
         notes,
         title,
         category,
-        inStock,
         confirmationNotes,
         isConfirmed,
         isHidden,
@@ -169,16 +167,25 @@ export const deleteRecipe = async (
     await requireAdmin();
     const recipe = await prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true, imageKey: true },
+      select: {
+        id: true,
+        imageKey: true,
+        _count: {
+          select: { orderItems: true },
+        },
+      },
     });
 
     if (!recipe) throw new AppError("Recipe not found");
-
-    if (recipe.imageKey) await storageHelper.delete(recipe.imageKey);
+    if (recipe._count.orderItems > 0) {
+      throw new AppError("Cannot delete a recipe used in orders");
+    }
 
     await prisma.recipe.delete({
       where: { id: recipeId },
     });
+
+    if (recipe.imageKey) await storageHelper.delete(recipe.imageKey);
     return recipeId;
   });
 };

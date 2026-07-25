@@ -64,15 +64,22 @@ export interface IPublicRecipeIngredient {
   title: string;
 }
 
+export interface IPublicRecipeVariant {
+  id: number;
+  label: string;
+  inStock: number;
+  sortOrder: number;
+}
+
 export type IPublicRecipe = {
   id: number;
   title: string;
   description: string;
-  inStock: number;
   spicy: number;
   series: IRecipeSeries;
   notes: string;
   imageKey: string | null;
   category: IRecipeCategory;
   ingredients: IPublicRecipeIngredient[];
+  variants: IPublicRecipeVariant[];
 };

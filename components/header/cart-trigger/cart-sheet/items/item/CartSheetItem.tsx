@@ -48,6 +48,7 @@ export function CartSheetItem({ item, closeSheet }: Props) {
           >
             {item.name}
           </Link>
+          <p className="text-xs text-muted-foreground">{item.variantLabel}</p>
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="gap-1 px-1.5 text-[11px]">
@@ -69,7 +70,7 @@ export function CartSheetItem({ item, closeSheet }: Props) {
           size="icon"
           variant="ghost"
           className="-mr-1 -mt-1 size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => removeItem(item.recipeId)}
+          onClick={() => removeItem(item.variantId)}
           label={`Видалити ${item.name} з кошика`}
           title="Видалити з кошика"
         >
@@ -90,7 +91,7 @@ export function CartSheetItem({ item, closeSheet }: Props) {
             variant="outline"
             disabled={item.quantity === 1}
             className="size-8 rounded-full"
-            onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
+            onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
             label={`Зменшити кількість ${item.name}`}
             title="Зменшити кількість"
           >
@@ -106,7 +107,7 @@ export function CartSheetItem({ item, closeSheet }: Props) {
             variant="outline"
             className="size-8 rounded-full"
             disabled={isMaxReached}
-            onClick={() => updateQuantity(item.recipeId, item.quantity + 1)}
+            onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
             label={`Збільшити кількість ${item.name}`}
             title="Збільшити кількість"
           >

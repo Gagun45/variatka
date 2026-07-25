@@ -5,6 +5,7 @@ import {
   IPublicRecipeSortType,
   PUBLIC_RECIPE_SORTERS,
 } from "@/lib/public.sorting.recipes";
+import { isRecipeInStock } from "@/lib/recipe-stock";
 import { IPublicRecipe } from "@/lib/types";
 
 import { useMemo } from "react";
@@ -43,9 +44,9 @@ export function usePublicRecipesFilter({
 
     // 3. STOCK
     if (stock === "in") {
-      result = result.filter((recipe) => recipe.inStock > 0);
+      result = result.filter(isRecipeInStock);
     } else if (stock === "out") {
-      result = result.filter((recipe) => recipe.inStock === 0);
+      result = result.filter((recipe) => !isRecipeInStock(recipe));
     }
 
     if (series !== "all") {

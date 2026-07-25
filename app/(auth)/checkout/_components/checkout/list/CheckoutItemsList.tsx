@@ -42,7 +42,7 @@ const CheckoutItemsList = ({ items }: Props) => {
 
       <div className="flex flex-col gap-3">
         {items.map((item) => (
-          <CheckoutItemCard item={item} key={item.recipeId} />
+          <CheckoutItemCard item={item} key={item.variantId} />
         ))}
       </div>
     </section>

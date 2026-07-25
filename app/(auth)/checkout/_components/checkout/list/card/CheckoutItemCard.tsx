@@ -56,6 +56,9 @@ const CheckoutItemCard = ({ item }: Props) => {
                     {item.name}
                   </Link>
                 </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {item.variantLabel}
+                </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary" className="gap-1">
                     <PackageCheck className="size-3" />
@@ -73,7 +76,7 @@ const CheckoutItemCard = ({ item }: Props) => {
                 size="icon"
                 variant="ghost"
                 className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
-                onClick={() => removeItem(item.recipeId)}
+                onClick={() => removeItem(item.variantId)}
                 label={`Видалити ${item.name} із замовлення`}
                 title="Видалити із замовлення"
               >
@@ -91,7 +94,9 @@ const CheckoutItemCard = ({ item }: Props) => {
                 variant="outline"
                 disabled={item.quantity === 1}
                 className="size-8"
-                onClick={() => updateQuantity(item.recipeId, item.quantity - 1)}
+                onClick={() =>
+                  updateQuantity(item.variantId, item.quantity - 1)
+                }
                 label={`Зменшити кількість ${item.name}`}
                 title="Зменшити кількість"
               >
@@ -107,7 +112,9 @@ const CheckoutItemCard = ({ item }: Props) => {
                 variant="outline"
                 disabled={isMaxReached}
                 className="size-8"
-                onClick={() => updateQuantity(item.recipeId, item.quantity + 1)}
+                onClick={() =>
+                  updateQuantity(item.variantId, item.quantity + 1)
+                }
                 label={`Збільшити кількість ${item.name}`}
                 title="Збільшити кількість"
               >

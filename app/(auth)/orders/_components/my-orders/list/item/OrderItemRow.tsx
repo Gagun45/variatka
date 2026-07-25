@@ -13,10 +13,12 @@ export function OrderItemRow({ item }: Props) {
   return (
     <div className="flex min-w-0 items-center justify-between gap-4 py-3">
       <Link
-        href={frontendUrls.public.view(item.id)}
+        href={frontendUrls.public.view(item.recipeId)}
         className="group flex min-w-0 items-center gap-1.5 text-sm font-medium no-underline! transition-colors hover:text-primary!"
       >
-        <span className="truncate">{item.title}</span>
+        <span className="truncate">
+          {item.title} — {item.variantLabel}
+        </span>
         <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
       </Link>
 

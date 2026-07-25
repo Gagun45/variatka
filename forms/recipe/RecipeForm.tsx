@@ -16,7 +16,6 @@ import { useEffect } from "react";
 import CategorySelectField from "./fields/CategorySelectField";
 import ConfirmationNotesField from "./fields/ConfirmationNotesField";
 import DescriptionField from "./fields/DescriptionField";
-import InStockField from "./fields/InStockField";
 import IsConfirmedField from "./fields/IsConfirmedField";
 import NotesField from "./fields/NotesField";
 import SeriesField from "./fields/SeriesField";
@@ -56,7 +55,6 @@ const RecipeForm = ({
     description: initialValues?.description ?? "",
     notes: initialValues?.notes ?? "",
     title: initialValues?.title ?? "",
-    inStock: initialValues?.inStock ?? 0,
     confirmationNotes: initialValues?.confirmationNotes ?? "",
     isConfirmed: initialValues?.isConfirmed ?? false,
     spicy: initialValues?.spicy ?? 0,
@@ -85,7 +83,6 @@ const RecipeForm = ({
       title: watchedValues.title ?? "",
       description: watchedValues.description ?? "",
       notes: watchedValues.notes ?? "",
-      inStock: watchedValues.inStock ?? 0,
       category: watchedValues.category ?? initialCategory,
       confirmationNotes: watchedValues.confirmationNotes ?? "",
       isConfirmed: watchedValues.isConfirmed ?? false,
@@ -142,7 +139,6 @@ const RecipeForm = ({
               )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <InStockField />
               <SpicyField />
             </div>
             <div className="mt-4 flex flex-wrap gap-3">

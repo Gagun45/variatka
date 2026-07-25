@@ -36,7 +36,7 @@ const CartSheetItems = ({ closeSheet }: Props) => {
   return (
     <div className="flex flex-col gap-3">
       {items.map((item) => (
-        <CartSheetItem key={item.recipeId} item={item} closeSheet={closeSheet} />
+        <CartSheetItem key={item.variantId} item={item} closeSheet={closeSheet} />
       ))}
     </div>
   );

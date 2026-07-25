@@ -7,7 +7,6 @@ export const recipePresenter = {
     title: r.title,
     description: r.description,
     notes: r.notes,
-    inStock: r.inStock,
     series: r.series,
     spicy: r.spicy,
     imageKey: r.imageKey,
@@ -15,6 +14,12 @@ export const recipePresenter = {
     ingredients: r.ingredients.map((ri) => ({
       id: ri.ingredientId,
       title: ri.ingredient.title,
+    })),
+    variants: r.variants.map(({ id, label, inStock, sortOrder }) => ({
+      id,
+      label,
+      inStock,
+      sortOrder,
     })),
   }),
 };

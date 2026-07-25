@@ -44,7 +44,9 @@ export function OrderDetails({ order, itemCount }: Props) {
           </span>
         </div>
         <div className="divide-y border-y">
-          {order.items.map((item) => <OrderItemRow key={item.id} item={item} />)}
+          {order.items.map((item) => (
+            <OrderItemRow key={item.variantId} item={item} />
+          ))}
         </div>
       </section>
     </div>

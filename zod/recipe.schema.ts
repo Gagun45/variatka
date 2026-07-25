@@ -7,7 +7,6 @@ export const recipeSchema = z.object({
   title: z.string().min(1, "Recipe title is required"),
   description: z.string(),
   notes: z.string(),
-  inStock: z.number().min(0),
   confirmationNotes: z.string().optional(),
   isConfirmed: z.boolean(),
   isHidden: z.boolean(),

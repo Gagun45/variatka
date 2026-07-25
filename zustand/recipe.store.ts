@@ -24,7 +24,6 @@ const initialDraft: IRecipeDto = {
   title: "",
   description: "",
   notes: "",
-  inStock: 0,
   category: "SPICES",
   confirmationNotes: "",
   isConfirmed: false,
@@ -75,7 +74,7 @@ export const useRecipeStore = create<IRecipeState>()(
         }),
     }),
     {
-      name: "recipe-storage",
+      name: "recipe-store",
       storage: createJSONStorage(() => localStorage),
     },
   ),

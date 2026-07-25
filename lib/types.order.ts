@@ -2,7 +2,8 @@ import { ICreateOrderFormValues } from "@/zod/order.schema";
 import type { OrderStatus } from "@prisma/client";
 
 export interface IOrderItemDto {
-  id: number;
+  recipeId: number;
+  variantId: number;
   amount: number;
 }
 
@@ -28,7 +29,9 @@ export interface IPublicOrder {
 }
 
 export interface IPublicOrderItem {
-  id: number;
+  recipeId: number;
+  variantId: number;
   title: string;
+  variantLabel: string;
   amount: number;
 }

@@ -1,9 +1,10 @@
 import { IPublicRecipe } from "./types";
+import { isRecipeInStock } from "./recipe-stock";
 
 export const PUBLIC_RECIPE_SORTERS = {
   recommended: (a: IPublicRecipe, b: IPublicRecipe) => {
     const availabilityDifference =
-      Number(b.inStock > 0) - Number(a.inStock > 0);
+      Number(isRecipeInStock(b)) - Number(isRecipeInStock(a));
 
     return availabilityDifference || a.title.localeCompare(b.title);
   },

@@ -66,9 +66,10 @@ export const updateOrderStatus = async ({
 
       if (status === "COMPLETED") {
         for (const item of existingOrder.items) {
-          const stockUpdate = await tx.recipe.updateMany({
+          const stockUpdate = await tx.recipeVariant.updateMany({
             where: {
-              id: item.recipeId,
+              id: item.variantId,
+              recipeId: item.recipeId,
               inStock: { gte: item.amount },
             },
             data: {
@@ -77,8 +78,12 @@ export const updateOrderStatus = async ({
           });
 
           if (stockUpdate.count === 0) {
+            const currentVariant = await tx.recipeVariant.findUnique({
+              where: { id: item.variantId },
+              select: { inStock: true },
+            });
             throw new AppError(
-              `"${item.recipeTitle}" has only ${item.recipe.inStock} items left in stock.`,
+              `"${item.recipeTitle}" (${item.variantLabel}) has only ${currentVariant?.inStock ?? 0} items left in stock.`,
             );
           }
         }
@@ -122,34 +127,63 @@ export const createOrder = async ({
       throw new AppError("Ваш кошик порожній.");
     }
 
-    // Prevent invalid amounts
-    if (orderItems.some((item) => item.amount <= 0)) {
+    if (
+      orderItems.some(
+        (item) =>
+          !Number.isSafeInteger(item.recipeId) ||
+          item.recipeId <= 0 ||
+          !Number.isSafeInteger(item.variantId) ||
+          item.variantId <= 0 ||
+          !Number.isSafeInteger(item.amount) ||
+          item.amount <= 0,
+      )
+    ) {
       throw new AppError("Invalid item quantity.");
     }
 
-    const recipeIds = orderItems.map((item) => item.id);
-    if (new Set(recipeIds).size !== recipeIds.length) {
-      throw new AppError("Each product may only appear once in an order.");
+    const variantIds = orderItems.map((item) => item.variantId);
+    if (new Set(variantIds).size !== variantIds.length) {
+      throw new AppError("Each product variant may only appear once in an order.");
     }
 
     const order = await prisma.$transaction(async (tx) => {
-      // Load recipes inside the transaction
-      const recipes = await tx.recipe.findMany({
+      const variants = await tx.recipeVariant.findMany({
         where: {
-          ...publicRecipeWhere,
           id: {
-            in: recipeIds,
+            in: variantIds,
+          },
+          recipe: publicRecipeWhere,
+        },
+        include: {
+          recipe: {
+            select: {
+              id: true,
+              title: true,
+            },
           },
         },
       });
 
-      if (recipes.length !== orderItems.length) {
+      if (variants.length !== orderItems.length) {
         throw new AppError("Some products were not found.");
       }
 
-      const recipeMap = new Map(recipes.map((recipe) => [recipe.id, recipe]));
+      const variantMap = new Map(
+        variants.map((variant) => [variant.id, variant]),
+      );
 
-      // Create order
+      for (const item of orderItems) {
+        const variant = variantMap.get(item.variantId);
+        if (!variant || variant.recipeId !== item.recipeId) {
+          throw new AppError("Some products were not found.");
+        }
+        if (variant.inStock < item.amount) {
+          throw new AppError(
+            `"${variant.recipe.title}" (${variant.label}) has only ${variant.inStock} items left in stock.`,
+          );
+        }
+      }
+
       return tx.order.create({
         data: {
           userId: user.pid,
@@ -161,11 +195,13 @@ export const createOrder = async ({
 
           items: {
             create: orderItems.map((item) => {
-              const recipe = recipeMap.get(item.id)!;
+              const variant = variantMap.get(item.variantId)!;
 
               return {
-                recipeId: recipe.id,
-                recipeTitle: recipe.title,
+                recipeId: variant.recipeId,
+                variantId: variant.id,
+                recipeTitle: variant.recipe.title,
+                variantLabel: variant.label,
                 amount: item.amount,
               };
             }),

@@ -10,6 +10,7 @@ import { useToggleSavedRecipe } from "@/features/recipe/hooks/useToggleSavedReci
 import { SpicyOptions } from "@/forms/recipe/fields/SpicyField";
 import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 import { IRecipe } from "@/lib/prisma.args";
+import { getRecipeStock } from "@/lib/recipe-stock";
 
 interface Props {
   recipe: IRecipe;
@@ -25,7 +26,8 @@ const RecipeHeader = ({ recipe }: Props) => {
   const onToggleHidden = () => {
     hiddenMutate(id);
   };
-  const { description, inStock, spicy, series, isHidden, category } = recipe;
+  const { description, spicy, series, isHidden, category } = recipe;
+  const inStock = getRecipeStock(recipe);
   const categoryLabel = RECIPE_CATEGORIES_DATA[category].label;
 
   return (

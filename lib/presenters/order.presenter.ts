@@ -12,8 +12,10 @@ export const orderPresenter = {
       status: order.status,
       items: order.items.map((i) => ({
         amount: i.amount,
-        id: i.recipeId,
+        recipeId: i.recipeId,
+        variantId: i.variantId,
         title: i.recipeTitle,
+        variantLabel: i.variantLabel,
       })),
       createdAt: order.createdAt.toISOString(),
     };

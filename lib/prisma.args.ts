@@ -41,6 +41,7 @@ export const orderArgs = {
     items: {
       include: {
         recipe: true,
+        variant: true,
       },
     },
   },

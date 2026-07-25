@@ -12,6 +12,7 @@ import { RECIPE_CATEGORIES_DATA } from "@/lib/enumslist/recipe.constants";
 import { RECIPE_SERIES_DATA } from "@/lib/enumslist/series.constants";
 import { getImageUrl } from "@/lib/image.helper";
 import { IRecipe } from "@/lib/prisma.args";
+import { getRecipeStock } from "@/lib/recipe-stock";
 import { frontendUrls } from "@/lib/urls";
 import { cn } from "@/lib/utils";
 import { EyeOff } from "lucide-react";
@@ -32,7 +33,6 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
     title,
     imageKey,
     isSaved,
-    inStock,
     isConfirmed,
     imageVersion,
     isHidden,
@@ -45,6 +45,7 @@ const RecipeCard = ({ recipe, onSavedToggle, onConfirmToggle }: Props) => {
   const categoryData = RECIPE_CATEGORIES_DATA[category];
   const seriesData = RECIPE_SERIES_DATA[series];
   const isNomlyGold = series === "NOMLYGOLD";
+  const inStock = getRecipeStock(recipe);
 
   return (
     <Card

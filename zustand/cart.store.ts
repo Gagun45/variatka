@@ -1,9 +1,11 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { IPublicRecipe } from "@/lib/types";
 
 export type ICartItem = {
   recipeId: number;
+  variantId: number;
+  variantLabel: string;
   name: string;
   imageKey: string | null;
   quantity: number;
@@ -12,9 +14,9 @@ export type ICartItem = {
 
 interface ICartStore {
   items: ICartItem[];
-  addItem: (recipe: IPublicRecipe) => void;
-  updateQuantity: (recipeId: number, quantity: number) => void;
-  removeItem: (recipeId: number) => void;
+  addItem: (recipe: IPublicRecipe, variantId: number) => void;
+  updateQuantity: (variantId: number, quantity: number) => void;
+  removeItem: (variantId: number) => void;
   clear: () => void;
 }
 
@@ -23,19 +25,22 @@ export const useCartStore = create<ICartStore>()(
     (set) => ({
       items: [],
 
-      addItem: (recipe) =>
+      addItem: (recipe, variantId) =>
         set((state) => {
+          const variant = recipe.variants.find((item) => item.id === variantId);
+          if (!variant || variant.inStock <= 0) return state;
+
           const existingItem = state.items.find(
-            (item) => item.recipeId === recipe.id,
+            (item) => item.variantId === variantId,
           );
 
           if (existingItem) {
             return {
               items: state.items.map((item) =>
-                item.recipeId === recipe.id
+                item.variantId === variantId
                   ? {
                       ...item,
-                      quantity: Math.min(item.quantity + 1, recipe.inStock),
+                      quantity: Math.min(item.quantity + 1, variant.inStock),
                     }
                   : item,
               ),
@@ -47,20 +52,22 @@ export const useCartStore = create<ICartStore>()(
               ...state.items,
               {
                 recipeId: recipe.id,
+                variantId: variant.id,
+                variantLabel: variant.label,
                 name: recipe.title,
                 imageKey: recipe.imageKey,
                 quantity: 1,
-                inStock: recipe.inStock,
+                inStock: variant.inStock,
               },
             ],
           };
         }),
 
-      updateQuantity: (recipeId, quantity) =>
+      updateQuantity: (variantId, quantity) =>
         set((state) => ({
           items: state.items
             .map((item) =>
-              item.recipeId === recipeId
+              item.variantId === variantId
                 ? {
                     ...item,
                     quantity: Math.min(Math.max(quantity, 0), item.inStock),
@@ -70,15 +77,16 @@ export const useCartStore = create<ICartStore>()(
             .filter((item) => item.quantity > 0),
         })),
 
-      removeItem: (recipeId) =>
+      removeItem: (variantId) =>
         set((state) => ({
-          items: state.items.filter((item) => item.recipeId !== recipeId),
+          items: state.items.filter((item) => item.variantId !== variantId),
         })),
 
       clear: () => set({ items: [] }),
     }),
     {
-      name: "nomly-cart-storage",
+      name: "nomly-cart-store",
+      storage: createJSONStorage(() => localStorage),
     },
   ),
 );
@@ -88,5 +96,5 @@ export const selectCartItems = (state: ICartStore) => state.items;
 export const selectCartTotalQuantity = (state: ICartStore) =>
   state.items.reduce((sum, item) => sum + item.quantity, 0);
 
-export const selectItemQuantity = (recipeId: number) => (state: ICartStore) =>
-  state.items.find((item) => item.recipeId === recipeId)?.quantity ?? 0;
+export const selectItemQuantity = (variantId: number) => (state: ICartStore) =>
+  state.items.find((item) => item.variantId === variantId)?.quantity ?? 0;

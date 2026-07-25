@@ -5,6 +5,7 @@ import { IRecipeHiddenFilter } from "@/lib/enumslist/hidden.constants";
 import { IRecipeCategoryFilter } from "@/lib/enumslist/recipe.constants";
 import { IRecipeSeriesFilter } from "@/lib/enumslist/series.constants";
 import { IRecipe } from "@/lib/prisma.args";
+import { isRecipeInStock } from "@/lib/recipe-stock";
 import { IRecipeSortType, RECIPE_SORTERS } from "@/lib/sorting.recipes";
 import { useMemo } from "react";
 
@@ -46,9 +47,9 @@ export function useRecipesFilter({
 
     // 3. STOCK
     if (stock === "in") {
-      result = result.filter((r) => r.inStock);
+      result = result.filter(isRecipeInStock);
     } else if (stock === "out") {
-      result = result.filter((r) => !r.inStock);
+      result = result.filter((recipe) => !isRecipeInStock(recipe));
     }
 
     // 4. READY
