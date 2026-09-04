@@ -40,6 +40,26 @@ export const getRecipe = async (
   });
 };
 
+export const getRecipeTitle = async (
+  id: number,
+): Promise<IActionResponse<string>> => {
+  return safeAction("getRecipeTitle", async () => {
+    await requireAdmin();
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw new AppError("Recipe not found");
+    }
+
+    const recipe = await prisma.recipe.findUnique({
+      where: { id },
+      select: { title: true },
+    });
+
+    if (!recipe) throw new AppError("Recipe not found");
+    return recipe.title;
+  });
+};
+
 export const createRecipe = async (
   dto: ICreateRecipeDto,
 ): Promise<IActionResponse<IRecipe>> => {
