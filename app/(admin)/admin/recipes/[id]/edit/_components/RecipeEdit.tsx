@@ -89,6 +89,7 @@ const LoadedRecipeEdit = ({ recipe, ingredients }: LoadedRecipeEditProps) => {
 
   return (
     <div className="space-y-8">
+      <h1>{recipe.title}</h1>
       <RecipeIngredientsEdit
         allIngredients={ingredients}
         editor={editor}
