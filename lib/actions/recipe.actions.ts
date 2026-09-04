@@ -350,6 +350,32 @@ export const getPublicRecipe = async (
   });
 };
 
+export const getPublicRecipeMetadata = async (
+  id: number,
+): Promise<
+  IActionResponse<Pick<IPublicRecipe, "title" | "description">>
+> => {
+  return safeAction("getPublicRecipeMetadata", async () => {
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw new AppError("Recipe not found");
+    }
+
+    const recipe = await prisma.recipe.findFirst({
+      where: {
+        id,
+        ...publicRecipeWhere,
+      },
+      select: {
+        title: true,
+        description: true,
+      },
+    });
+
+    if (!recipe) throw new AppError("Recipe not found");
+    return recipe;
+  });
+};
+
 export const getWishlistIds = async (): Promise<IActionResponse<number[]>> => {
   return safeAction("getWishlistIds", async () => {
     const user = await getCurrentUser();

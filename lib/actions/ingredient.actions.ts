@@ -18,6 +18,26 @@ export const getIngredients = async (): Promise<
   });
 };
 
+export const getIngredientTitle = async (
+  id: number,
+): Promise<IActionResponse<string>> => {
+  return safeAction("getIngredientTitle", async () => {
+    await requireAdmin();
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw new AppError("Ingredient not found");
+    }
+
+    const ingredient = await prisma.ingredient.findUnique({
+      where: { id },
+      select: { title: true },
+    });
+
+    if (!ingredient) throw new AppError("Ingredient not found");
+    return ingredient.title;
+  });
+};
+
 export const createIngredient = async (
   dto: IIngredientFormValues,
 ): Promise<IActionResponse<IIngredient>> => {

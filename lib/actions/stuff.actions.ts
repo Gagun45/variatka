@@ -16,6 +16,26 @@ export const getStuff = async (): Promise<IActionResponse<IStuff[]>> => {
   });
 };
 
+export const getStuffTitle = async (
+  id: number,
+): Promise<IActionResponse<string>> => {
+  return safeAction("getStuffTitle", async () => {
+    await requireAdmin();
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw new AppError("Stuff not found");
+    }
+
+    const stuff = await prisma.stuff.findUnique({
+      where: { id },
+      select: { title: true },
+    });
+
+    if (!stuff) throw new AppError("Stuff not found");
+    return stuff.title;
+  });
+};
+
 export const createStuff = async (
   dto: ICreateStuffDto,
 ): Promise<IActionResponse<IStuff>> => {

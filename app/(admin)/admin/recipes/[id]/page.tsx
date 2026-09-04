@@ -1,13 +1,23 @@
 import PageBreadcrumb from "@/components/bread/PageBreadcrumb";
 import Recipe from "./_components/Recipe";
+import { getRecipeTitle } from "@/lib/actions/recipe.actions";
 import { BREADCRUMB_ITEMS } from "@/lib/constants/bread.constants";
 import { Metadata } from "next";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const id = (await params).id;
+  const recipeId = Number((await params).id);
+  const result = await getRecipeTitle(recipeId);
+
+  if (!result.ok) {
+    return {
+      title: "Recipe",
+      description: "Recipe details",
+    };
+  }
+
   return {
-    title: `Recipe ${id}`,
-    description: `Details for recipe ${id}`,
+    title: result.data,
+    description: `Details for ${result.data}`,
   };
 }
 
