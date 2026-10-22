@@ -22,7 +22,7 @@ import { IRecipeSeriesFilter } from "@/lib/enumslist/series.constants";
 import { IRecipe } from "@/lib/prisma.args";
 import { IRecipeSortType, RECIPE_SORT_OPTIONS } from "@/lib/sorting.recipes";
 import { useRecipesFilter } from "@/hooks/useRecipesFilter";
-import { useSearchParams } from "next/navigation";
+import { useAdminSearchFilter } from "@/hooks/useAdminSearchFilter";
 import RecipesList from "./recipes-list/RecipesList";
 
 type RecipeFilterValues = {
@@ -52,8 +52,7 @@ type Props = {
 };
 
 const RecipeFilterView = ({ title, recipes, filters }: Props) => {
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("query") ?? "";
+  const { searchQuery, searchFilter } = useAdminSearchFilter();
 
   const {
     category,
@@ -73,6 +72,7 @@ const RecipeFilterView = ({ title, recipes, filters }: Props) => {
   } = filters;
 
   const filterDefinitions: FilterDefinition[] = [
+    searchFilter,
     {
       id: "category",
       value: category,

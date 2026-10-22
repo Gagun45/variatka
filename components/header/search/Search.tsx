@@ -20,13 +20,7 @@ const Search = () => {
   const adminPlaceholder = ADMIN_SEARCH_ROUTES[pathname];
 
   if (adminPlaceholder) {
-    return (
-      <AdminSearchBar
-        initialQuery={initialQuery}
-        placeholder={adminPlaceholder}
-        key={pathname}
-      />
-    );
+    return <AdminSearchBar placeholder={adminPlaceholder} />;
   }
 
   if (pathname.startsWith("/admin")) return null;

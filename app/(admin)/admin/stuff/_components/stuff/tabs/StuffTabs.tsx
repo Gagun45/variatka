@@ -3,7 +3,7 @@
 
 import ResultsFoundText from "@/components/results-found-p/ResultsFoundText";
 import { Separator } from "@/components/ui/separator";
-import { useSearchParams } from "next/navigation";
+import { useAdminSearchFilter } from "@/hooks/useAdminSearchFilter";
 import { useState } from "react";
 import StuffList from "../list/StuffList";
 import StuffFormsDialog from "./forms-dialog/StuffFormsDialog";
@@ -30,8 +30,7 @@ interface Props {
 }
 
 const StuffTabs = ({ stuff }: Props) => {
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("query") ?? "";
+  const { searchQuery, searchFilter } = useAdminSearchFilter();
 
   const [activeCategory, setActiveCategory] =
     useState<IStuffCategoryFilter>("all");
@@ -55,6 +54,7 @@ const StuffTabs = ({ stuff }: Props) => {
     activeCategory === "all" ? "DECOR" : activeCategory;
 
   const filterDefinitions: FilterDefinition[] = [
+    searchFilter,
     {
       id: "category",
       value: activeCategory,

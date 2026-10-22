@@ -21,7 +21,7 @@ import {
   IIngredientSortType,
   INGREDIENT_SORT_OPTIONS,
 } from "@/lib/sorting.ingredients";
-import { useSearchParams } from "next/navigation";
+import { useAdminSearchFilter } from "@/hooks/useAdminSearchFilter";
 import type { ReactNode } from "react";
 import IngredienstList from "./list/IngredienstList";
 
@@ -50,8 +50,7 @@ const IngredientFilterView = ({
   filters,
   headerAction,
 }: Props) => {
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("query") ?? "";
+  const { searchQuery, searchFilter } = useAdminSearchFilter();
 
   const {
     category,
@@ -71,6 +70,7 @@ const IngredientFilterView = ({
   });
 
   const filterDefinitions: FilterDefinition[] = [
+    searchFilter,
     {
       id: "category",
       value: category,
