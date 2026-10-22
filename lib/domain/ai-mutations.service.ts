@@ -19,7 +19,7 @@ const notEmpty = (value: unknown) => value !== null;
 const patchValues = (patch: object) => Object.fromEntries(Object.entries(patch).filter(([, value]) => notEmpty(value)));
 
 function ensureChanged(before: object, after: object) {
-  if (JSON.stringify(before) === JSON.stringify(after)) throw new NoChangesError("Запис уже має ці значення. Змін не потрібно.");
+  if (JSON.stringify(before) === JSON.stringify(after)) throw new NoChangesError(`Змін не потрібно. ${"title" in before ? `«${before.title}»` : "Запис"} уже має потрібні значення.`);
 }
 
 export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false, allowReferencedDelete = false, cache?: IngredientResolutionCache): Promise<PreparedMutation> {

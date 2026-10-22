@@ -25,7 +25,7 @@ export function completeBatchPreview(items: InventoryMutationPreview[], unchange
     }
   }
   if (result.length > MAX_BATCH_OPERATIONS) throw new AppError(`Пакет перевищує ${MAX_BATCH_OPERATIONS} операцій, включно зі створенням відсутніх інгредієнтів. Звузьте запит.`);
-  if (!result.length) throw new NoChangesError("Змін не потрібно: усі записи вже мають ці значення.");
+  if (!result.length) throw new NoChangesError(`Змін не потрібно: усі записи вже мають потрібні значення.${unchanged.length ? ` Без змін: ${unchanged.join(", ")}.` : ""}`);
   // Dependencies first; recipe removals/edits before deleting ingredients they referenced.
   const rank: Record<InventoryMutationPreview["kind"], number> = { createIngredient: 0, createStuff: 1, createRecipe: 2, updateIngredient: 3, updateStuff: 3, updateRecipe: 3, deleteRecipe: 4, deleteStuff: 4, deleteIngredient: 5 };
   return { items: result.sort((a, b) => rank[a.kind] - rank[b.kind]), unchanged };

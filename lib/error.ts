@@ -7,4 +7,6 @@ export class AppError extends Error {
   }
 }
 
-export class NoChangesError extends AppError {}
+export class NoChangesError extends AppError {
+  constructor(message: string) { super(message, "NO_CHANGES"); }
+}

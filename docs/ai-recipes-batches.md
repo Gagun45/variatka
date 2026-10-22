@@ -48,11 +48,11 @@ Filtered update:
 
 > Познач усі інгредієнти категорії спеції як наявні.
 
-The preview summarizes creation/update/deletion counts and counts by entity. Cards stay in execution order so dependencies remain visible. Updates show changed fields and composition entries only; expand **Усі дані запису** to inspect unchanged values too. New ingredient cards identify the recipes that need them. Deletions have a distinct warning and require confirmation through the same atomic batch flow.
+Single updates, deletions and recipe previews use the same change cards as batches, with an action-specific heading such as **Оновлення матеріалу** instead of a one-operation package. Single ingredient/material creation remains editable. Multi-operation previews summarize creation/update/deletion counts and counts by entity. Cards stay in execution order so dependencies remain visible. Updates show changed fields and composition entries only; expand **Усі дані запису** to inspect unchanged values too. New ingredient cards identify the recipes that need them. Deletions have a distinct warning and require confirmation through the same atomic batch flow.
 
 The confirmation bar stays near the bottom of the viewport while reviewing a long batch, with the total and deletion count. Keyboard focus moves to a new preview heading and to errors. Nothing is saved by opening details or focusing the preview.
 
-The preview lists concrete records, their before/after values and the operation count. Records already matching the request are reported without a write. Confirmation affects the frozen list shown in that preview; records added later are not silently included.
+The preview lists concrete records, their before/after values and the operation count. Records already matching the request are reported without a write. If every record is unchanged, the assistant returns a neutral **Змін не потрібно** result with no confirmation button or red validation error. This also applies to a single unchanged ingredient, material or recipe. Confirmation affects the frozen list shown in that preview; records added later are not silently included.
 
 The maximum is **20 operations**, including missing ingredient creates. Broader requests are rejected with instructions to narrow them. Conflicting or repeated operations on the same record must be combined. There is one confirmation for the whole batch, and cancellation writes nothing.
 

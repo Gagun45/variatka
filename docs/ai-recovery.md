@@ -4,6 +4,8 @@ The assistant shows real request phases: analysis/preparation (one server call),
 
 ## Recovery actions
 
+Requests that already match stored values are normal results, not failures: **Змін не потрібно**. They show no error recovery controls, do not write data, and are not logged as errors.
+
 - Invalid values or conflicting records: **Редагувати запит** restores the last prompt and its selection/search/clarification context. Failed planning also restores the prompt directly to the input.
 - Provider failures: the prompt is retained. Error codes distinguish temporary availability, limits, configuration and invalid responses. No automatic provider retries are performed.
 - Stale preview: discard the old preview; **Підготувати новий перегляд** reruns the original request against current data. This may call the model again and always requires a new confirmation. **Редагувати запит** is also available.

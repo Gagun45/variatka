@@ -319,6 +319,17 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.notEqual(reuse.preview.after.ingredients[0].id, null);
     });
 
+    await t.test("unchanged recipe requests are successful checks and preserve the database version", async () => {
+      const recipe = await client.recipe.findUnique({ where: { title: "Test sauce" } });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "updateRecipe", targetName: recipe.title, patch: recipePatch({ notes: recipe.notes }), composition: null } } };
+      const reply = await actions.askInventoryAssistant({ prompt: "Залиш нотатки без змін", selected: null, previousSearch: null, clarification: null });
+      assert.equal(reply.ok, true);
+      assert.equal(reply.data.operation, "noChanges");
+      assert.ok(reply.data.message.includes(recipe.title));
+      const after = await client.recipe.findUnique({ where: { id: recipe.id } });
+      assert.equal(after.updatedAt.toISOString(), recipe.updatedAt.toISOString());
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;

@@ -1,4 +1,5 @@
 import type { InventoryMutationPreview } from "@/zod/ai-mutation.schema";
+import { mutationDefinitions } from "./mutation-definitions";
 import { inventoryCategoryLabels, inventorySeriesLabels } from "./inventory-labels";
 
 const labels: Record<string, string> = {
@@ -44,4 +45,19 @@ export function snapshotRows(snapshot: Extract<InventoryMutationPreview, { after
     for (const item of snapshot.ingredients) rows.push({ label: `Склад: ${item.title}`, before: null, after: item.amount });
   }
   return rows;
+}
+
+export const previewActionLabels = { create: "Створення", update: "Оновлення", delete: "Видалення" };
+export function previewPresentation(items: InventoryMutationPreview[]) {
+  if (items.length !== 1) {
+    const count = items.length;
+    const word = count % 10 >= 2 && count % 10 <= 4 && !(count % 100 >= 12 && count % 100 <= 14) ? "операції" : "операцій";
+    return { heading: `Перегляд пакета · ${count} ${word}`, confirmation: `Підтвердити всі ${count}` };
+  }
+  const item = items[0];
+  const definition = mutationDefinitions[item.kind];
+  const entity = { recipe: "рецепта", ingredient: "інгредієнта", stuff: "матеріалу" }[definition.entity];
+  const action = definition.action;
+  const confirmation = { create: "Підтвердити створення", update: "Підтвердити зміни", delete: "Підтвердити видалення" };
+  return { heading: `${previewActionLabels[action]} ${entity}`, confirmation: confirmation[action] };
 }

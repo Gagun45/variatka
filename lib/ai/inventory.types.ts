@@ -22,6 +22,7 @@ export type InventoryRecord = InventoryResult & {
 };
 
 export type AssistantReply =
+  | { operation: "noChanges"; message: string }
   | { operation: "search"; message: string; results: InventorySearchResult }
   | { operation: "viewSelected"; message: string; record: InventoryRecord }
   | { operation: "clarify"; message: string; clarification: Clarification }

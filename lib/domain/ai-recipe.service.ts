@@ -97,7 +97,7 @@ export async function prepareRecipeMutation(intent: RecipeIntent, selected: Reco
     }
   }
   checkComposition(after.ingredients);
-  if (JSON.stringify(before) === JSON.stringify(after)) throw new NoChangesError("Рецепт уже має ці значення. Змін не потрібно.");
+  if (JSON.stringify(before) === JSON.stringify(after)) throw new NoChangesError(`Змін не потрібно. Рецепт «${record.title}» уже має потрібні значення.`);
   const preview: InventoryMutationPreview = { kind: intent.kind, target: identity, before, after };
   return { kind: "ready" as const, preview };
 }

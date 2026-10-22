@@ -821,3 +821,91 @@ test("refresh handles thrown failures and never reloads a deleted record", async
   assert.equal(recordCalls, 0);
   assert.deepEqual(output, { selected: null, results: null, failed: true });
 });
+
+test("single no-op requests succeed without a preview, write or error log", async (t) => {
+  const logger = t.mock.method(console, "error", () => {});
+  state.records.ingredient = ingredientRecord();
+  state.plan = mutationPlan({ kind: "updateIngredient", targetName: null, patch: ingredientPatch({ isInStock: state.records.ingredient.isInStock }) });
+  const response = await actions.askInventoryAssistant(request({ selected: { entity: "ingredient", id: 1 } }));
+  assert.equal(response.ok, true);
+  assert.equal(response.data.operation, "noChanges");
+  assert.match(response.data.message, /Змін не потрібно/);
+  assert.ok(response.data.message.includes(state.records.ingredient.title));
+  assert.equal("preview" in response.data, false);
+  assert.equal(state.writes.length, 0);
+  assert.equal(logger.mock.callCount(), 0);
+});
+
+test("all-unchanged batches are neutral while mixed batches retain changed operations", async () => {
+  state.records.ingredient = ingredientRecord();
+  state.records.stuff = stuffRecord();
+  const unchanged = { kind: "updateIngredient", targetName: null, patch: ingredientPatch({ isInStock: state.records.ingredient.isInStock }) };
+  state.plan = { message: "Перегляд", assumptions: [], command: { kind: "batch", intent: { kind: "list", operations: [unchanged] } } };
+  const context = request({ selected: { entity: "ingredient", id: 1 } });
+  const all = await actions.askInventoryAssistant(context);
+  assert.equal(all.ok, true);
+  assert.equal(all.data.operation, "noChanges");
+  state.plan.command.intent.operations.push({ kind: "updateStuff", targetName: "Слоїчки 250 мл", patch: stuffPatch({ stock: { mode: "adjust", value: 5 } }) });
+  state.rows.stuff = [state.records.stuff];
+  const mixed = await actions.askInventoryAssistant(context);
+  assert.equal(mixed.ok, true);
+  assert.equal(mixed.data.operation, "batch");
+  assert.equal(mixed.data.preview.items.length, 1);
+  assert.equal(mixed.data.preview.items[0].kind, "updateStuff");
+  assert.equal(mixed.data.preview.unchanged.length, 1);
+  assert.equal(state.writes.length, 0);
+});
+
+test("no-op target selection returns a dedicated neutral code", async (t) => {
+  const logger = t.mock.method(console, "error", () => {});
+  state.records.stuff = stuffRecord();
+  const response = await actions.previewInventoryMutation({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "set", value: state.records.stuff.inStock } }) }, { entity: "stuff", id: 2 });
+  assert.equal(response.ok, false);
+  assert.equal(response.code, "NO_CHANGES");
+  assert.equal(logger.mock.callCount(), 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test("preview presentation distinguishes one operation from real batches", () => {
+  const { previewPresentation } = require("../lib/ai/preview-summary.ts");
+  const one = { kind: "updateStuff" };
+  assert.deepEqual(previewPresentation([one]), { heading: "Оновлення матеріалу", confirmation: "Підтвердити зміни" });
+  assert.equal(previewPresentation([{ kind: "createRecipe" }]).heading, "Створення рецепта");
+  assert.equal(previewPresentation([{ kind: "deleteIngredient" }]).confirmation, "Підтвердити видалення");
+  assert.equal(previewPresentation([one, one]).heading, "Перегляд пакета · 2 операції");
+  assert.equal(previewPresentation(Array(12).fill(one)).heading, "Перегляд пакета · 12 операцій");
+});
+
+test("single and batch previews render shared cards while creation forms remain editable", () => {
+  const originalTsx = require.extensions[".tsx"];
+  require.extensions[".tsx"] = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(file, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX },
+  }).outputText, file);
+  try {
+    const React = require("react");
+    const { renderToStaticMarkup } = require("react-dom/server");
+    const View = require("../app/(admin)/admin/ai/_components/InventoryMutationView.tsx").default;
+    const Batch = require("../app/(admin)/admin/ai/_components/InventoryBatchView.tsx").default;
+    const before = { title: "Банка", description: "Скло", category: "JARS", inStock: 10 };
+    const item = { kind: "updateStuff", target: { id: 2, title: before.title, updatedAt: "2026-01-01T00:00:00.000Z" }, before, after: { ...before, inStock: 15 } };
+    const callbacks = { assumptions: [], busy: false, onConfirm() {}, onCancel() {}, onChange() {} };
+    const single = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: item }));
+    assert.ok(single.includes("Оновлення матеріалу"));
+    assert.equal(single.includes("Перегляд пакета"), false);
+    assert.ok(single.includes("Усі дані запису"));
+    assert.equal(single.includes("<table"), false);
+    const batch = renderToStaticMarkup(React.createElement(Batch, { ...callbacks, preview: { items: [item, { kind: "createStuff", after: { ...before, title: "Етикетка" } }], unchanged: [] } }));
+    assert.ok(batch.includes("Перегляд пакета · 2 операції"));
+    assert.ok(batch.includes("Підтвердити всі 2"));
+    const creation = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: { kind: "createStuff", after: before } }));
+    assert.ok(creation.includes("<input"));
+    assert.ok(creation.includes("<textarea"));
+    assert.equal(creation.includes("disabled="), false);
+    const deletion = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: { kind: "deleteStuff", target: item.target, before } }));
+    assert.ok(deletion.includes("Підтвердити видалення"));
+    assert.ok(deletion.includes("Запис буде видалено повністю"));
+  } finally {
+    if (originalTsx) require.extensions[".tsx"] = originalTsx;
+    else delete require.extensions[".tsx"];
+  }
+});

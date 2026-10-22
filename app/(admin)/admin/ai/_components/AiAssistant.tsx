@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { MessageSquarePlus, Send } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,13 +12,13 @@ import { stuffKeys } from "@/features/stuff/stuff.keys";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 import { frontendUrls } from "@/lib/urls";
 import type { InventoryRecord, InventoryResult, InventorySearchResult, MutationResult } from "@/lib/ai/inventory.types";
+import AssistantContext from "./AssistantContext";
+import AssistantErrorPanel from "./AssistantErrorPanel";
 import InventoryBatchView from "./InventoryBatchView";
 import type { BatchPreview } from "@/zod/ai-batch.schema";
 import { completeBatchPreview } from "@/lib/ai/batch-preview";
-import { inventoryEntityLabels } from "@/lib/ai/inventory-labels";
-import { searchFilters } from "@/lib/ai/search-labels";
 import { refreshAfterSave } from "@/lib/ai/refresh-after-save";
-import { confirmationFailure, recoveryFor, requestPhaseLabels, type AssistantErrorCode, type RequestPhase } from "@/lib/ai/request-state";
+import { confirmationFailure, requestPhaseLabels, type AssistantErrorCode, type RequestPhase } from "@/lib/ai/request-state";
 import type { AssistantRequest } from "@/zod/ai-search.schema";
 import { mutationDefinitions } from "@/lib/ai/mutation-definitions";
 import type { Clarification, InventorySearch } from "@/zod/ai-search.schema";
@@ -33,13 +33,15 @@ export default function AiAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [phase, setPhase] = useState<RequestPhase>("idle");
   const busy = phase !== "idle";
+  const [neutral, setNeutral] = useState("");
   const [error, setErrorMessage] = useState("");
   const [errorCode, setErrorCode] = useState<AssistantErrorCode>("VALIDATION_ERROR");
   const lastRequest = useRef<AssistantRequest | null>(null);
   const requestSelection = useRef<InventoryRecord | null>(null);
   const refreshTargets = useRef<MutationResult[]>([]);
-  const recovery = recoveryFor(errorCode);
   function setError(message: string, code: AssistantErrorCode = "VALIDATION_ERROR") {
+    setNeutral("");
+    if (code === "NO_CHANGES") { setNeutral(message); setErrorMessage(""); return; }
     setErrorMessage(message);
     setErrorCode(code);
   }
@@ -52,8 +54,6 @@ export default function AiAssistant() {
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [notices, setNotices] = useState<MutationResult[]>([]);
   const [batch, setBatch] = useState<BatchPreview | null>(null);
-  const errorRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pending = useRef(false);
   const queryClient = useQueryClient();
@@ -116,10 +116,12 @@ export default function AiAssistant() {
     try {
       const result = await askInventoryAssistant(request);
       if (!result.ok) { setPrompt(request.prompt); setError(result.message, result.code); return; }
-      setMessages((old) => [...old, { role: "assistant", text: result.data.message }]);
+      if (result.data.operation !== "noChanges") setMessages((old) => [...old, { role: "assistant", text: result.data.message }]);
       const reply = result.data;
       setClarification(reply.operation === "clarify" ? reply.clarification : null);
-      if (reply.operation === "search") {
+      if (reply.operation === "noChanges") {
+        setNeutral(reply.message);
+      } else if (reply.operation === "search") {
         setResults(reply.results);
         setPreviousSearch(reply.results.search);
         setSelected(null);
@@ -165,7 +167,7 @@ export default function AiAssistant() {
       if (pendingIntent) {
         setPhase("preparing");
         const preview = await previewInventoryMutation(pendingIntent, { entity: record.entity, id: record.id });
-        if (!preview.ok) { setError(preview.message, preview.code); return; }
+        if (!preview.ok) { if (preview.code === "NO_CHANGES") setPendingIntent(null); setError(preview.message, preview.code); return; }
         if (mutationDefinitions[preview.data.kind].entity === "recipe") setBatch(completeBatchPreview([preview.data]));
         else setMutation(preview.data);
         setPendingIntent(null);
@@ -273,16 +275,8 @@ export default function AiAssistant() {
       {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} onConfirm={confirmMutation} onCancel={() => { setBatch(null); setError(""); }} />}
 
       {notices.length > 0 && <div role="status" className="space-y-2 rounded-xl border p-4"><p className="font-medium">Виконано операцій: {notices.length}</p><ul className="space-y-1">{notices.map((notice, index) => <li key={index}>{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : notice.entity === "recipe" ? frontendUrls.recipes.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</li>)}</ul></div>}
-      {error && <div ref={errorRef} tabIndex={-1} role="alert" className={`space-y-3 rounded-xl border p-4 focus-visible:outline-2 focus-visible:outline-ring ${errorCode === "REFRESH_FAILED" ? "" : "border-destructive"}`}>
-        <p className="font-medium">{error}</p>
-        <p className="text-sm text-muted-foreground">{recovery.hint}</p>
-        <div className="flex flex-wrap gap-2">
-          {recovery.action === "edit" && lastRequest.current && <Button type="button" variant="outline" disabled={busy} onClick={editRequest}>Редагувати запит</Button>}
-          {recovery.action === "prepare" && lastRequest.current && <><Button type="button" disabled={busy} onClick={() => { if (lastRequest.current) void requestProposal(lastRequest.current); }}>Підготувати новий перегляд</Button><Button type="button" variant="outline" disabled={busy} onClick={editRequest}>Редагувати запит</Button></>}
-          {recovery.action === "refresh" && <Button type="button" variant="outline" disabled={busy} onClick={retryRefresh}>Оновити дані</Button>}
-          {recovery.action === "inspect" && <>{[["Інгредієнти", frontendUrls.ingredients.index], ["Рецепти", frontendUrls.recipes.index], ["Матеріали", frontendUrls.stuff.index]].map(([label, href]) => <Button key={href} asChild variant="outline"><Link href={href} target="_blank" rel="noopener noreferrer">{label}</Link></Button>)}</>}
-        </div>
-      </div>}
+      {neutral && <div role="status" className="rounded-xl border bg-muted/40 p-4 text-sm">{neutral}</div>}
+      {error && <AssistantErrorPanel error={error} code={errorCode} busy={busy} canEdit={lastRequest.current !== null} onEdit={editRequest} onPrepare={() => { if (lastRequest.current) void requestProposal(lastRequest.current); }} onRefresh={retryRefresh} />}
       {busy && <p role="status" aria-live="polite" className="text-muted-foreground">{requestPhaseLabels[phase]}</p>}
 
       {clarification && <section aria-label="Уточнення запиту" className="space-y-2 rounded-lg border p-4">
@@ -292,13 +286,7 @@ export default function AiAssistant() {
         <Button type="button" variant="outline" disabled={busy} onClick={() => { setClarification(null); setError(""); }}>Скасувати уточнення</Button>
       </section>}
 
-      {(selected || previousSearch) && <details className="rounded-lg border p-3 text-sm">
-        <summary className="cursor-pointer font-medium">Контекст запиту</summary>
-        <div className="mt-2 space-y-1">
-          {selected && <p>Обрано: {inventoryEntityLabels[selected.entity]} «{selected.title}» · #{selected.id}.</p>}
-          {previousSearch && <p>Пошук: {previousSearch.entity === "all" ? "Усі типи" : inventoryEntityLabels[previousSearch.entity]} · {searchFilters(previousSearch).join(" · ") || "Без додаткових фільтрів"}.</p>}
-        </div>
-      </details>}
+      <AssistantContext selected={selected} previousSearch={previousSearch} />
 
 
       <form onSubmit={propose} className="space-y-3">

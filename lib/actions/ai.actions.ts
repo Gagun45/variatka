@@ -1,6 +1,6 @@
 "use server";
 
-import { AppError } from "../error";
+import { AppError, NoChangesError } from "../error";
 import { safeAction } from "./action.wrapper";
 import { requireAdmin } from "./user.actions";
 import {
@@ -51,31 +51,36 @@ export async function askInventoryAssistant(request: AssistantRequest) {
     const selected = parsed.data.selected ? await readInventoryRecord(parsed.data.selected) : null;
     const plan = await planInventoryRequest(parsed.data, selected);
     const command = plan.command;
-    switch (command.kind) {
-      case "search":
-        return { operation: "search", message: "Результати пошуку за вашим запитом:", results: await searchInventory(command.search) };
-      case "viewSelected":
-        if (!selected) throw new AppError("Спочатку знайдіть та оберіть запис.");
-        return { operation: "viewSelected", message: `Актуальні дані: ${selected.title}`, record: selected };
-      case "mutation": {
-        const prepared = await prepareInventoryMutation(command.intent, parsed.data.selected);
-        if (prepared.kind === "choose") return {
-          operation: "chooseMutationTarget", message: "Оберіть запис для цієї зміни. Після вибору з’явиться перегляд для підтвердження.",
-          assumptions: plan.assumptions, intent: prepared.intent, results: prepared.results,
-        };
-        if (mutationDefinitions[prepared.preview.kind].entity === "recipe") return {
-          operation: "batch", message: "Перевірте рецепт і всі пов’язані операції. Ще нічого не збережено.", assumptions: plan.assumptions, preview: completeBatchPreview([prepared.preview]),
-        };
-        return { operation: "mutation", message: "Перевірте запропоновану операцію. Ще нічого не збережено.", assumptions: plan.assumptions, preview: prepared.preview };
+    try {
+      switch (command.kind) {
+        case "search":
+          return { operation: "search", message: "Результати пошуку за вашим запитом:", results: await searchInventory(command.search) };
+        case "viewSelected":
+          if (!selected) throw new AppError("Спочатку знайдіть та оберіть запис.");
+          return { operation: "viewSelected", message: `Актуальні дані: ${selected.title}`, record: selected };
+        case "mutation": {
+          const prepared = await prepareInventoryMutation(command.intent, parsed.data.selected);
+          if (prepared.kind === "choose") return {
+            operation: "chooseMutationTarget", message: "Оберіть запис для цієї зміни. Після вибору з’явиться перегляд для підтвердження.",
+            assumptions: plan.assumptions, intent: prepared.intent, results: prepared.results,
+          };
+          if (mutationDefinitions[prepared.preview.kind].entity === "recipe") return {
+            operation: "batch", message: "Перевірте рецепт і всі пов’язані операції. Ще нічого не збережено.", assumptions: plan.assumptions, preview: completeBatchPreview([prepared.preview]),
+          };
+          return { operation: "mutation", message: "Перевірте запропоновану операцію. Ще нічого не збережено.", assumptions: plan.assumptions, preview: prepared.preview };
+        }
+        case "batch":
+          return { operation: "batch", message: "Перевірте всі операції. Буде збережено весь пакет або жодної зміни.", assumptions: plan.assumptions, preview: await prepareInventoryBatch(command.intent, parsed.data.selected) };
+        case "clarify":
+          return { operation: "clarify", message: plan.message, clarification: prepareClarification(parsed.data, plan.message, command.continuesPrevious) };
+        case "unsupported":
+          return { operation: "unsupported", message: plan.message };
+        default:
+          return assertNever(command);
       }
-      case "batch":
-        return { operation: "batch", message: "Перевірте всі операції. Буде збережено весь пакет або жодної зміни.", assumptions: plan.assumptions, preview: await prepareInventoryBatch(command.intent, parsed.data.selected) };
-      case "clarify":
-        return { operation: "clarify", message: plan.message, clarification: prepareClarification(parsed.data, plan.message, command.continuesPrevious) };
-      case "unsupported":
-        return { operation: "unsupported", message: plan.message };
-      default:
-        return assertNever(command);
+    } catch (error) {
+      if (error instanceof NoChangesError) return { operation: "noChanges", message: error.message };
+      throw error;
     }
   });
 }
