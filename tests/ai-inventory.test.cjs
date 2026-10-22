@@ -909,3 +909,23 @@ test("single and batch previews render shared cards while creation forms remain 
     else delete require.extensions[".tsx"];
   }
 });
+
+test("unquoted partial names in mixed batches reach server resolution without losing operations", async () => {
+  state.records.stuff = stuffRecord();
+  state.rows.stuff = [state.records.stuff];
+  state.records.ingredient = ingredientRecord({ isInStock: true });
+  state.rows.ingredient = [state.records.ingredient];
+  state.plan = { message: "Перегляд", assumptions: [], command: { kind: "batch", intent: { kind: "list", operations: [
+    { kind: "updateStuff", targetName: "Слоїчки", patch: stuffPatch({ stock: { mode: "set", value: 20 } }) },
+    { kind: "updateIngredient", targetName: "Куркума", patch: ingredientPatch({ isInStock: false }) },
+  ] } } };
+  const result = await actions.askInventoryAssistant(request({ prompt: "Одним пакетом встанови залишок матеріалу Слоїчки на 20 і познач інгредієнт Куркума як відсутній" }));
+  assert.equal(result.ok, true);
+  assert.equal(result.data.operation, "batch");
+  assert.equal(result.data.preview.items.length, 2);
+  const instructions = state.apiCalls[0].instructions;
+  assert.ok(instructions.includes("never hypothetical database ambiguity"));
+  assert.ok(instructions.includes('updateStuff targetName="банка"'));
+  assert.equal(instructions.includes("Every operation must include its exact target name"), false);
+  assert.equal(state.writes.length, 0);
+});
