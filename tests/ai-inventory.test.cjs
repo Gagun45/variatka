@@ -673,3 +673,20 @@ test("ingredient and stuff creation use the same typed command and preview actio
   assert.equal(state.records.ingredient.isSaved, true);
   assert.equal(state.apiCalls.length, 0);
 });
+
+test("planner receives Ukrainian entity vocabulary and safe interpretation examples", async () => {
+  state.plan = plan(stuff);
+  const result = await actions.askInventoryAssistant(request({ prompt: "Покажи всі матеріали" }));
+  assert.equal(result.ok, true);
+  const instructions = state.apiCalls[0].instructions;
+  for (const phrase of ["матеріалів", "складників", "баночок", "Матеріали is the entire stuff ENTITY", "stockMax 9", "deleteStuff; preview required", "додай банки is ambiguous", "Preserve quoted record titles"]) assert.ok(instructions.includes(phrase), phrase);
+  assert.deepEqual(result.data.results.search, stuff);
+  assert.equal(state.writes.length, 0);
+});
+
+test("shared context filters preserve false, zero and Ukrainian labels", () => {
+  const { searchFilters } = require("../lib/ai/search-labels.ts");
+  assert.deepEqual(searchFilters({ ...stuff, category: "JARS", isInStock: false, stockMin: 0 }), ["Категорія: Слоїчки", "У наявності: Ні", "Залишок від: 0"]);
+  assert.deepEqual(searchFilters({ ...recipe, series: "DEFAULT", includeIngredients: ["часник", "сіль"] }), ["Серія: Стандарт", "Містить усі: часник, сіль"]);
+  assert.deepEqual(searchFilters(ingredient), []);
+});

@@ -10,6 +10,8 @@ For ingredient/stuff creation, editing, availability, stock and deletion with co
 
 For recipe CRUD and atomic batches, see the [recipe and batch guide](docs/ai-recipes-batches.md).
 
+For Ukrainian terminology, visible request context and reset behavior, see the [terminology and context guide](docs/ai-terminology-context.md).
+
 First, run the development server:
 
 ```bash

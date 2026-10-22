@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { MessageSquarePlus, Send } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,8 @@ import type { InventoryRecord, InventoryResult, InventorySearchResult, MutationR
 import InventoryBatchView from "./InventoryBatchView";
 import type { BatchPreview } from "@/zod/ai-batch.schema";
 import { completeBatchPreview } from "@/lib/ai/batch-preview";
+import { inventoryEntityLabels } from "@/lib/ai/inventory-labels";
+import { searchFilters } from "@/lib/ai/search-labels";
 import { mutationDefinitions } from "@/lib/ai/mutation-definitions";
 import type { Clarification, InventorySearch } from "@/zod/ai-search.schema";
 import { InventoryRecordView, InventorySearchView } from "./InventorySearchView";
@@ -36,8 +39,26 @@ export default function AiAssistant() {
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [notices, setNotices] = useState<MutationResult[]>([]);
   const [batch, setBatch] = useState<BatchPreview | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const pending = useRef(false);
   const queryClient = useQueryClient();
+
+  function newRequest() {
+    if (pending.current) return;
+    setPrompt("");
+    setMessages([]);
+    setError("");
+    setResults(null);
+    setSelected(null);
+    setClarification(null);
+    setPreviousSearch(null);
+    setMutation(null);
+    setPendingIntent(null);
+    setAssumptions([]);
+    setNotices([]);
+    setBatch(null);
+    inputRef.current?.focus();
+  }
 
   async function propose(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -188,11 +209,7 @@ export default function AiAssistant() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-8" lang="uk">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">AI-помічник</h1>
-        <p className="text-muted-foreground">Шукайте інгредієнти, рецепти й матеріали українською. Оберіть запис, щоб переглянути його дані та поставити уточнювальне запитання.</p>
-        <p className="text-sm text-muted-foreground">Можна створювати, редагувати й видаляти інгредієнти, рецепти та матеріали, змінювати наявність і залишки. Кожна операція потребує перегляду та підтвердження. Також підтримуються рецепти зі складом і пакети до 20 операцій. Варіанти та залишки готової продукції поки не змінюються через AI.</p>
-      </header>
+      <h1 className="text-2xl font-semibold">AI-помічник</h1>
 
       <div role="log" aria-label="Повідомлення" aria-live="polite" className="space-y-3">
         {messages.map((message, index) => (
@@ -220,10 +237,29 @@ export default function AiAssistant() {
         <Button type="button" variant="outline" disabled={busy} onClick={() => { setClarification(null); setError(""); }}>Скасувати уточнення</Button>
       </section>}
 
+      {(selected || previousSearch) && <details className="rounded-lg border p-3 text-sm">
+        <summary className="cursor-pointer font-medium">Контекст запиту</summary>
+        <div className="mt-2 space-y-1">
+          {selected && <p>Обрано: {inventoryEntityLabels[selected.entity]} «{selected.title}» · #{selected.id}.</p>}
+          {previousSearch && <p>Пошук: {previousSearch.entity === "all" ? "Усі типи" : inventoryEntityLabels[previousSearch.entity]} · {searchFilters(previousSearch).join(" · ") || "Без додаткових фільтрів"}.</p>}
+        </div>
+      </details>}
+
+
       <form onSubmit={propose} className="space-y-3">
         <label htmlFor="ai-prompt" className="font-medium">{clarification ? "Ваша відповідь" : "Ваш запит"}</label>
-        <Textarea id="ai-prompt" required maxLength={12000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={clarification ? "Напишіть відповідь на уточнення" : "Покажи приховані непідтверджені соуси"} />
-        <Button type="submit" disabled={busy || !prompt.trim()}>Надіслати</Button>
+        <Textarea ref={inputRef} id="ai-prompt" required maxLength={12000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={clarification ? "Напишіть відповідь на уточнення" : "Покажи приховані непідтверджені соуси"} />
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Button type="button" variant="ghost" className="min-h-11 gap-2 text-muted-foreground" disabled={busy} onClick={newRequest}>
+            <MessageSquarePlus aria-hidden="true" />
+            Новий чат
+          </Button>
+          <Button type="submit" className="min-h-11 gap-2 px-5" disabled={busy || !prompt.trim()}>
+            Надіслати
+            <Send aria-hidden="true" />
+          </Button>
+        </div>
       </form>
     </main>
   );

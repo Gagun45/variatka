@@ -1,8 +1,10 @@
 import { assistantPlanSchema, type AssistantRequest } from "@/zod/ai-search.schema";
 import type { InventoryRecord } from "./inventory.types";
+import { inventoryVocabularyInstructions } from "./inventory-vocabulary";
 import { requestStructuredOutput } from "./structured-output";
 
 const instructions = `You are a Ukrainian-language inventory assistant. Return a structured plan, not a database answer.
+${inventoryVocabularyInstructions}
 Supported operations:
 - search: find ingredients, recipes or stuff using the search schema.
 - viewSelected: show the current selected record's stored details, including recipe composition, notes, stock, descriptions, statuses.
