@@ -6,12 +6,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { proposeIngredient } from "@/lib/actions/ai.actions";
+import { askInventoryAssistant, getInventoryRecord, searchInventoryRecords } from "@/lib/actions/ai.actions";
 import { createIngredient } from "@/lib/actions/ingredient.actions";
 import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
 import { frontendUrls } from "@/lib/urls";
 import type { IngredientDraft } from "@/zod/ai.schema";
 import type { IIngredientFormValues } from "@/zod/ingredient.schema";
+import type { InventoryRecord, InventoryResult, InventorySearchResult } from "@/lib/ai/inventory.types";
+import type { InventorySearch } from "@/zod/ai-search.schema";
+import { InventoryRecordView, InventorySearchView } from "./InventorySearchView";
 
 type Message = { role: "user" | "assistant"; text: string };
 
@@ -22,6 +25,9 @@ export default function AiAssistant() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<{ id: number; title: string } | null>(null);
+  const [results, setResults] = useState<InventorySearchResult | null>(null);
+  const [selected, setSelected] = useState<InventoryRecord | null>(null);
+  const [previousSearch, setPreviousSearch] = useState<InventorySearch | null>(null);
   const pending = useRef(false);
   const queryClient = useQueryClient();
 
@@ -42,12 +48,61 @@ export default function AiAssistant() {
     setMessages((old) => [...old, { role: "user", text: request }]);
     setPrompt("");
     try {
-      const result = await proposeIngredient(request);
+      const result = await askInventoryAssistant({
+        prompt: request,
+        selected: selected ? { entity: selected.entity, id: selected.id } : null,
+        previousSearch,
+      });
       if (!result.ok) { setError(result.message); return; }
       setMessages((old) => [...old, { role: "assistant", text: result.data.message }]);
-      setDraft(result.data);
+      const reply = result.data;
+      if (reply.operation === "search") {
+        setResults(reply.results);
+        setPreviousSearch(reply.results.search);
+        setSelected(null);
+      } else if (reply.operation === "viewSelected") {
+        setSelected(reply.record);
+      } else if (reply.operation === "createIngredient") {
+        setDraft(reply.draft);
+      }
     } catch {
       setError("Не вдалося отримати відповідь. Спробуйте ще раз.");
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function selectRecord(record: InventoryResult) {
+    if (pending.current) return;
+    pending.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await getInventoryRecord({ entity: record.entity, id: record.id });
+      if (!result.ok) { setError(result.message); setSelected(null); return; }
+      setSelected(result.data);
+      setMessages((old) => [...old, { role: "assistant", text: `Обрано: ${result.data.title}. Дані завантажено з бази.` }]);
+    } catch {
+      setError("Не вдалося завантажити запис. Спробуйте ще раз.");
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function loadMore() {
+    if (pending.current || !results?.hasMore) return;
+    pending.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await searchInventoryRecords(results.search, results.page + 1);
+      if (!result.ok) { setError(result.message); return; }
+      const existing = new Set(results.items.map((item) => `${item.entity}:${item.id}`));
+      setResults({ ...result.data, items: [...results.items, ...result.data.items.filter((item) => !existing.has(`${item.entity}:${item.id}`))] });
+    } catch {
+      setError("Не вдалося завантажити результати. Спробуйте ще раз.");
     } finally {
       pending.current = false;
       setBusy(false);
@@ -78,8 +133,8 @@ export default function AiAssistant() {
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-8" lang="uk">
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">AI-помічник</h1>
-        <p className="text-muted-foreground">Опишіть новий інгредієнт українською. Перевірте пропозицію та підтвердьте створення.</p>
-        <p className="text-sm text-muted-foreground">Поки що підтримується лише створення одного інгредієнта за запит. Кожен запит незалежний — вказуйте всі деталі заново.</p>
+        <p className="text-muted-foreground">Шукайте інгредієнти, рецепти й матеріали українською. Оберіть запис, щоб переглянути його дані та поставити уточнювальне запитання.</p>
+        <p className="text-sm text-muted-foreground">Наприклад: «Рецепти з часником без цукру», «Спеції, яких немає в наявності», «Слоїчки із залишком менше 10». Також можна створити один інгредієнт із попереднім переглядом. Зміна й видалення поки не підтримуються.</p>
       </header>
 
       <div role="log" aria-label="Повідомлення" aria-live="polite" className="space-y-3">
@@ -90,6 +145,9 @@ export default function AiAssistant() {
           </div>
         ))}
       </div>
+
+      {results && <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} />}
+      {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); setError(""); }} />}
 
       {draft?.operation === "createIngredient" && draft.ingredient && (
         <form onSubmit={confirm} className="space-y-4 rounded-xl border p-5">
@@ -128,8 +186,8 @@ export default function AiAssistant() {
 
       <form onSubmit={propose} className="space-y-3">
         <label htmlFor="ai-prompt" className="font-medium">Ваш запит</label>
-        <Textarea id="ai-prompt" required maxLength={2000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Створи інгредієнт: чорний перець, спеції, є в наявності." />
-        <Button type="submit" disabled={busy || !prompt.trim()}>Отримати пропозицію</Button>
+        <Textarea id="ai-prompt" required maxLength={2000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Покажи приховані непідтверджені соуси" />
+        <Button type="submit" disabled={busy || !prompt.trim()}>Надіслати</Button>
       </form>
     </main>
   );

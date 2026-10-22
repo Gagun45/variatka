@@ -4,6 +4,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 For the admin AI ingredient assistant, see the [step-by-step setup and implementation guide](docs/ai-assistant.md).
 
+For natural-language inventory search, record selection and follow-up questions, see the [AI search guide](docs/ai-search.md).
+
 First, run the development server:
 
 ```bash

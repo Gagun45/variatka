@@ -1,6 +1,6 @@
 # AI ingredient assistant: setup and implementation guide
 
-The first version lives at `/admin/ai` (also linked as **AI-помічник** in admin navigation). Write a Ukrainian request, review/edit the proposed ingredient, then click **Підтвердити створення**. No packages or database migrations are needed.
+The assistant lives at `/admin/ai` (also linked as **AI-помічник** in admin navigation). For ingredient creation, write a Ukrainian request, review/edit the proposed ingredient, then click **Підтвердити створення**. No packages or database migrations are needed. The assistant also supports [search and record selection across ingredients, recipes and stuff](ai-search.md).
 
 ## 1. Create an OpenAI API key
 
@@ -50,9 +50,9 @@ Why: AI interprets the request; your existing application code performs the writ
 
 The assistant is instructed to propose `SPICES`, an empty description, and `isInStock=false`, and explain every inferred/defaulted field in Ukrainian. Other ingredients use `OTHER`. Review these suggestions: schema validation enforces field types, but the model can still misunderstand meaning.
 
-Each prompt is independent. For a revised proposal, send the full request again or edit the preview directly. Visible messages are local to this page and disappear on reload. A new prompt replaces the pending preview.
+For a revised creation proposal, send the full request again or edit the preview directly. Search follow-ups can use the last search and explicitly selected record. Visible messages and context are local to this page and disappear on reload. A new prompt replaces the pending creation preview.
 
-Why: independent requests avoid conversation persistence and keep this first version easy to understand and move into a floating panel later.
+Why: transient context avoids conversation persistence and keeps this version easy to move into a floating panel later.
 
 ## 6. Check confirmation and error behavior
 
@@ -70,8 +70,8 @@ Why: these checks cover the boundary between a proposal and an actual database w
 ## 7. Understand the code
 
 1. `zod/ai.schema.ts` defines prompt limits and the draft contract. It reuses the ingredient fields and restricts the operation to `createIngredient` or `unsupported`.
-2. `lib/ai/ingredient-draft.ts` sends one request to OpenAI using built-in `fetch`. Zod generates the strict JSON Schema, and validates the result again locally. The request has a 30-second timeout, an output limit, and `store: false` (this disables response storage, not all provider retention policies). Only the prompt and schema/instructions are sent; there is no inventory dump.
-3. `lib/actions/ai.actions.ts` authenticates the admin, validates the prompt, and returns the proposal. It performs no database writes.
+2. `lib/ai/structured-output.ts` sends requests to OpenAI using built-in `fetch`; `ingredient-draft.ts` retains the original draft-only entry point. Zod generates the strict JSON Schema, and validates the result again locally. The request has a 30-second timeout, an output limit, and `store: false` (this disables response storage, not all provider retention policies). The new search planner also sends selected record identity and previous search filters; there is no inventory dump.
+3. `lib/actions/ai.actions.ts` authenticates the admin, validates the request, and routes searches, selected-record reads and ingredient proposals. It performs no database writes.
 4. `app/(admin)/admin/ai/_components/AiAssistant.tsx` displays messages and an editable preview. Confirmation calls the existing `createIngredient` action directly, so it needs no second AI request.
 5. `lib/actions/ingredient.actions.ts` checks admin access, validates submitted fields on the server, trims the title, checks for duplicates, and writes through Prisma. This server validation also covers the existing manual creation flow.
 
