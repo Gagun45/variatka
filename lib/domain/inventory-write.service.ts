@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import z from "zod";
 import { ingredientWriteSchema, stuffWriteSchema, inventoryIdSchema, inventoryVersionSchema, inventoryTitleInputSchema, type IngredientWrite, type StuffWrite } from "@/zod/ai-mutation.schema";
 import { AppError } from "../error";
@@ -13,66 +14,74 @@ function parse<T>(schema: z.ZodType<T>, data: unknown): T {
   return result.data;
 }
 
-function versionWhere(id: number, expectedUpdatedAt?: string) {
+export function versionWhere(id: number, expectedUpdatedAt?: string) {
   parse(inventoryIdSchema, id);
   return { id, ...(expectedUpdatedAt !== undefined && { updatedAt: new Date(parse(inventoryVersionSchema, expectedUpdatedAt)) }) };
 }
 
-function nextVersion(expectedUpdatedAt?: string) {
+export function nextVersion(expectedUpdatedAt?: string) {
   // Always advance even if two confirmations land in the same millisecond.
   return expectedUpdatedAt === undefined ? {} : { updatedAt: new Date(Math.max(Date.now(), Date.parse(expectedUpdatedAt) + 1)) };
 }
 
-async function guarded<T>(write: () => Promise<T>): Promise<T> {
+export async function guarded<T>(write: () => Promise<T>): Promise<T> {
   try { return await write(); } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? error.code : null;
     if (code === "P2002") throw new AppError("Запис із такою назвою вже існує.");
     if (code === "P2025") throw new AppError(staleMessage);
-    if (code === "P2003") throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.");
+    if (code === "P2003") throw new AppError("Запис використовується в рецептах або замовленнях. Видалення неможливе.");
+    if (code === "P2034") throw new AppError("Дані змінилися під час збереження. Повторіть запит і перевірте новий перегляд.");
     throw error;
   }
 }
 
 // Shared by ordinary admin forms and AI confirmation. Callers must requireAdmin first.
 export const ingredientWrites = {
-  create: async (data: IngredientWrite) => {
+  create: async (data: IngredientWrite, db: Prisma.TransactionClient = prisma) => {
     const parsed = parse(ingredientWriteSchema.extend({ title: inventoryTitleInputSchema }), data);
-    return guarded(() => prisma.ingredient.create({ data: parsed, ...ingredientArgs }));
+    return guarded(() => db.ingredient.create({ data: parsed, ...ingredientArgs }));
   },
-  update: async (id: number, data: Omit<IngredientWrite, "isSaved"> & { isSaved?: boolean }, expectedUpdatedAt?: string) => {
+  update: async (id: number, data: Omit<IngredientWrite, "isSaved"> & { isSaved?: boolean }, expectedUpdatedAt?: string, db: Prisma.TransactionClient = prisma) => {
     const where = versionWhere(id, expectedUpdatedAt);
     const parsed = parse(ingredientWriteSchema.partial({ isSaved: true }), data);
-    return guarded(() => prisma.ingredient.update({ where, data: { ...parsed, ...nextVersion(expectedUpdatedAt) }, ...ingredientArgs }));
+    return guarded(() => db.ingredient.update({ where, data: { ...parsed, ...nextVersion(expectedUpdatedAt) }, ...ingredientArgs }));
   },
-  delete: async (id: number, expectedUpdatedAt?: string) => {
+  delete: async (id: number, expectedUpdatedAt?: string, db: Prisma.TransactionClient = prisma, cleanup?: string[]) => {
     const where = versionWhere(id, expectedUpdatedAt);
-    const record = await prisma.ingredient.findUnique({ where: { id }, select: { imageKey: true, _count: { select: { recipeIngredients: true } } } });
+    const record = await db.ingredient.findUnique({ where: { id }, select: { imageKey: true, _count: { select: { recipeIngredients: true } } } });
     if (!record) throw new AppError(staleMessage);
     if (record._count.recipeIngredients > 0) throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.");
     // Relation predicate + FK prevent deleting an ingredient attached after the pre-check.
-    const deleted = await guarded(() => prisma.ingredient.delete({ where: { ...where, recipeIngredients: { none: {} } }, select: { imageKey: true } }));
+    const deleted = await guarded(() => db.ingredient.delete({ where: { ...where, recipeIngredients: { none: {} } }, select: { imageKey: true } }));
     // Delete the DB row first: a failed/stale delete must never remove its image.
     if (deleted.imageKey) {
-      try { await storageHelper.delete(deleted.imageKey); }
-      catch { console.error("Could not clean up image for a deleted ingredient", id); }
+      if (cleanup) cleanup.push(deleted.imageKey);
+      else await cleanupInventoryImages([deleted.imageKey]);
     }
     return id;
   },
 };
 
 export const stuffWrites = {
-  create: async (data: StuffWrite) => {
+  create: async (data: StuffWrite, db: Prisma.TransactionClient = prisma) => {
     const parsed = parse(stuffWriteSchema.extend({ title: inventoryTitleInputSchema }), data);
-    return guarded(() => prisma.stuff.create({ data: parsed, ...stuffArgs }));
+    return guarded(() => db.stuff.create({ data: parsed, ...stuffArgs }));
   },
-  update: async (id: number, data: Omit<StuffWrite, "description"> & { description?: string | null }, expectedUpdatedAt?: string) => {
+  update: async (id: number, data: Omit<StuffWrite, "description"> & { description?: string | null }, expectedUpdatedAt?: string, db: Prisma.TransactionClient = prisma) => {
     const where = versionWhere(id, expectedUpdatedAt);
     const parsed = parse(stuffWriteSchema.partial({ description: true }), data);
-    return guarded(() => prisma.stuff.update({ where, data: { ...parsed, ...nextVersion(expectedUpdatedAt) }, ...stuffArgs }));
+    return guarded(() => db.stuff.update({ where, data: { ...parsed, ...nextVersion(expectedUpdatedAt) }, ...stuffArgs }));
   },
-  delete: async (id: number, expectedUpdatedAt?: string) => {
+  delete: async (id: number, expectedUpdatedAt?: string, db: Prisma.TransactionClient = prisma) => {
     const where = versionWhere(id, expectedUpdatedAt);
-    await guarded(() => prisma.stuff.delete({ where }));
+    await guarded(() => db.stuff.delete({ where }));
     return id;
   },
 };
+
+export async function cleanupInventoryImages(keys: string[]) {
+  for (const key of keys) {
+    try { await storageHelper.delete(key); }
+    catch { console.error("Could not clean up an image after a committed inventory deletion"); }
+  }
+}

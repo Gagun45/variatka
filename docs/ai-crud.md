@@ -1,6 +1,6 @@
 # Ingredient and stuff CRUD through the AI assistant
 
-The assistant at `/admin/ai` can now create, search/view, update and delete ingredients and stuff (materials). Every write requires a preview and an explicit button confirmation. Recipe search/details remain available; recipe writes and order functionality are excluded.
+The assistant at `/admin/ai` can now create, search/view, update and delete ingredients and stuff (materials). Every write requires a preview and an explicit button confirmation. Recipe CRUD and atomic batches are described in the [recipe and batch guide](ai-recipes-batches.md). Order functionality is excluded.
 
 No new packages, environment variables or database migrations are required. Use your existing OpenAI setup.
 
@@ -167,4 +167,4 @@ In the browser, use clearly named test records:
 7. Ask for a stock change without a quantity, answer the clarification with `30`, and verify a preview appears without a write. Cancel clarification and start an independent search; verify the old request is not reused.
 8. Verify search, record details and existing manual ingredient/stuff forms still work. Create an ingredient while search results are visible and verify that confirmation refreshes the results using the same behavior as stuff creation.
 
-Use the same smoke test after deployment with your existing production API environment variables. No recipe or order AI writes are included in this step.
+Use the same smoke test after deployment with your existing production API environment variables. For recipe writes and batch smoke tests, follow the [recipe and batch guide](ai-recipes-batches.md). Order AI writes remain excluded.

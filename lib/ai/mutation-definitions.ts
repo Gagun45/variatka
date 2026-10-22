@@ -8,8 +8,11 @@ export const mutationDefinitions = {
   createStuff: { entity: "stuff", action: "create" },
   updateStuff: { entity: "stuff", action: "update" },
   deleteStuff: { entity: "stuff", action: "delete" },
+  createRecipe: { entity: "recipe", action: "create" },
+  updateRecipe: { entity: "recipe", action: "update" },
+  deleteRecipe: { entity: "recipe", action: "delete" },
 } as const satisfies Record<InventoryMutationIntent["kind"], {
-  entity: "ingredient" | "stuff";
+  entity: "ingredient" | "stuff" | "recipe";
   action: "create" | "update" | "delete";
 }>;
 

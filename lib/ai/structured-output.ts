@@ -35,7 +35,7 @@ export async function requestStructuredOutput<T>(options: {
         store: false,
         instructions: options.instructions,
         input: options.input,
-        max_output_tokens: 1500,
+        max_output_tokens: 9000,
         text: { format: {
           type: "json_schema",
           name: options.name,

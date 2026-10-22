@@ -75,6 +75,13 @@ const prisma = Object.fromEntries(["ingredient", "recipe", "stuff"].map((entity)
   },
 }]));
 
+prisma.$transaction = async (callback) => {
+  const records = structuredClone(state.records);
+  const writes = [...state.writes];
+  try { return await callback(prisma); }
+  catch (error) { state.records = records; state.writes = writes; throw error; }
+};
+
 Module._load = function (id, parent, main) {
   if (id === "../prisma") return { prisma };
   if (id === "../r2/storage.helper") return { storageHelper: { delete: async (key) => {
@@ -632,7 +639,7 @@ test("oversized or exhausted clarification contexts are rejected with no databas
   assert.equal(exhausted.ok, false);
   assert.match(exhausted.message, /ліміт уточнень/);
   const calls = state.apiCalls.length;
-  for (const invalid of [{ ...context, originalPrompt: "x".repeat(2001) }, { ...context, turns: [...context.turns, context.turns[0]] }, { ...context, question: "" }]) {
+  for (const invalid of [{ ...context, originalPrompt: "x".repeat(12001) }, { ...context, turns: [...context.turns, context.turns[0]] }, { ...context, question: "" }]) {
     assert.equal((await actions.askInventoryAssistant(request({ clarification: invalid }))).ok, false);
   }
   assert.equal(state.apiCalls.length, calls);

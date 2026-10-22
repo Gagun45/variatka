@@ -8,6 +8,8 @@ For natural-language inventory search, record selection and follow-up questions,
 
 For ingredient/stuff creation, editing, availability, stock and deletion with confirmation, see the [AI CRUD guide](docs/ai-crud.md).
 
+For recipe CRUD and atomic batches, see the [recipe and batch guide](docs/ai-recipes-batches.md).
+
 First, run the development server:
 
 ```bash

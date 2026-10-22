@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { inventoryCategoryLabels } from "@/lib/ai/inventory-labels";
 import type { InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import { mutationDefinitions } from "@/lib/ai/mutation-definitions";
+import RecipeMutationView from "./RecipeMutationView";
 
 const labels: Record<string, string> = { title: "Назва", description: "Опис", category: "Категорія", isInStock: "У наявності", isSaved: "Збережений", inStock: "Залишок" };
 function display(key: string, value: unknown) {
@@ -15,14 +16,16 @@ function display(key: string, value: unknown) {
   return String(value);
 }
 
-export default function InventoryMutationView({ preview, assumptions, busy, onChange, onConfirm, onCancel }: {
+export default function InventoryMutationView({ preview, assumptions, busy, onChange, onConfirm, onCancel, embedded = false }: {
   preview: InventoryMutationPreview;
   assumptions: string[];
   busy: boolean;
   onChange: (preview: InventoryMutationPreview) => void;
   onConfirm: () => void;
   onCancel: () => void;
+  embedded?: boolean;
 }) {
+  if (preview.kind === "createRecipe" || preview.kind === "updateRecipe" || preview.kind === "deleteRecipe") return <RecipeMutationView preview={preview} busy={busy} embedded={embedded} onConfirm={onConfirm} onCancel={onCancel} />;
   const definition = mutationDefinitions[preview.kind];
   const deleting = definition.action === "delete";
   const creating = preview.kind === "createIngredient" || preview.kind === "createStuff";
@@ -35,12 +38,13 @@ export default function InventoryMutationView({ preview, assumptions, busy, onCh
     else if (preview.kind === "createStuff") onChange({ ...preview, after: { ...preview.after, [field]: value } });
   }
 
-  return <form onSubmit={(event) => { event.preventDefault(); onConfirm(); }} className={`space-y-4 rounded-xl border p-5 ${deleting ? "border-destructive" : ""}`}>
+  const Container = embedded ? "div" : "form";
+  return <Container onSubmit={(event) => { event.preventDefault(); onConfirm(); }} className={`space-y-4 rounded-xl border p-5 ${deleting ? "border-destructive" : ""}`}>
     <h2 className="text-lg font-semibold">{deleting ? "Перегляд видалення" : creating ? definition.entity === "ingredient" ? "Новий інгредієнт" : "Новий матеріал" : "Перегляд змін"}</h2>
     {"target" in preview && <p className="break-words font-medium">{definition.entity === "ingredient" ? "Інгредієнт" : "Матеріал"}: {preview.target.title} · #{preview.target.id}</p>}
     <p className="text-sm text-muted-foreground">{deleting ? "Цей запис буде видалено без можливості відновлення через помічника. Перевірте назву та підтвердьте видалення." : "Ще нічого не збережено. Перевірте запропоновані значення."}</p>
     {assumptions.length > 0 && <div className="rounded-lg bg-muted p-3 text-sm"><p className="font-medium">Запропоновані значення:</p><ul className="list-disc pl-5">{assumptions.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
-    <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
+    <fieldset disabled={busy || embedded} className="space-y-4 disabled:opacity-60">
       {creating ? <>
         <label className="block space-y-1"><span>Назва</span><Input required maxLength={200} value={preview.after.title} onChange={(event) => editCreationField("title", event.target.value)} /></label>
         <label className="block space-y-1"><span>Опис</span><Textarea maxLength={10000} value={preview.after.description ?? ""} onChange={(event) => editCreationField("description", event.target.value)} /></label>
@@ -59,10 +63,10 @@ export default function InventoryMutationView({ preview, assumptions, busy, onCh
         </table></div>
         {!deleting && <p className="text-sm text-muted-foreground">Решта полів залишаться без змін. Щоб виправити пропозицію, скасуйте її та надішліть уточнений запит.</p>}
       </>}
-      <div className="flex flex-wrap gap-2">
+      {!embedded && <div className="flex flex-wrap gap-2">
         <Button type="submit" variant={deleting ? "destructive" : "default"} disabled={creating && !preview.after.title.trim()}>{deleting ? "Підтвердити видалення" : creating ? "Підтвердити створення" : "Підтвердити зміни"}</Button>
         <Button type="button" variant="outline" onClick={onCancel}>Скасувати</Button>
-      </div>
+      </div>}
     </fieldset>
-  </form>;
+  </Container>;
 }

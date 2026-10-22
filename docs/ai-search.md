@@ -98,7 +98,7 @@ Loading more uses a database action directly, without another AI call. Searches 
 6. `lib/actions/ai.actions.ts`: authenticated chat routing, direct search/pagination and selection/detail actions.
 7. `InventorySearchView.tsx` and `AiAssistant.tsx`: filters/results, selection, detail panels and transient session context.
 
-This still uses structured plans rather than a provider tool-calling loop. Ingredient/stuff mutations reuse resolved selections with before/after previews and explicit confirmation. The same approach can be extended to recipe writes later.
+This still uses structured plans rather than a provider tool-calling loop. Ingredient/stuff mutations reuse resolved selections with before/after previews and explicit confirmation. Recipe writes and atomic batches now use the same approach; see the [recipe and batch guide](ai-recipes-batches.md).
 
 ## Verification
 

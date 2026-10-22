@@ -5,12 +5,15 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { askInventoryAssistant, confirmInventoryMutation, getInventoryRecord, previewInventoryMutation, searchInventoryRecords } from "@/lib/actions/ai.actions";
+import { askInventoryAssistant, confirmInventoryBatch, getInventoryRecord, previewInventoryMutation, searchInventoryRecords } from "@/lib/actions/ai.actions";
 import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
 import { stuffKeys } from "@/features/stuff/stuff.keys";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 import { frontendUrls } from "@/lib/urls";
-import type { InventoryRecord, InventoryResult, InventorySearchResult } from "@/lib/ai/inventory.types";
+import type { InventoryRecord, InventoryResult, InventorySearchResult, MutationResult } from "@/lib/ai/inventory.types";
+import InventoryBatchView from "./InventoryBatchView";
+import type { BatchPreview } from "@/zod/ai-batch.schema";
+import { completeBatchPreview } from "@/lib/ai/batch-preview";
 import { mutationDefinitions } from "@/lib/ai/mutation-definitions";
 import type { Clarification, InventorySearch } from "@/zod/ai-search.schema";
 import { InventoryRecordView, InventorySearchView } from "./InventorySearchView";
@@ -31,7 +34,8 @@ export default function AiAssistant() {
   const [mutation, setMutation] = useState<InventoryMutationPreview | null>(null);
   const [pendingIntent, setPendingIntent] = useState<InventoryMutationIntent | null>(null);
   const [assumptions, setAssumptions] = useState<string[]>([]);
-  const [notice, setNotice] = useState<{ operation: "created" | "updated" | "deleted"; entity: "ingredient" | "stuff"; id: number; title: string } | null>(null);
+  const [notices, setNotices] = useState<MutationResult[]>([]);
+  const [batch, setBatch] = useState<BatchPreview | null>(null);
   const pending = useRef(false);
   const queryClient = useQueryClient();
 
@@ -43,7 +47,8 @@ export default function AiAssistant() {
     setError("");
     setMutation(null);
     setPendingIntent(null);
-    setNotice(null);
+    setNotices([]);
+    setBatch(null);
     setAssumptions([]);
     const request = prompt.trim();
     setMessages((old) => [...old, { role: "user", text: request }]);
@@ -65,6 +70,10 @@ export default function AiAssistant() {
         setSelected(null);
       } else if (reply.operation === "viewSelected") {
         setSelected(reply.record);
+      } else if (reply.operation === "batch") {
+        setBatch(reply.preview);
+        setAssumptions(reply.assumptions);
+        setSelected(null);
       } else if (reply.operation === "mutation") {
         setMutation(reply.preview);
         setAssumptions(reply.assumptions);
@@ -92,6 +101,7 @@ export default function AiAssistant() {
     setError("");
     setMutation(null);
     setClarification(null);
+    setBatch(null);
     try {
       const result = await getInventoryRecord({ entity: record.entity, id: record.id });
       if (!result.ok) { setError(result.message); setSelected(null); return; }
@@ -99,7 +109,8 @@ export default function AiAssistant() {
       if (pendingIntent) {
         const preview = await previewInventoryMutation(pendingIntent, { entity: record.entity, id: record.id });
         if (!preview.ok) { setError(preview.message); return; }
-        setMutation(preview.data);
+        if (mutationDefinitions[preview.data.kind].entity === "recipe") setBatch(completeBatchPreview([preview.data]));
+        else setMutation(preview.data);
         setPendingIntent(null);
       }
       setMessages((old) => [...old, { role: "assistant", text: `Обрано: ${result.data.title}. Дані завантажено з бази.` }]);
@@ -130,25 +141,26 @@ export default function AiAssistant() {
   }
 
   async function confirmMutation() {
-    if (pending.current || !mutation) return;
+    if (pending.current || (!mutation && !batch)) return;
     pending.current = true;
     setBusy(true);
     setError("");
     try {
-      const result = await confirmInventoryMutation(mutation);
+      const result = await confirmInventoryBatch(batch ?? { items: [mutation!], unchanged: [] });
       if (!result.ok) { setError(result.message); return; }
-      const saved = result.data;
+      const written = result.data.results;
+      const saved = written[0];
+      setBatch(null);
       setMutation(null);
       setPendingIntent(null);
-      setNotice(saved);
-      void queryClient.invalidateQueries({ queryKey: saved.entity === "ingredient" ? ingredientKeys.ingredients : stuffKeys.stuff });
-      if (saved.entity === "ingredient") {
-        void queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
-        void queryClient.invalidateQueries({ queryKey: recipeKeys.public });
-      }
+      setNotices(written);
+      void queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
+      void queryClient.invalidateQueries({ queryKey: stuffKeys.stuff });
+      void queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
+      void queryClient.invalidateQueries({ queryKey: recipeKeys.public });
       // Refresh failures must not turn a successful write into an apparent failure.
       try {
-        if (saved.operation === "deleted") {
+        if (written.length !== 1 || saved.operation === "deleted") {
           setSelected(null);
           setResults((old) => old ? { ...old, items: old.items.filter((item) => item.entity !== saved.entity || item.id !== saved.id) } : null);
         } else {
@@ -179,7 +191,7 @@ export default function AiAssistant() {
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">AI-помічник</h1>
         <p className="text-muted-foreground">Шукайте інгредієнти, рецепти й матеріали українською. Оберіть запис, щоб переглянути його дані та поставити уточнювальне запитання.</p>
-        <p className="text-sm text-muted-foreground">Можна створювати, редагувати й видаляти інгредієнти та матеріали, змінювати наявність і залишки. Кожна операція потребує перегляду та підтвердження. Рецепти поки доступні лише для пошуку й перегляду.</p>
+        <p className="text-sm text-muted-foreground">Можна створювати, редагувати й видаляти інгредієнти, рецепти та матеріали, змінювати наявність і залишки. Кожна операція потребує перегляду та підтвердження. Також підтримуються рецепти зі складом і пакети до 20 операцій. Варіанти та залишки готової продукції поки не змінюються через AI.</p>
       </header>
 
       <div role="log" aria-label="Повідомлення" aria-live="polite" className="space-y-3">
@@ -193,10 +205,11 @@ export default function AiAssistant() {
 
       {results && <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} />}
       {pendingIntent && <div className="space-y-2 rounded-lg bg-muted p-3"><p role="status">Оберіть один запис вище для підготовки зміни. Ще нічого не збережено.</p><Button type="button" variant="outline" disabled={busy} onClick={() => { setPendingIntent(null); setError(""); }}>Скасувати операцію</Button></div>}
-      {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); setMutation(null); setPendingIntent(null); setClarification(null); setError(""); }} />}
+      {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); setMutation(null); setBatch(null); setPendingIntent(null); setClarification(null); setError(""); }} />}
       {mutation && <InventoryMutationView preview={mutation} assumptions={assumptions} busy={busy} onChange={setMutation} onConfirm={confirmMutation} onCancel={() => { setMutation(null); setError(""); }} />}
+      {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} onConfirm={confirmMutation} onCancel={() => { setBatch(null); setError(""); }} />}
 
-      {notice && <p role="status" className="rounded-xl border p-4">{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</p>}
+      {notices.length > 0 && <div role="status" className="space-y-2 rounded-xl border p-4"><p className="font-medium">Виконано операцій: {notices.length}</p><ul className="space-y-1">{notices.map((notice, index) => <li key={index}>{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : notice.entity === "recipe" ? frontendUrls.recipes.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</li>)}</ul></div>}
       {error && <p role="alert" className="text-destructive">{error}</p>}
       {busy && <p role="status" className="text-muted-foreground">Обробка…</p>}
 
@@ -209,7 +222,7 @@ export default function AiAssistant() {
 
       <form onSubmit={propose} className="space-y-3">
         <label htmlFor="ai-prompt" className="font-medium">{clarification ? "Ваша відповідь" : "Ваш запит"}</label>
-        <Textarea id="ai-prompt" required maxLength={2000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={clarification ? "Напишіть відповідь на уточнення" : "Покажи приховані непідтверджені соуси"} />
+        <Textarea id="ai-prompt" required maxLength={12000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={clarification ? "Напишіть відповідь на уточнення" : "Покажи приховані непідтверджені соуси"} />
         <Button type="submit" disabled={busy || !prompt.trim()}>Надіслати</Button>
       </form>
     </main>

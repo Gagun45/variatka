@@ -18,6 +18,7 @@ import {
   IRecipeIngredient,
 } from "../types";
 import { safeAction } from "./action.wrapper";
+import { recipeWrites } from "../domain/recipe-write.service";
 import { getCurrentUser, requireAdmin } from "./user.actions";
 
 export const getRecipes = async (): Promise<IActionResponse<IRecipe[]>> => {
@@ -65,46 +66,8 @@ export const createRecipe = async (
 ): Promise<IActionResponse<IRecipe>> => {
   return safeAction("createRecipe", async () => {
     await requireAdmin();
-    const {
-      title,
-      description,
-      notes,
-      items,
-      confirmationNotes,
-      isConfirmed,
-      category,
-      isHidden,
-      series,
-      spicy,
-    } = dto;
-
-    const existingRecipe = await prisma.recipe.findFirst({
-      where: { title },
-    });
-    if (existingRecipe)
-      throw new AppError("A recipe with this title already exists.");
-
-    const newRecipe = await prisma.recipe.create({
-      data: {
-        description,
-        notes,
-        title,
-        category,
-        confirmationNotes,
-        isConfirmed,
-        isHidden,
-        series,
-        spicy,
-        ingredients: {
-          create: items.map((item) => ({
-            amount: item.amount,
-            ingredientId: item.ingredientId,
-          })),
-        },
-      },
-      ...recipeArgs,
-    });
-    return newRecipe;
+    const { items, ...data } = dto;
+    return recipeWrites.create({ ...data, isSaved: false, confirmationNotes: data.confirmationNotes ?? null }, items);
   });
 };
 
@@ -114,25 +77,7 @@ export const updateRecipeFields = async (
 ): Promise<IActionResponse<IRecipe>> => {
   return safeAction("updateRecipeFields", async () => {
     await requireAdmin();
-    const existingRecipe = await prisma.recipe.findFirst({
-      where: {
-        title: dto.title,
-        NOT: {
-          id,
-        },
-      },
-    });
-    if (existingRecipe)
-      throw new AppError("A recipe with this title already exists.");
-
-    const updatedRecipe = await prisma.recipe.update({
-      where: {
-        id,
-      },
-      data: dto,
-      ...recipeArgs,
-    });
-    return updatedRecipe;
+    return recipeWrites.update(id, dto);
   });
 };
 
@@ -154,29 +99,7 @@ export const updateRecipe = async (
   return safeAction("updateRecipe", async () => {
     await requireAdmin();
 
-    return prisma.$transaction(async (tx) => {
-      const existingRecipe = await tx.recipe.findFirst({
-        where: { title: dto.title, NOT: { id } },
-        select: { id: true },
-      });
-
-      if (existingRecipe) {
-        throw new AppError("A recipe with this title already exists.");
-      }
-
-      await tx.recipe.update({ where: { id }, data: dto });
-      if (items !== undefined) {
-        await recipeIngredientsService.replaceInTransaction(tx, id, items);
-      }
-
-      const updatedRecipe = await tx.recipe.findUnique({
-        where: { id },
-        ...recipeArgs,
-      });
-
-      if (!updatedRecipe) throw new AppError("Recipe not found after update");
-      return updatedRecipe;
-    });
+    return recipeWrites.update(id, dto, items);
   });
 };
 
@@ -185,28 +108,7 @@ export const deleteRecipe = async (
 ): Promise<IActionResponse<number>> => {
   return safeAction("deleteRecipe", async () => {
     await requireAdmin();
-    const recipe = await prisma.recipe.findUnique({
-      where: { id: recipeId },
-      select: {
-        id: true,
-        imageKey: true,
-        _count: {
-          select: { orderItems: true },
-        },
-      },
-    });
-
-    if (!recipe) throw new AppError("Recipe not found");
-    if (recipe._count.orderItems > 0) {
-      throw new AppError("Cannot delete a recipe used in orders");
-    }
-
-    await prisma.recipe.delete({
-      where: { id: recipeId },
-    });
-
-    if (recipe.imageKey) await storageHelper.delete(recipe.imageKey);
-    return recipeId;
+    return recipeWrites.delete(recipeId);
   });
 };
 

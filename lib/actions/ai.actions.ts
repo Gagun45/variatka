@@ -18,7 +18,10 @@ import type { AssistantReply } from "../ai/inventory.types";
 import { prepareClarification, validateClarificationSelection } from "../ai/clarification";
 import { assertNever } from "../ai/mutation-definitions";
 import { inventoryMutationIntentSchema, inventoryMutationPreviewSchema, type InventoryMutationIntent, type InventoryMutationPreview } from "@/zod/ai-mutation.schema";
-import { applyInventoryMutation, prepareInventoryMutation } from "../domain/ai-mutations.service";
+import { prepareInventoryMutation } from "../domain/ai-mutations.service";
+import { applyInventoryBatch, completeBatchPreview, prepareInventoryBatch } from "../domain/ai-batch.service";
+import { batchPreviewSchema, type BatchPreview } from "@/zod/ai-batch.schema";
+import { mutationDefinitions } from "../ai/mutation-definitions";
 
 export async function searchInventoryRecords(search: InventorySearch, page = 0) {
   return safeAction("searchInventoryRecords", async () => {
@@ -43,7 +46,7 @@ export async function askInventoryAssistant(request: AssistantRequest) {
   return safeAction<AssistantReply>("askInventoryAssistant", async () => {
     await requireAdmin();
     const parsed = assistantRequestSchema.safeParse(request);
-    if (!parsed.success) throw new AppError("Некоректний запит. Максимум — 2000 символів.");
+    if (!parsed.success) throw new AppError("Некоректний запит. Максимум — 12000 символів.");
     validateClarificationSelection(parsed.data);
     const selected = parsed.data.selected ? await readInventoryRecord(parsed.data.selected) : null;
     const plan = await planInventoryRequest(parsed.data, selected);
@@ -60,8 +63,13 @@ export async function askInventoryAssistant(request: AssistantRequest) {
           operation: "chooseMutationTarget", message: "Оберіть запис для цієї зміни. Після вибору з’явиться перегляд для підтвердження.",
           assumptions: plan.assumptions, intent: prepared.intent, results: prepared.results,
         };
+        if (mutationDefinitions[prepared.preview.kind].entity === "recipe") return {
+          operation: "batch", message: "Перевірте рецепт і всі пов’язані операції. Ще нічого не збережено.", assumptions: plan.assumptions, preview: completeBatchPreview([prepared.preview]),
+        };
         return { operation: "mutation", message: "Перевірте запропоновану операцію. Ще нічого не збережено.", assumptions: plan.assumptions, preview: prepared.preview };
       }
+      case "batch":
+        return { operation: "batch", message: "Перевірте всі операції. Буде збережено весь пакет або жодної зміни.", assumptions: plan.assumptions, preview: await prepareInventoryBatch(command.intent, parsed.data.selected) };
       case "clarify":
         return { operation: "clarify", message: plan.message, clarification: prepareClarification(parsed.data, plan.message, command.continuesPrevious) };
       case "unsupported":
@@ -89,6 +97,15 @@ export async function confirmInventoryMutation(preview: InventoryMutationPreview
     await requireAdmin();
     const parsed = inventoryMutationPreviewSchema.safeParse(preview);
     if (!parsed.success) throw new AppError("Некоректний перегляд. Повторіть запит.");
-    return applyInventoryMutation(parsed.data);
+    return (await applyInventoryBatch({ items: [parsed.data], unchanged: [] })).results[0];
+  });
+}
+
+export async function confirmInventoryBatch(preview: BatchPreview) {
+  return safeAction("confirmInventoryBatch", async () => {
+    await requireAdmin();
+    const parsed = batchPreviewSchema.safeParse(preview);
+    if (!parsed.success) throw new AppError("Некоректний пакет операцій. Повторіть запит.");
+    return applyInventoryBatch(parsed.data);
   });
 }

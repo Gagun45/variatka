@@ -1,4 +1,5 @@
 import z from "zod";
+import { compositionChangeSchema, namedRecipeIngredientSchema, recipePatchSchema, recipeSnapshotSchema, recipeWriteSchema } from "./ai-recipe.schema";
 
 export const inventoryIdSchema = z.number().int().positive().max(2_147_483_647);
 export const inventoryVersionSchema = z.iso.datetime();
@@ -31,6 +32,9 @@ export const stuffPatchSchema = z.strictObject({
 
 const targetName = title.nullable();
 export const inventoryMutationIntentSchema = z.union([
+  z.strictObject({ kind: z.literal("createRecipe"), data: recipeWriteSchema.extend({ title }), ingredients: z.array(namedRecipeIngredientSchema).max(50) }),
+  z.strictObject({ kind: z.literal("updateRecipe"), targetName, patch: recipePatchSchema, composition: compositionChangeSchema.nullable() }),
+  z.strictObject({ kind: z.literal("deleteRecipe"), targetName }),
   z.strictObject({ kind: z.literal("createIngredient"), data: ingredientWriteSchema.extend({ title }) }),
   z.strictObject({ kind: z.literal("createStuff"), data: stuffWriteSchema.extend({ title }) }),
   z.strictObject({ kind: z.literal("updateIngredient"), targetName, patch: ingredientPatchSchema }),
@@ -41,6 +45,9 @@ export const inventoryMutationIntentSchema = z.union([
 
 const target = z.strictObject({ id: inventoryIdSchema, title: storedTitle, updatedAt: inventoryVersionSchema });
 export const inventoryMutationPreviewSchema = z.union([
+  z.strictObject({ kind: z.literal("createRecipe"), after: recipeSnapshotSchema }),
+  z.strictObject({ kind: z.literal("updateRecipe"), target, before: recipeSnapshotSchema, after: recipeSnapshotSchema }),
+  z.strictObject({ kind: z.literal("deleteRecipe"), target, before: recipeSnapshotSchema }),
   z.strictObject({ kind: z.literal("createIngredient"), after: ingredientWriteSchema }),
   z.strictObject({ kind: z.literal("createStuff"), after: stuffWriteSchema }),
   z.strictObject({ kind: z.literal("updateIngredient"), target, before: ingredientWriteSchema, after: ingredientWriteSchema }),

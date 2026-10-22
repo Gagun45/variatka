@@ -2,9 +2,12 @@ import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai
 import { ingredientWriteSchema, stuffWriteSchema } from "@/zod/ai-mutation.schema";
 import type { RecordSelection } from "@/zod/ai-search.schema";
 import type { InventorySearchResult } from "../ai/inventory.types";
-import { AppError } from "../error";
+import { AppError, NoChangesError } from "../error";
 import { prisma } from "../prisma";
-import { searchInventory } from "./ai-inventory.service";
+import { resolveMutationTarget } from "./ai-target.service";
+import { prepareRecipeMutation, type IngredientResolutionCache } from "./ai-recipe.service";
+import { createRecipeInTransaction, updateRecipeInTransaction, deleteRecipeInTransaction } from "./recipe-write.service";
+import type { Prisma } from "@prisma/client";
 import { ingredientWrites, stuffWrites } from "./inventory-write.service";
 import { assertNever, mutationDefinitions } from "../ai/mutation-definitions";
 
@@ -16,34 +19,21 @@ const notEmpty = (value: unknown) => value !== null;
 const patchValues = (patch: object) => Object.fromEntries(Object.entries(patch).filter(([, value]) => notEmpty(value)));
 
 function ensureChanged(before: object, after: object) {
-  if (JSON.stringify(before) === JSON.stringify(after)) throw new AppError("Запис уже має ці значення. Змін не потрібно.");
+  if (JSON.stringify(before) === JSON.stringify(after)) throw new NoChangesError("Запис уже має ці значення. Змін не потрібно.");
 }
 
-export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false): Promise<PreparedMutation> {
+export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false, allowReferencedDelete = false, cache?: IngredientResolutionCache): Promise<PreparedMutation> {
   switch (intent.kind) {
+    case "createRecipe": case "updateRecipe": case "deleteRecipe": return prepareRecipeMutation(intent, selected, explicitlyChosen, cache);
     case "createIngredient": return { kind: "ready", preview: { kind: intent.kind, after: intent.data } };
     case "createStuff": return { kind: "ready", preview: { kind: intent.kind, after: intent.data } };
     case "updateIngredient": case "deleteIngredient": case "updateStuff": case "deleteStuff": break;
     default: return assertNever(intent);
   }
   const entity = mutationDefinitions[intent.kind].entity;
-  let selection = selected;
-  if (intent.targetName !== null && !explicitlyChosen) {
-    // Only a unique exact title is resolved automatically. Other matches require selection.
-    const where = { title: { equals: intent.targetName, mode: "insensitive" as const } };
-    const exact = entity === "ingredient"
-      ? await prisma.ingredient.findMany({ where, take: 2, select: { id: true } })
-      : await prisma.stuff.findMany({ where, take: 2, select: { id: true } });
-    if (exact.length === 1) selection = { entity, id: exact[0].id };
-    else {
-      const results = await searchInventory(entity === "ingredient"
-        ? { entity, text: intent.targetName, category: null, isInStock: null, isSaved: null }
-        : { entity, text: intent.targetName, category: null, isInStock: null, stockMin: null, stockMax: null });
-      if (!results.items.length) throw new AppError("Запис не знайдено. Уточніть назву або спочатку знайдіть та оберіть запис.");
-      return { kind: "choose", intent, results };
-    }
-  }
-  if (!selection || selection.entity !== entity) throw new AppError("Спочатку оберіть потрібний інгредієнт або матеріал. Рецепти поки не можна змінювати.");
+  const resolution = await resolveMutationTarget(intent, selected, explicitlyChosen);
+  if (resolution.kind === "choose") return resolution;
+  const selection = resolution.selection;
 
   if (entity === "ingredient" && (intent.kind === "updateIngredient" || intent.kind === "deleteIngredient")) {
     const record = await prisma.ingredient.findUnique({ where: { id: selection.id }, select: {
@@ -55,7 +45,7 @@ export async function prepareInventoryMutation(intent: InventoryMutationIntent, 
     const before = ingredientWriteSchema.parse(data);
     const target = { id, title: record.title, updatedAt: updatedAt.toISOString() };
     if (intent.kind === "deleteIngredient") {
-      if (_count.recipeIngredients > 0) throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.");
+      if (_count.recipeIngredients > 0 && !allowReferencedDelete) throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.");
       return { kind: "ready", preview: { kind: intent.kind, target, before } };
     }
     const after = ingredientWriteSchema.parse({ ...before, ...patchValues(intent.patch) });
@@ -80,30 +70,43 @@ export async function prepareInventoryMutation(intent: InventoryMutationIntent, 
   return { kind: "ready", preview: { kind: intent.kind, target, before, after } };
 }
 
-export async function applyInventoryMutation(preview: InventoryMutationPreview) {
+export async function applyInventoryMutation(preview: InventoryMutationPreview, db: Prisma.TransactionClient = prisma, cleanup?: string[], resolveItems?: (snapshot: import("@/zod/ai-recipe.schema").RecipeSnapshot) => Promise<import("../types").IRecipeIngredient[]>) {
   const entity = mutationDefinitions[preview.kind].entity;
   switch (preview.kind) {
+    case "createRecipe": {
+      if (!resolveItems) throw new AppError("Підтвердіть рецепт через пакет операцій.");
+      const record = await createRecipeInTransaction(db, preview.after.fields, await resolveItems(preview.after));
+      return { operation: "created" as const, entity, id: record.id, title: record.title };
+    }
+    case "updateRecipe": {
+      if (!resolveItems) throw new AppError("Підтвердіть рецепт через пакет операцій.");
+      const record = await updateRecipeInTransaction(db, preview.target.id, preview.after.fields, await resolveItems(preview.after), preview.target.updatedAt);
+      return { operation: "updated" as const, entity, id: record.id, title: record.title };
+    }
+    case "deleteRecipe":
+      await deleteRecipeInTransaction(db, preview.target.id, preview.target.updatedAt, cleanup);
+      return { operation: "deleted" as const, entity, id: preview.target.id, title: preview.target.title };
     case "createIngredient": {
-      const record = await ingredientWrites.create(preview.after);
+      const record = await ingredientWrites.create(preview.after, db);
       return { operation: "created" as const, entity, id: record.id, title: record.title };
     }
     case "createStuff": {
-      const record = await stuffWrites.create(preview.after);
+      const record = await stuffWrites.create(preview.after, db);
       return { operation: "created" as const, entity, id: record.id, title: record.title };
     }
     case "updateIngredient": {
-      const record = await ingredientWrites.update(preview.target.id, preview.after, preview.target.updatedAt);
+      const record = await ingredientWrites.update(preview.target.id, preview.after, preview.target.updatedAt, db);
       return { operation: "updated" as const, entity, id: record.id, title: record.title };
     }
     case "updateStuff": {
-      const record = await stuffWrites.update(preview.target.id, preview.after, preview.target.updatedAt);
+      const record = await stuffWrites.update(preview.target.id, preview.after, preview.target.updatedAt, db);
       return { operation: "updated" as const, entity, id: record.id, title: record.title };
     }
     case "deleteIngredient":
-      await ingredientWrites.delete(preview.target.id, preview.target.updatedAt);
+      await ingredientWrites.delete(preview.target.id, preview.target.updatedAt, db, cleanup);
       return { operation: "deleted" as const, entity, id: preview.target.id, title: preview.target.title };
     case "deleteStuff":
-      await stuffWrites.delete(preview.target.id, preview.target.updatedAt);
+      await stuffWrites.delete(preview.target.id, preview.target.updatedAt, db);
       return { operation: "deleted" as const, entity, id: preview.target.id, title: preview.target.title };
     default: return assertNever(preview);
   }

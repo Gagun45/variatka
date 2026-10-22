@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { IRecipe, recipeArgs } from "@/lib/prisma.args";
 import { IRecipeIngredient } from "@/lib/types";
 import { Prisma } from "@prisma/client";
+import { guarded, nextVersion, versionWhere } from "./inventory-write.service";
 
 export const normalizeRecipeIngredients = (
   items: IRecipeIngredient[],
@@ -12,10 +13,10 @@ export const normalizeRecipeIngredients = (
   const seen = new Set<number>();
 
   return items.map((item) => {
-    const ingredientId = Number(item.ingredientId);
-    const amount = item.amount.trim();
+    const ingredientId = item?.ingredientId;
+    const amount = typeof item?.amount === "string" ? item.amount.trim() : "";
 
-    if (!Number.isInteger(ingredientId) || ingredientId <= 0 || !amount) {
+    if (!Number.isSafeInteger(ingredientId) || ingredientId <= 0 || !amount || amount.length > 200) {
       throw new AppError("Invalid ingredient data");
     }
 
@@ -37,15 +38,20 @@ export const recipeIngredientsService = {
     tx: Prisma.TransactionClient,
     recipeId: number,
     items: IRecipeIngredient[],
+    bumpVersion = true,
   ): Promise<void> => {
     const normalizedItems = normalizeRecipeIngredients(items);
 
     const recipe = await tx.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true },
+      select: { id: true, updatedAt: true },
     });
 
     if (!recipe) throw new AppError("Recipe not found");
+    if (bumpVersion) {
+      const version = recipe.updatedAt.toISOString();
+      await guarded(() => tx.recipe.update({ where: versionWhere(recipeId, version), data: nextVersion(version) }));
+    }
 
     if (normalizedItems.length > 0) {
       const ingredients = await tx.ingredient.findMany({
