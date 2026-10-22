@@ -19,7 +19,7 @@ export async function requestStructuredOutput<T>(options: {
   input: string;
 }): Promise<T> {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new AppError("AI ще не налаштовано: додайте OPENAI_API_KEY на сервері.");
+  if (!key) throw new AppError("AI ще не налаштовано: додайте OPENAI_API_KEY на сервері.", "PROVIDER_CONFIGURATION");
 
   const model = process.env.OPENAI_MODEL || "gpt-6-luna";
   let response: Response;
@@ -45,13 +45,14 @@ export async function requestStructuredOutput<T>(options: {
       }),
     });
   } catch {
-    throw new AppError("Не вдалося з’єднатися з AI. Спробуйте ще раз.");
+    throw new AppError("Не вдалося з’єднатися з AI. Спробуйте ще раз.", "PROVIDER_UNAVAILABLE");
   }
 
   if (!response.ok) {
     // Never expose provider response bodies or credentials to the browser/logs.
-    if (response.status === 429) throw new AppError("Ліміт AI вичерпано. Перевірте баланс або спробуйте пізніше.");
-    throw new AppError("Помилка AI. Перевірте API-ключ, модель і налаштування OpenAI.");
+    if (response.status === 429) throw new AppError("Ліміт AI вичерпано. Перевірте баланс або спробуйте пізніше.", "PROVIDER_LIMIT");
+    if (response.status >= 500 || response.status === 408) throw new AppError("AI тимчасово недоступний. Спробуйте пізніше.", "PROVIDER_UNAVAILABLE");
+    throw new AppError("Помилка AI. Перевірте API-ключ, модель і налаштування OpenAI.", "PROVIDER_CONFIGURATION");
   }
 
   try {
@@ -64,6 +65,6 @@ export async function requestStructuredOutput<T>(options: {
       .map((item) => item.text ?? "").join("");
     return options.schema.parse(JSON.parse(text));
   } catch {
-    throw new AppError("AI не повернув коректну пропозицію. Уточніть запит і спробуйте ще раз.");
+    throw new AppError("AI не повернув коректну пропозицію. Уточніть запит і спробуйте ще раз.", "PROVIDER_INVALID_RESPONSE");
   }
 }

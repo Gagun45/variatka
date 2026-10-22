@@ -72,13 +72,13 @@ export async function applyInventoryBatch(preview: BatchPreview) {
       for (const ingredient of item.after.ingredients) if (ingredient.id !== null) {
         if (!ingredient.updatedAt) throw new AppError("Некоректна версія інгредієнта.");
         const previous = references.get(ingredient.id);
-        if (previous && previous !== ingredient.updatedAt) throw new AppError("Інгредієнт змінився під час підготовки пакета. Повторіть запит.");
+        if (previous && previous !== ingredient.updatedAt) throw new AppError("Інгредієнт змінився під час підготовки пакета. Повторіть запит.", "STALE_PREVIEW");
         references.set(ingredient.id, ingredient.updatedAt);
       }
     }
     for (const [id, version] of references) {
       const current = await tx.ingredient.findUnique({ where: { id }, select: { updatedAt: true } });
-      if (!current || current.updatedAt.toISOString() !== version) throw new AppError("Інгредієнт рецепта змінився або видалений. Повторіть запит.");
+      if (!current || current.updatedAt.toISOString() !== version) throw new AppError("Інгредієнт рецепта змінився або видалений. Повторіть запит.", "STALE_PREVIEW");
     }
     const resolveItems = async (snapshot: RecipeSnapshot) => snapshot.ingredients.map((item) => {
       const ingredientId = item.id ?? newIds.get(key(item.title));

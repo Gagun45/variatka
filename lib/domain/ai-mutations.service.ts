@@ -40,12 +40,12 @@ export async function prepareInventoryMutation(intent: InventoryMutationIntent, 
       id: true, updatedAt: true, title: true, description: true, category: true, isInStock: true, isSaved: true,
       _count: { select: { recipeIngredients: true } },
     } });
-    if (!record) throw new AppError("Інгредієнт більше не існує. Повторіть пошук.");
+    if (!record) throw new AppError("Інгредієнт більше не існує. Повторіть пошук.", "STALE_PREVIEW");
     const { id, updatedAt, _count, ...data } = record;
     const before = ingredientWriteSchema.parse(data);
     const target = { id, title: record.title, updatedAt: updatedAt.toISOString() };
     if (intent.kind === "deleteIngredient") {
-      if (_count.recipeIngredients > 0 && !allowReferencedDelete) throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.");
+      if (_count.recipeIngredients > 0 && !allowReferencedDelete) throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.", "CONFLICT");
       return { kind: "ready", preview: { kind: intent.kind, target, before } };
     }
     const after = ingredientWriteSchema.parse({ ...before, ...patchValues(intent.patch) });
@@ -55,7 +55,7 @@ export async function prepareInventoryMutation(intent: InventoryMutationIntent, 
 
   if (intent.kind !== "updateStuff" && intent.kind !== "deleteStuff") throw new AppError("Непідтримувана операція.");
   const record = await prisma.stuff.findUnique({ where: { id: selection.id }, select: { id: true, updatedAt: true, title: true, description: true, category: true, inStock: true } });
-  if (!record) throw new AppError("Матеріал більше не існує. Повторіть пошук.");
+  if (!record) throw new AppError("Матеріал більше не існує. Повторіть пошук.", "STALE_PREVIEW");
   const { id, updatedAt, ...data } = record;
   const before = stuffWriteSchema.parse(data);
   const target = { id, title: record.title, updatedAt: updatedAt.toISOString() };

@@ -52,12 +52,12 @@ export async function prepareRecipeMutation(intent: RecipeIntent, selected: Reco
     _count: { select: { orderItems: true } },
     ingredients: { orderBy: { ingredientId: "asc" }, select: { amount: true, ingredient: { select: { id: true, title: true, category: true, updatedAt: true } } } },
   } });
-  if (!record) throw new AppError("Рецепт більше не існує. Повторіть пошук.");
+  if (!record) throw new AppError("Рецепт більше не існує. Повторіть пошук.", "STALE_PREVIEW");
   const { id, updatedAt, ingredients, _count, ...fields } = record;
   const before: RecipeSnapshot = { fields: recipeWriteSchema.parse(fields), ingredients: ingredients.map(({ amount, ingredient }) => ({ ...ingredient, updatedAt: ingredient.updatedAt.toISOString(), amount })) };
   const identity = { id, title: record.title, updatedAt: updatedAt.toISOString() };
   if (intent.kind === "deleteRecipe") {
-    if (_count.orderItems > 0) throw new AppError("Неможливо видалити рецепт, використаний у замовленнях.");
+    if (_count.orderItems > 0) throw new AppError("Неможливо видалити рецепт, використаний у замовленнях.", "CONFLICT");
     const preview: InventoryMutationPreview = { kind: intent.kind, target: identity, before };
     return { kind: "ready" as const, preview };
   }

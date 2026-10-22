@@ -18,7 +18,7 @@ export const getMe = async (): Promise<IActionResponse<IUser>> => {
 export const getCurrentUser = async (): Promise<IUser> => {
   const session = await auth();
 
-  if (!session?.user) throw new AppError("Unauthorized");
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED");
   const { user } = session;
 
   return {
@@ -33,7 +33,7 @@ export const getCurrentUser = async (): Promise<IUser> => {
 
 export const requireAdmin = async (): Promise<IUser> => {
   const user = await getCurrentUser();
-  if (user.role !== "ADMIN") throw new AppError("Forbidden");
+  if (user.role !== "ADMIN") throw new AppError("Forbidden", "UNAUTHORIZED");
   return user;
 };
 

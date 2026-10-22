@@ -27,10 +27,10 @@ export function nextVersion(expectedUpdatedAt?: string) {
 export async function guarded<T>(write: () => Promise<T>): Promise<T> {
   try { return await write(); } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? error.code : null;
-    if (code === "P2002") throw new AppError("Запис із такою назвою вже існує.");
-    if (code === "P2025") throw new AppError(staleMessage);
-    if (code === "P2003") throw new AppError("Запис використовується в рецептах або замовленнях. Видалення неможливе.");
-    if (code === "P2034") throw new AppError("Дані змінилися під час збереження. Повторіть запит і перевірте новий перегляд.");
+    if (code === "P2002") throw new AppError("Запис із такою назвою вже існує.", "CONFLICT");
+    if (code === "P2025") throw new AppError(staleMessage, "STALE_PREVIEW");
+    if (code === "P2003") throw new AppError("Запис використовується в рецептах або замовленнях. Видалення неможливе.", "CONFLICT");
+    if (code === "P2034") throw new AppError("Дані змінилися під час збереження. Повторіть запит і перевірте новий перегляд.", "STALE_PREVIEW");
     throw error;
   }
 }
@@ -49,8 +49,8 @@ export const ingredientWrites = {
   delete: async (id: number, expectedUpdatedAt?: string, db: Prisma.TransactionClient = prisma, cleanup?: string[]) => {
     const where = versionWhere(id, expectedUpdatedAt);
     const record = await db.ingredient.findUnique({ where: { id }, select: { imageKey: true, _count: { select: { recipeIngredients: true } } } });
-    if (!record) throw new AppError(staleMessage);
-    if (record._count.recipeIngredients > 0) throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.");
+    if (!record) throw new AppError(staleMessage, "STALE_PREVIEW");
+    if (record._count.recipeIngredients > 0) throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.", "CONFLICT");
     // Relation predicate + FK prevent deleting an ingredient attached after the pre-check.
     const deleted = await guarded(() => db.ingredient.delete({ where: { ...where, recipeIngredients: { none: {} } }, select: { imageKey: true } }));
     // Delete the DB row first: a failed/stale delete must never remove its image.

@@ -24,7 +24,7 @@ export async function resolveMutationTarget(intent: Exclude<InventoryMutationInt
         ? { entity, ...common, isInStock: null, isSaved: null }
         : entity === "stuff" ? { entity, ...common, isInStock: null, stockMin: null, stockMax: null }
         : { entity, ...common, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] });
-      if (!results.items.length) throw new AppError("Запис не знайдено. Уточніть назву або спочатку знайдіть та оберіть запис.");
+      if (!results.items.length) throw new AppError("Запис не знайдено. Уточніть назву або спочатку знайдіть та оберіть запис.", "NOT_FOUND");
       return { kind: "choose" as const, intent, results };
     }
   }

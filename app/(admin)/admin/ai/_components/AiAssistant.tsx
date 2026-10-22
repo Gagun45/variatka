@@ -17,6 +17,9 @@ import type { BatchPreview } from "@/zod/ai-batch.schema";
 import { completeBatchPreview } from "@/lib/ai/batch-preview";
 import { inventoryEntityLabels } from "@/lib/ai/inventory-labels";
 import { searchFilters } from "@/lib/ai/search-labels";
+import { refreshAfterSave } from "@/lib/ai/refresh-after-save";
+import { confirmationFailure, recoveryFor, requestPhaseLabels, type AssistantErrorCode, type RequestPhase } from "@/lib/ai/request-state";
+import type { AssistantRequest } from "@/zod/ai-search.schema";
 import { mutationDefinitions } from "@/lib/ai/mutation-definitions";
 import type { Clarification, InventorySearch } from "@/zod/ai-search.schema";
 import { InventoryRecordView, InventorySearchView } from "./InventorySearchView";
@@ -28,8 +31,18 @@ type Message = { role: "user" | "assistant"; text: string };
 export default function AiAssistant() {
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [phase, setPhase] = useState<RequestPhase>("idle");
+  const busy = phase !== "idle";
+  const [error, setErrorMessage] = useState("");
+  const [errorCode, setErrorCode] = useState<AssistantErrorCode>("VALIDATION_ERROR");
+  const lastRequest = useRef<AssistantRequest | null>(null);
+  const requestSelection = useRef<InventoryRecord | null>(null);
+  const refreshTargets = useRef<MutationResult[]>([]);
+  const recovery = recoveryFor(errorCode);
+  function setError(message: string, code: AssistantErrorCode = "VALIDATION_ERROR") {
+    setErrorMessage(message);
+    setErrorCode(code);
+  }
   const [results, setResults] = useState<InventorySearchResult | null>(null);
   const [selected, setSelected] = useState<InventoryRecord | null>(null);
   const [clarification, setClarification] = useState<Clarification | null>(null);
@@ -39,7 +52,7 @@ export default function AiAssistant() {
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [notices, setNotices] = useState<MutationResult[]>([]);
   const [batch, setBatch] = useState<BatchPreview | null>(null);
-  const errorRef = useRef<HTMLParagraphElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pending = useRef(false);
@@ -48,6 +61,9 @@ export default function AiAssistant() {
   function newRequest() {
     if (pending.current) return;
     setPrompt("");
+    lastRequest.current = null;
+    requestSelection.current = null;
+    refreshTargets.current = [];
     setMessages([]);
     setError("");
     setResults(null);
@@ -65,25 +81,41 @@ export default function AiAssistant() {
   async function propose(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending.current || !prompt.trim()) return;
+    await requestProposal({ prompt: prompt.trim(), selected: selected ? { entity: selected.entity, id: selected.id } : null, previousSearch, clarification });
+  }
+
+  function editRequest() {
+    if (pending.current || !lastRequest.current) return;
+    const request = lastRequest.current;
+    setPrompt(request.prompt);
+    setSelected(requestSelection.current);
+    setPreviousSearch(request.previousSearch);
+    setClarification(request.clarification);
+    setMutation(null);
+    setBatch(null);
+    setPendingIntent(null);
+    setError("");
+    inputRef.current?.focus();
+  }
+
+  async function requestProposal(request: AssistantRequest) {
+    if (pending.current) return;
     pending.current = true;
-    setBusy(true);
+    setPhase("planning");
     setError("");
     setMutation(null);
     setPendingIntent(null);
     setNotices([]);
     setBatch(null);
     setAssumptions([]);
-    const request = prompt.trim();
-    setMessages((old) => [...old, { role: "user", text: request }]);
+    if (!request.selected) requestSelection.current = null;
+    else if (selected?.entity === request.selected.entity && selected.id === request.selected.id) requestSelection.current = selected;
+    lastRequest.current = request;
+    setMessages((old) => [...old, { role: "user", text: request.prompt }]);
     setPrompt("");
     try {
-      const result = await askInventoryAssistant({
-        prompt: request,
-        selected: selected ? { entity: selected.entity, id: selected.id } : null,
-        previousSearch,
-        clarification,
-      });
-      if (!result.ok) { setError(result.message); return; }
+      const result = await askInventoryAssistant(request);
+      if (!result.ok) { setPrompt(request.prompt); setError(result.message, result.code); return; }
       setMessages((old) => [...old, { role: "assistant", text: result.data.message }]);
       const reply = result.data;
       setClarification(reply.operation === "clarify" ? reply.clarification : null);
@@ -110,28 +142,30 @@ export default function AiAssistant() {
         setAssumptions(reply.assumptions);
       }
     } catch {
-      setError("Не вдалося отримати відповідь. Спробуйте ще раз.");
+      setPrompt(request.prompt);
+      setError("Не вдалося отримати відповідь. Ваш запит не втрачено.", "PROVIDER_UNAVAILABLE");
     } finally {
       pending.current = false;
-      setBusy(false);
+      setPhase("idle");
     }
   }
 
   async function selectRecord(record: InventoryResult) {
     if (pending.current) return;
     pending.current = true;
-    setBusy(true);
+    setPhase("loading");
     setError("");
     setMutation(null);
     setClarification(null);
     setBatch(null);
     try {
       const result = await getInventoryRecord({ entity: record.entity, id: record.id });
-      if (!result.ok) { setError(result.message); setSelected(null); return; }
+      if (!result.ok) { setError(result.message, result.code); setSelected(null); return; }
       setSelected(result.data);
       if (pendingIntent) {
+        setPhase("preparing");
         const preview = await previewInventoryMutation(pendingIntent, { entity: record.entity, id: record.id });
-        if (!preview.ok) { setError(preview.message); return; }
+        if (!preview.ok) { setError(preview.message, preview.code); return; }
         if (mutationDefinitions[preview.data.kind].entity === "recipe") setBatch(completeBatchPreview([preview.data]));
         else setMutation(preview.data);
         setPendingIntent(null);
@@ -141,71 +175,81 @@ export default function AiAssistant() {
       setError("Не вдалося завантажити запис. Спробуйте ще раз.");
     } finally {
       pending.current = false;
-      setBusy(false);
+      setPhase("idle");
     }
   }
 
   async function loadMore() {
     if (pending.current || !results?.hasMore) return;
     pending.current = true;
-    setBusy(true);
+    setPhase("loading");
     setError("");
     try {
       const result = await searchInventoryRecords(results.search, results.page + 1);
-      if (!result.ok) { setError(result.message); return; }
+      if (!result.ok) { setError(result.message, result.code); return; }
       const existing = new Set(results.items.map((item) => `${item.entity}:${item.id}`));
       setResults({ ...result.data, items: [...results.items, ...result.data.items.filter((item) => !existing.has(`${item.entity}:${item.id}`))] });
     } catch {
       setError("Не вдалося завантажити результати. Спробуйте ще раз.");
     } finally {
       pending.current = false;
-      setBusy(false);
+      setPhase("idle");
     }
+  }
+
+  async function refreshSavedData(written: MutationResult[]) {
+    setPhase("refreshing");
+    const refreshed = await refreshAfterSave(written, previousSearch, {
+      invalidate: () => Promise.all([
+        queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients }),
+        queryClient.invalidateQueries({ queryKey: stuffKeys.stuff }),
+        queryClient.invalidateQueries({ queryKey: recipeKeys.recipes }),
+        queryClient.invalidateQueries({ queryKey: recipeKeys.public }),
+      ]),
+      record: getInventoryRecord,
+      search: searchInventoryRecords,
+    });
+    setSelected(refreshed.selected);
+    if (previousSearch) setResults(refreshed.results);
+    if (refreshed.failed) setError("Зміни збережено, але актуальні дані не вдалося завантажити.", "REFRESH_FAILED");
+  }
+
+  async function retryRefresh() {
+    if (pending.current || !refreshTargets.current.length) return;
+    pending.current = true;
+    setError("");
+    try { await refreshSavedData(refreshTargets.current); }
+    finally { pending.current = false; setPhase("idle"); }
   }
 
   async function confirmMutation() {
     if (pending.current || (!mutation && !batch)) return;
     pending.current = true;
-    setBusy(true);
+    setPhase("saving");
     setError("");
     try {
       const result = await confirmInventoryBatch(batch ?? { items: [mutation!], unchanged: [] });
-      if (!result.ok) { setError(result.message); return; }
-      const written = result.data.results;
-      const saved = written[0];
+      // Any failed confirmation discards the old preview, preventing blind retries.
       setBatch(null);
       setMutation(null);
       setPendingIntent(null);
-      setNotices(written);
-      void queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
-      void queryClient.invalidateQueries({ queryKey: stuffKeys.stuff });
-      void queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
-      void queryClient.invalidateQueries({ queryKey: recipeKeys.public });
-      // Refresh failures must not turn a successful write into an apparent failure.
-      try {
-        if (written.length !== 1 || saved.operation === "deleted") {
-          setSelected(null);
-          setResults((old) => old ? { ...old, items: old.items.filter((item) => item.entity !== saved.entity || item.id !== saved.id) } : null);
-        } else {
-          const record = await getInventoryRecord({ entity: saved.entity, id: saved.id });
-          if (record.ok) setSelected(record.data);
-          else { setSelected(null); setError("Операцію виконано. Оновіть пошук, щоб побачити актуальні дані."); }
-        }
-        if (results) {
-          const refreshed = await searchInventoryRecords(results.search);
-          if (refreshed.ok) setResults(refreshed.data);
-          else setResults(null);
-        }
-      } catch {
-        setSelected(null);
-        setResults(null);
-        setError("Операцію виконано. Оновіть пошук, щоб побачити актуальні дані.");
+      if (!result.ok) {
+        const code = confirmationFailure(result.code);
+        setError(code === "SAVE_UNCERTAIN" ? "Не вдалося отримати результат збереження." : result.message, code);
+        return;
       }
+      const written = result.data.results;
+      refreshTargets.current = written;
+      setNotices(written);
+      await refreshSavedData(written);
     } catch {
-      setError("Не вдалося підтвердити операцію. Перевірте список записів перед повторною спробою.");
+      setBatch(null);
+      setMutation(null);
+      setPendingIntent(null);
+      setError("Не вдалося отримати результат збереження.", "SAVE_UNCERTAIN");
     } finally {
       pending.current = false;
-      setBusy(false);
+      setPhase("idle");
     }
   }
 
@@ -229,8 +273,17 @@ export default function AiAssistant() {
       {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} onConfirm={confirmMutation} onCancel={() => { setBatch(null); setError(""); }} />}
 
       {notices.length > 0 && <div role="status" className="space-y-2 rounded-xl border p-4"><p className="font-medium">Виконано операцій: {notices.length}</p><ul className="space-y-1">{notices.map((notice, index) => <li key={index}>{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : notice.entity === "recipe" ? frontendUrls.recipes.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</li>)}</ul></div>}
-      {error && <p ref={errorRef} tabIndex={-1} role="alert" className="rounded text-destructive focus-visible:outline-2 focus-visible:outline-ring">{error}</p>}
-      {busy && <p role="status" className="text-muted-foreground">Обробка…</p>}
+      {error && <div ref={errorRef} tabIndex={-1} role="alert" className={`space-y-3 rounded-xl border p-4 focus-visible:outline-2 focus-visible:outline-ring ${errorCode === "REFRESH_FAILED" ? "" : "border-destructive"}`}>
+        <p className="font-medium">{error}</p>
+        <p className="text-sm text-muted-foreground">{recovery.hint}</p>
+        <div className="flex flex-wrap gap-2">
+          {recovery.action === "edit" && lastRequest.current && <Button type="button" variant="outline" disabled={busy} onClick={editRequest}>Редагувати запит</Button>}
+          {recovery.action === "prepare" && lastRequest.current && <><Button type="button" disabled={busy} onClick={() => { if (lastRequest.current) void requestProposal(lastRequest.current); }}>Підготувати новий перегляд</Button><Button type="button" variant="outline" disabled={busy} onClick={editRequest}>Редагувати запит</Button></>}
+          {recovery.action === "refresh" && <Button type="button" variant="outline" disabled={busy} onClick={retryRefresh}>Оновити дані</Button>}
+          {recovery.action === "inspect" && <>{[["Інгредієнти", frontendUrls.ingredients.index], ["Рецепти", frontendUrls.recipes.index], ["Матеріали", frontendUrls.stuff.index]].map(([label, href]) => <Button key={href} asChild variant="outline"><Link href={href} target="_blank" rel="noopener noreferrer">{label}</Link></Button>)}</>}
+        </div>
+      </div>}
+      {busy && <p role="status" aria-live="polite" className="text-muted-foreground">{requestPhaseLabels[phase]}</p>}
 
       {clarification && <section aria-label="Уточнення запиту" className="space-y-2 rounded-lg border p-4">
         <p className="font-medium">{clarification.question}</p>

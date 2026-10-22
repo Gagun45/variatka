@@ -12,6 +12,8 @@ For recipe CRUD and atomic batches, see the [recipe and batch guide](docs/ai-rec
 
 For Ukrainian terminology, visible request context and reset behavior, see the [terminology and context guide](docs/ai-terminology-context.md).
 
+For request states, failed prompts and save/refresh recovery, see the [recovery guide](docs/ai-recovery.md).
+
 First, run the development server:
 
 ```bash

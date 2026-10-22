@@ -1,3 +1,4 @@
+import type { ActionErrorCode } from "./action-error";
 import { IRecipeDto } from "@/zod/recipe.schema";
 import { LucideIcon } from "lucide-react";
 import { IconType } from "react-icons/lib";
@@ -46,6 +47,7 @@ export type IActionSuccess<T> = {
 };
 export type IActionError = {
   ok: false;
+  code?: ActionErrorCode;
   message: string;
 };
 

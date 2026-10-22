@@ -743,3 +743,81 @@ test("name matching prefers exact titles, allows unique substrings and retains a
   assert.deepEqual(matchNames("часнк", names), []);
   assert.deepEqual(matchNames("%", names), []);
 });
+
+test("AI provider failures return structured codes without leaking provider bodies", async (t) => {
+  t.mock.method(console, "error", () => {});
+  for (const [status, code] of [[429, "PROVIDER_LIMIT"], [503, "PROVIDER_UNAVAILABLE"], [401, "PROVIDER_CONFIGURATION"]]) {
+    global.fetch = async () => new Response("PRIVATE PROVIDER BODY", { status });
+    const reply = await actions.askInventoryAssistant(request());
+    assert.equal(reply.ok, false);
+    assert.equal(reply.code, code);
+    assert.equal(reply.message.includes("PRIVATE"), false);
+  }
+  global.fetch = async () => { throw new Error("network credentials detail"); };
+  const failed = await actions.askInventoryAssistant(request());
+  assert.equal(failed.code, "PROVIDER_UNAVAILABLE");
+  assert.equal(failed.message.includes("credentials"), false);
+  assert.equal(state.writes.length, 0);
+});
+
+test("confirmation returns distinct stale, conflict and validation codes", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.allowWrites = true;
+  state.records.stuff = stuffRecord();
+  const prepared = await actions.previewInventoryMutation({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "adjust", value: 1 } }) }, { entity: "stuff", id: 2 });
+  assert.equal(prepared.ok, true);
+  state.writeError = "P2025";
+  assert.equal((await actions.confirmInventoryMutation(prepared.data)).code, "STALE_PREVIEW");
+  state.writeError = "P2002";
+  assert.equal((await actions.confirmInventoryMutation(prepared.data)).code, "CONFLICT");
+  assert.equal((await actions.confirmInventoryBatch({ items: [], unchanged: [] })).code, "VALIDATION_ERROR");
+});
+
+test("recovery never retries uncertain writes and separates refresh-only failures", () => {
+  const { confirmationFailure, recoveryFor } = require("../lib/ai/request-state.ts");
+  assert.equal(confirmationFailure(undefined), "SAVE_UNCERTAIN");
+  assert.equal(confirmationFailure("INTERNAL_ERROR"), "SAVE_UNCERTAIN");
+  assert.equal(confirmationFailure("STALE_PREVIEW"), "STALE_PREVIEW");
+  assert.equal(recoveryFor("SAVE_UNCERTAIN").action, "inspect");
+  assert.equal(recoveryFor("REFRESH_FAILED").action, "refresh");
+  assert.equal(recoveryFor("STALE_PREVIEW").action, "prepare");
+  assert.equal(recoveryFor("VALIDATION_ERROR").action, "edit");
+  assert.equal(recoveryFor("PROVIDER_UNAVAILABLE").action, "edit");
+  assert.equal(recoveryFor("UNAUTHORIZED").action, "none");
+});
+
+test("post-save recovery retries only reads and reports resolved search failures", async () => {
+  const { refreshAfterSave } = require("../lib/ai/refresh-after-save.ts");
+  const written = [{ entity: "stuff", id: 2, title: "Банка", operation: "updated" }];
+  let reads = 0;
+  let fail = true;
+  const record = { entity: "stuff", id: 2, title: "Банка" };
+  const results = { search: stuff, items: [], hasMore: false, page: 0 };
+  const readers = {
+    invalidate: async () => {},
+    record: async () => { reads++; return { ok: true, data: record }; },
+    search: async () => { reads++; return fail ? { ok: false, message: "offline" } : { ok: true, data: results }; },
+  };
+  const first = await refreshAfterSave(written, stuff, readers);
+  assert.equal(first.failed, true);
+  assert.deepEqual(first.selected, record);
+  assert.equal(first.results, null);
+  fail = false;
+  const second = await refreshAfterSave(written, stuff, readers);
+  assert.equal(second.failed, false);
+  assert.deepEqual(second.results, results);
+  assert.equal(reads, 4);
+  assert.equal(state.writes.length, 0);
+});
+
+test("refresh handles thrown failures and never reloads a deleted record", async () => {
+  const { refreshAfterSave } = require("../lib/ai/refresh-after-save.ts");
+  let recordCalls = 0;
+  const output = await refreshAfterSave([{ entity: "stuff", id: 2, title: "Банка", operation: "deleted" }], stuff, {
+    invalidate: async () => { throw new Error("cache offline"); },
+    record: async () => { recordCalls++; throw new Error("must not load"); },
+    search: async () => { throw new Error("network offline"); },
+  });
+  assert.equal(recordCalls, 0);
+  assert.deepEqual(output, { selected: null, results: null, failed: true });
+});

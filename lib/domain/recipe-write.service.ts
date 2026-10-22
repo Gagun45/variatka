@@ -25,7 +25,7 @@ export async function createRecipeInTransaction(tx: Prisma.TransactionClient, da
 export async function updateRecipeInTransaction(tx: Prisma.TransactionClient, id: number, data: RecipeWrite, items?: IRecipeIngredient[], expectedUpdatedAt?: string) {
   const parsed = fields(data);
   const current = await tx.recipe.findUnique({ where: versionWhere(id), select: { updatedAt: true } });
-  if (!current) throw new AppError("Рецепт не знайдено.");
+  if (!current) throw new AppError("Рецепт не знайдено.", "STALE_PREVIEW");
   const version = expectedUpdatedAt ?? current.updatedAt.toISOString();
   // Lock and advance the parent before touching composition. All writers follow this order.
   await guarded(() => tx.recipe.update({ where: versionWhere(id, version), data: { ...parsed, ...nextVersion(version) } }));
@@ -35,8 +35,8 @@ export async function updateRecipeInTransaction(tx: Prisma.TransactionClient, id
 
 export async function deleteRecipeInTransaction(tx: Prisma.TransactionClient, id: number, expectedUpdatedAt?: string, cleanup: string[] = []) {
   const record = await tx.recipe.findUnique({ where: versionWhere(id), select: { _count: { select: { orderItems: true } } } });
-  if (!record) throw new AppError("Рецепт не знайдено або видалено.");
-  if (record._count.orderItems > 0) throw new AppError("Неможливо видалити рецепт, використаний у замовленнях.");
+  if (!record) throw new AppError("Рецепт не знайдено або видалено.", "STALE_PREVIEW");
+  if (record._count.orderItems > 0) throw new AppError("Неможливо видалити рецепт, використаний у замовленнях.", "CONFLICT");
   const deleted = await guarded(() => tx.recipe.delete({ where: { ...versionWhere(id, expectedUpdatedAt), orderItems: { none: {} } }, select: { imageKey: true } }));
   if (deleted.imageKey) cleanup.push(deleted.imageKey);
   return id;
@@ -46,7 +46,7 @@ export const recipeWrites = {
   create: (data: RecipeWrite, items: IRecipeIngredient[]) => prisma.$transaction((tx) => createRecipeInTransaction(tx, data, items)),
   update: (id: number, data: Omit<RecipeWrite, "isSaved" | "confirmationNotes"> & Partial<Pick<RecipeWrite, "isSaved" | "confirmationNotes">>, items?: IRecipeIngredient[]) => prisma.$transaction(async (tx) => {
     const current = await tx.recipe.findUnique({ where: versionWhere(id), select: { isSaved: true, confirmationNotes: true } });
-    if (!current) throw new AppError("Рецепт не знайдено.");
+    if (!current) throw new AppError("Рецепт не знайдено.", "STALE_PREVIEW");
     return updateRecipeInTransaction(tx, id, { ...data, isSaved: data.isSaved ?? current.isSaved, confirmationNotes: data.confirmationNotes === undefined ? current.confirmationNotes : data.confirmationNotes }, items);
   }),
   delete: async (id: number) => {

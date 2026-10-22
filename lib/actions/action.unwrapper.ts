@@ -1,3 +1,4 @@
+import type { ActionErrorCode } from "../action-error";
 import { IActionError, IActionResponse } from "../types";
 
 export const unwrapAction = async <T>(
@@ -10,10 +11,12 @@ export const unwrapAction = async <T>(
 
 export const ACTION_ERROR = (
   message: string = "Something went wrong",
+  code: ActionErrorCode = "INTERNAL_ERROR",
 ): IActionError => {
   return {
     ok: false,
     message,
+    code,
   };
 };
 
