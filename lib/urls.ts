@@ -1,4 +1,5 @@
 export const frontendUrls = {
+  ai: "/admin/ai",
   ingredients: {
     index: "/admin/ingredients",
     view: (id: number) => `/admin/ingredients/${id}`,

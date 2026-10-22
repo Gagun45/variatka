@@ -1,6 +1,6 @@
 "use server";
 
-import { IIngredientFormValues } from "@/zod/ingredient.schema";
+import { IIngredientFormValues, ingredientSchema } from "@/zod/ingredient.schema";
 import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IIngredient, ingredientArgs } from "../prisma.args";
@@ -43,7 +43,12 @@ export const createIngredient = async (
 ): Promise<IActionResponse<IIngredient>> => {
   return safeAction("createIngredient", async () => {
     await requireAdmin();
-    const { title } = dto;
+    const parsed = ingredientSchema.safeParse(dto);
+    if (!parsed.success || !parsed.data.title.trim()) {
+      throw new AppError("Перевірте поля інгредієнта.");
+    }
+    const data = { ...parsed.data, title: parsed.data.title.trim() };
+    const { title } = data;
 
     const existingIngredient = await prisma.ingredient.findUnique({
       where: { title },
@@ -52,7 +57,7 @@ export const createIngredient = async (
       throw new AppError("An ingredient with this title already exists.");
 
     const newIngredient = await prisma.ingredient.create({
-      data: dto,
+      data,
       ...ingredientArgs,
     });
     return newIngredient;

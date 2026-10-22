@@ -6,6 +6,7 @@ export interface ILink {
 }
 
 export const MAIN_LINKS: ILink[] = [
+  { href: frontendUrls.ai, label: "AI-помічник" },
   { href: frontendUrls.ingredients.index, label: "Ingredients" },
   { href: frontendUrls.recipes.index, label: "Recipes" },
   { href: frontendUrls.stuff.index, label: "Stuff" },
