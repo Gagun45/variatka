@@ -14,7 +14,7 @@ Send a Ukrainian prompt such as:
 
 > Створи прихований рецепт «Тестова приправа» у категорії спеції: сіль 20 г, часник 5 г. Гострота 1.
 
-Check the preview before confirming. It shows recipe fields and the complete composition. Existing ingredients are resolved by name. Ambiguous names require clarification. Missing ingredients appear as separate creation operations in the same batch; they start with an empty description, unavailable and unsaved. Their category is shown for review.
+Check the preview before confirming. It shows recipe fields and the complete composition. Existing ingredients are resolved by name across all ingredient categories; you do not need to supply their categories. Their stored category is preserved. Exact names take precedence. Otherwise, a unique case-insensitive title substring is resolved to its full stored name, shown in the preview. Multiple matches stop preparation and list alternatives; resend the complete request with the exact name. Amount changes and removals search only that recipe’s composition, while additions search the ingredient inventory. Unknown composition names show the existing ingredients. This is literal substring matching, not fuzzy spelling correction. Missing ingredients appear as separate creation operations in the same batch; they start with an empty description, unavailable and unsaved. Their category is shown for review; when unspecified, a missing ingredient defaults to OTHER (Інше).
 
 Defaults: hidden, unconfirmed, unsaved, DEFAULT series, spiciness 0 and empty optional text. The assistant asks about an unclear recipe category. It must not invent composition or amounts; a recipe without supplied composition can be created as an empty draft.
 
@@ -48,6 +48,10 @@ Filtered update:
 
 > Познач усі інгредієнти категорії спеції як наявні.
 
+The preview summarizes creation/update/deletion counts and counts by entity. Cards stay in execution order so dependencies remain visible. Updates show changed fields and composition entries only; expand **Усі дані запису** to inspect unchanged values too. New ingredient cards identify the recipes that need them. Deletions have a distinct warning and require confirmation through the same atomic batch flow.
+
+The confirmation bar stays near the bottom of the viewport while reviewing a long batch, with the total and deletion count. Keyboard focus moves to a new preview heading and to errors. Nothing is saved by opening details or focusing the preview.
+
 The preview lists concrete records, their before/after values and the operation count. Records already matching the request are reported without a write. Confirmation affects the frozen list shown in that preview; records added later are not silently included.
 
 The maximum is **20 operations**, including missing ingredient creates. Broader requests are rejected with instructions to narrow them. Conflicting or repeated operations on the same record must be combined. There is one confirmation for the whole batch, and cancellation writes nothing.
@@ -75,7 +79,7 @@ npm run build
 
 The integration suite uses disposable in-process PostgreSQL through PGlite, applies the existing migrations and executes real Prisma SQL. It does not read the production connection string, call the model or open a network listener. Cases cover rollback, stale versions, dependency ordering, reference restrictions, filters and authorization. It does not simulate distributed concurrency or load.
 
-For a browser smoke test, create a uniquely named test recipe with one missing ingredient, inspect both preview operations and confirm. Change one amount and verify the rest stays intact. Cancel a batch and verify no records were created. Try an over-limit request and a stale preview. Finally delete your unreferenced test records and repeat the basic create/update flow after deployment.
+For a browser smoke test, create a uniquely named test recipe with one missing ingredient, inspect both preview operations and confirm. Change one amount and verify the rest stays intact. Cancel a batch and verify no records were created. Try an over-limit request and a stale preview. Also inspect a mixed batch on a narrow screen: verify long names and descriptions wrap, all values remain accessible, the confirmation bar stays usable, Tab reaches expandable details and buttons, and error focus is visible. Finally delete your unreferenced test records and repeat the basic create/update flow after deployment.
 
 Recipe variants, finished-product stock writes, images and orders are outside this feature. Ingredient availability and stuff stock remain supported.
 

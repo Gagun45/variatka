@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MessageSquarePlus, Send } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,6 +39,8 @@ export default function AiAssistant() {
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [notices, setNotices] = useState<MutationResult[]>([]);
   const [batch, setBatch] = useState<BatchPreview | null>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pending = useRef(false);
   const queryClient = useQueryClient();
@@ -227,7 +229,7 @@ export default function AiAssistant() {
       {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} onConfirm={confirmMutation} onCancel={() => { setBatch(null); setError(""); }} />}
 
       {notices.length > 0 && <div role="status" className="space-y-2 rounded-xl border p-4"><p className="font-medium">Виконано операцій: {notices.length}</p><ul className="space-y-1">{notices.map((notice, index) => <li key={index}>{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : notice.entity === "recipe" ? frontendUrls.recipes.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</li>)}</ul></div>}
-      {error && <p role="alert" className="text-destructive">{error}</p>}
+      {error && <p ref={errorRef} tabIndex={-1} role="alert" className="rounded text-destructive focus-visible:outline-2 focus-visible:outline-ring">{error}</p>}
       {busy && <p role="status" className="text-muted-foreground">Обробка…</p>}
 
       {clarification && <section aria-label="Уточнення запиту" className="space-y-2 rounded-lg border p-4">

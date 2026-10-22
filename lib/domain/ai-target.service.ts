@@ -13,6 +13,12 @@ export async function resolveMutationTarget(intent: Exclude<InventoryMutationInt
     const exact = entity === "ingredient" ? await prisma.ingredient.findMany(args) : entity === "stuff" ? await prisma.stuff.findMany(args) : await prisma.recipe.findMany(args);
     if (exact.length === 1) selection = { entity, id: exact[0].id };
     else {
+      // A unique partial TITLE is safe to propose; description-only hits never auto-select.
+      if (!exact.length) {
+        const partialArgs = { where: { title: { contains: intent.targetName.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" as const } }, take: 2, select: { id: true } };
+        const partial = entity === "ingredient" ? await prisma.ingredient.findMany(partialArgs) : entity === "stuff" ? await prisma.stuff.findMany(partialArgs) : await prisma.recipe.findMany(partialArgs);
+        if (partial.length === 1) return { kind: "selected" as const, selection: { entity, id: partial[0].id } };
+      }
       const common = { text: intent.targetName, category: null };
       const results = await searchInventory(entity === "ingredient"
         ? { entity, ...common, isInStock: null, isSaved: null }

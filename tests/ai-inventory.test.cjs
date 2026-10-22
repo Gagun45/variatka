@@ -690,3 +690,56 @@ test("shared context filters preserve false, zero and Ukrainian labels", () => {
   assert.deepEqual(searchFilters({ ...recipe, series: "DEFAULT", includeIngredients: ["часник", "сіль"] }), ["Серія: Стандарт", "Містить усі: часник, сіль"]);
   assert.deepEqual(searchFilters(ingredient), []);
 });
+
+test("batch summary includes only changed fields and preserves false/zero values", () => {
+  const { previewSummary, snapshotRows } = require("../lib/ai/preview-summary.ts");
+  const before = { title: "Банка", description: "Скло", category: "JARS", inStock: 5 };
+  const preview = { kind: "updateStuff", target: { id: 1, title: "Банка", updatedAt: new Date().toISOString() }, before, after: { ...before, inStock: 0 } };
+  assert.deepEqual(previewSummary(preview), { title: "Банка", rows: [{ label: "Залишок", before: "5", after: "0" }] });
+  assert.equal(snapshotRows(preview.after).length, 4);
+  assert.equal(snapshotRows({ title: "Сіль", description: "", category: "OTHER", isSaved: false, isInStock: false }).find((row) => row.label === "У наявності").after, "Ні");
+});
+
+test("recipe batch summary shows composition additions, removals and amount changes without unchanged ingredients", () => {
+  const { previewSummary, snapshotRows } = require("../lib/ai/preview-summary.ts");
+  const fields = { title: "Приправа", description: "", notes: "", confirmationNotes: null, category: "SPICES", series: "DEFAULT", spicy: 0, isHidden: true, isSaved: false, isConfirmed: false };
+  const entry = (id, title, amount) => ({ id, title, amount, category: "SPICES", updatedAt: id === null ? null : "2026-01-01T00:00:00.000Z" });
+  const before = { fields, ingredients: [entry(1, "Сіль", "10 г"), entry(2, "Часник", "2 г"), entry(3, "Перець", "1 г")] };
+  const after = { fields, ingredients: [entry(1, "Сіль", "10 г"), entry(2, "Часник", "4 г"), entry(null, "Кмин", "3 г")] };
+  const result = previewSummary({ kind: "updateRecipe", before, after });
+  assert.deepEqual(result.rows, [
+    { label: "Склад: Часник", before: "2 г", after: "4 г" },
+    { label: "Склад: Перець", before: "1 г", after: null },
+    { label: "Склад: Кмин (новий інгредієнт)", before: null, after: "3 г" },
+  ]);
+  assert.equal(snapshotRows(before).some((row) => row.label === "Склад: Сіль"), true);
+  assert.equal(snapshotRows({ fields, ingredients: [] }).at(-1).after, "Інгредієнтів немає");
+});
+
+test("delete summaries retain the exact target title and full snapshot", () => {
+  const { previewSummary, snapshotRows } = require("../lib/ai/preview-summary.ts");
+  const before = { title: "  Сіль  ", description: "", category: "OTHER", isInStock: false, isSaved: true };
+  const result = previewSummary({ kind: "deleteIngredient", before });
+  assert.equal(result.title, before.title);
+  assert.equal(result.rows.every((row) => row.after === null), true);
+  assert.equal(snapshotRows(before).find((row) => row.label === "Збережений").after, "Так");
+});
+
+
+test("recipe ingredient categories can be omitted without weakening confirmed snapshots", () => {
+  const { namedRecipeIngredientSchema, recipeIngredientReferenceSchema } = require("../zod/ai-recipe.schema.ts");
+  assert.equal(namedRecipeIngredientSchema.safeParse({ title: "Сіль", amount: "5 г", category: null }).success, true);
+  assert.equal(recipeIngredientReferenceSchema.safeParse({ title: "Сіль", amount: "5 г", category: null, id: null, updatedAt: null }).success, false);
+});
+
+
+test("name matching prefers exact titles, allows unique substrings and retains ambiguity", () => {
+  const { matchNames } = require("../lib/ai/name-resolution.ts");
+  const names = [{ title: "Часник" }, { title: "Тест часник" }, { title: "Часник сушений" }];
+  assert.deepEqual(matchNames("Часник", names), [names[0]]);
+  assert.deepEqual(matchNames("часник", names), [names[0]]);
+  assert.deepEqual(matchNames("сушений", names), [names[2]]);
+  assert.equal(matchNames("час", names).length, 3);
+  assert.deepEqual(matchNames("часнк", names), []);
+  assert.deepEqual(matchNames("%", names), []);
+});

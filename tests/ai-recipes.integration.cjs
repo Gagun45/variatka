@@ -249,6 +249,76 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal(recipes[1].after.ingredients[0].id, lower.id);
     });
 
+    await t.test("recipe ingredient lookup ignores category and accepts an unspecified category", async () => {
+      const existing = await client.ingredient.create({ data: ingredientData("Lookup salt", { category: "OTHER" }) });
+      const intent = recipeIntent("Lookup recipe");
+      intent.ingredients = [{ title: "Lookup salt", amount: "5 г", category: null }];
+      const prepared = await prepareInventoryMutation(intent, null);
+      assert.equal(prepared.preview.after.ingredients[0].id, existing.id);
+      assert.equal(prepared.preview.after.ingredients[0].category, "OTHER");
+      intent.ingredients[0].category = "SPICES";
+      const differentCategory = await prepareInventoryMutation(intent, null);
+      assert.equal(differentCategory.preview.after.ingredients[0].id, existing.id);
+      assert.equal(differentCategory.preview.after.ingredients[0].category, "OTHER");
+      intent.ingredients = [{ title: "Brand new uncategorized", amount: "1 г", category: null }];
+      const missing = await prepareInventoryBatch({ kind: "list", operations: [intent] }, null);
+      assert.equal(missing.items[0].kind, "createIngredient");
+      assert.equal(missing.items[0].after.category, "OTHER");
+    });
+
+    await t.test("similar ingredient names block recipe creation and list alternatives across categories", async () => {
+      await client.ingredient.create({ data: ingredientData("Lookup paprika sweet", { category: "SPICES" }) });
+      await client.ingredient.create({ data: ingredientData("Lookup paprika smoked", { category: "OTHER" }) });
+      const intent = recipeIntent("Ambiguous lookup recipe");
+      intent.ingredients = [{ title: "Lookup paprika", amount: "2 г", category: null }];
+      await assert.rejects(prepareInventoryBatch({ kind: "list", operations: [intent] }, null), (error) => {
+        assert.match(error.message, /Lookup paprika sweet/);
+        assert.match(error.message, /Lookup paprika smoked/);
+        return true;
+      });
+      assert.equal(await client.recipe.count({ where: { title: intent.data.title } }), 0);
+      assert.equal(await client.ingredient.count({ where: { title: "Lookup paprika" } }), 0);
+    });
+
+    await t.test("mixed batches resolve partial record and composition names and preserve other amounts", async () => {
+      const garlic = await client.ingredient.create({ data: ingredientData("Тест часник", { isInStock: true }) });
+      const salt = await client.ingredient.create({ data: ingredientData("Тест сіль") });
+      const jar = await client.stuff.create({ data: stuffData("Тест банка", { inStock: 10 }) });
+      const draft = await prepareInventoryBatch({ kind: "list", operations: [recipeIntent("Тест приправа", ["Тест часник", "Тест сіль"])] }, null);
+      await applyInventoryBatch(draft);
+      const preview = await prepareInventoryBatch({ kind: "list", operations: [
+        { kind: "updateIngredient", targetName: "часник", patch: ingredientPatch({ isInStock: false }) },
+        { kind: "updateStuff", targetName: "банка", patch: stuffPatch({ stock: { mode: "adjust", value: 5 } }) },
+        { kind: "updateRecipe", targetName: "приправа", patch: recipePatch({ description: "Приправа для овочів" }), composition: { mode: "patch", items: [{ action: "setAmount", title: "часник", amount: "8 г", category: null }] } },
+      ] }, null);
+      assert.equal(preview.items.length, 3);
+      const recipePreview = preview.items.find((item) => item.kind === "updateRecipe");
+      assert.equal(recipePreview.after.ingredients.find((item) => item.id === garlic.id).title, "Тест часник");
+      await applyInventoryBatch(preview);
+      assert.equal((await client.ingredient.findUnique({ where: { id: garlic.id } })).isInStock, false);
+      assert.equal((await client.stuff.findUnique({ where: { id: jar.id } })).inStock, 15);
+      const recipe = await client.recipe.findUnique({ where: { title: "Тест приправа" }, include: { ingredients: true } });
+      assert.equal(recipe.ingredients.find((item) => item.ingredientId === garlic.id).amount, "8 г");
+      assert.equal(recipe.ingredients.find((item) => item.ingredientId === salt.id).amount, "10 г");
+      const removal = await prepareInventoryMutation({ kind: "updateRecipe", targetName: recipe.title, patch: recipePatch(), composition: { mode: "patch", items: [{ action: "remove", title: "часник", amount: null, category: null }] } }, null);
+      assert.deepEqual(removal.preview.after.ingredients.map((item) => item.id), [salt.id]);
+    });
+
+    await t.test("ambiguous composition and duplicate aliases cannot partially change a batch", async () => {
+      const draft = await prepareInventoryBatch({ kind: "list", operations: [recipeIntent("Two garlic recipe", ["Garlic fresh", "Garlic dried"])] }, null);
+      await applyInventoryBatch(draft);
+      const update = (items) => ({ kind: "updateRecipe", targetName: "Two garlic recipe", patch: recipePatch(), composition: { mode: "patch", items } });
+      const change = (title) => ({ action: "setAmount", title, amount: "8 г", category: null });
+      await assert.rejects(prepareInventoryBatch({ kind: "list", operations: [update([change("Garlic")])] }, null), /Garlic fresh.*Garlic dried|Garlic dried.*Garlic fresh/);
+      await assert.rejects(prepareInventoryMutation(update([change("fresh"), change("Garlic fresh")]), null), /Повторна зміна/);
+      await assert.rejects(prepareInventoryMutation(update([change("Missing herb")]), null), /Доступні:.*Garlic/);
+      const saved = await client.recipe.findUnique({ where: { title: "Two garlic recipe" }, include: { ingredients: true } });
+      assert.equal(saved.ingredients.every((item) => item.amount === "10 г"), true);
+      const reuse = await prepareInventoryMutation(recipeIntent("Reuse partial ingredient", ["fresh"]), null);
+      assert.equal(reuse.preview.after.ingredients[0].title, "Garlic fresh");
+      assert.notEqual(reuse.preview.after.ingredients[0].id, null);
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;

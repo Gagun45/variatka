@@ -3,6 +3,7 @@ import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai
 import type { RecordSelection } from "@/zod/ai-search.schema";
 import type { RecipeSnapshot } from "@/zod/ai-recipe.schema";
 import { assertNever } from "../ai/mutation-definitions";
+import { candidateNames } from "../ai/name-resolution";
 import { AppError, NoChangesError } from "../error";
 import { prisma } from "../prisma";
 import { prepareInventoryMutation, applyInventoryMutation } from "./ai-mutations.service";
@@ -48,7 +49,7 @@ export async function prepareInventoryBatch(intent: BatchIntent, selected: Recor
   for (const operation of operations) {
     try {
       const prepared = await prepareInventoryMutation(operation.intent, operation.selected, operation.chosen, true, cache);
-      if (prepared.kind === "choose") throw new AppError("Одна з назв у пакеті неоднозначна. Вкажіть точні назви кожного запису.");
+      if (prepared.kind === "choose") throw new AppError(`Назва «${"targetName" in prepared.intent ? prepared.intent.targetName : "запис"}» у пакеті неоднозначна. Варіанти: ${candidateNames(prepared.results.items)}. Повторіть повний запит із точною назвою.`);
       items.push(prepared.preview);
     } catch (error) {
       if (!(error instanceof NoChangesError)) throw error;

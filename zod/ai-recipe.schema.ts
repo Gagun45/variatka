@@ -15,16 +15,17 @@ export const recipePatchSchema = z.strictObject({
   isConfirmed: z.boolean().nullable(), isSaved: z.boolean().nullable(),
 });
 export const namedRecipeIngredientSchema = z.strictObject({
-  title, amount: z.string().trim().min(1).max(200), category: z.enum(["SPICES", "OTHER"]),
+  title, amount: z.string().trim().min(1).max(200), category: z.enum(["SPICES", "OTHER"]).nullable(),
 });
 export const compositionChangeSchema = z.strictObject({
   mode: z.enum(["patch", "replace"]),
   items: z.array(z.strictObject({
     action: z.enum(["add", "setAmount", "remove"]), title,
-    amount: z.string().trim().min(1).max(200).nullable(), category: z.enum(["SPICES", "OTHER"]),
+    amount: z.string().trim().min(1).max(200).nullable(), category: z.enum(["SPICES", "OTHER"]).nullable(),
   })).max(50),
 });
 export const recipeIngredientReferenceSchema = namedRecipeIngredientSchema.extend({
+  category: z.enum(["SPICES", "OTHER"]),
   id: z.number().int().positive().nullable(), updatedAt: z.iso.datetime().nullable(),
 });
 export const recipeSnapshotSchema = z.strictObject({

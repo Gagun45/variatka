@@ -1,6 +1,7 @@
 import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import { recipeWriteSchema, type RecipeSnapshot } from "@/zod/ai-recipe.schema";
 import type { RecordSelection } from "@/zod/ai-search.schema";
+import { matchNames, candidateNames } from "../ai/name-resolution";
 import { AppError, NoChangesError } from "../error";
 import { prisma } from "../prisma";
 import { resolveMutationTarget } from "./ai-target.service";
@@ -9,7 +10,7 @@ type RecipeIntent = Extract<InventoryMutationIntent, { kind: "createRecipe" | "u
 type Reference = RecipeSnapshot["ingredients"][number];
 export type IngredientResolutionCache = Map<string, Reference>;
 
-async function resolveIngredient(item: { title: string; amount: string; category: "SPICES" | "OTHER" }, cache: IngredientResolutionCache): Promise<Reference> {
+async function resolveIngredient(item: { title: string; amount: string; category: "SPICES" | "OTHER" | null }, cache: IngredientResolutionCache): Promise<Reference> {
   // Exact spellings may identify different legacy records whose titles differ only by case.
   const key = item.title;
   const cached = cache.get(key);
@@ -17,8 +18,16 @@ async function resolveIngredient(item: { title: string; amount: string; category
   const records = await prisma.ingredient.findMany({ where: { title: { equals: item.title, mode: "insensitive" } }, take: 3, select: { id: true, title: true, category: true, updatedAt: true } });
   const exact = records.find((record) => record.title === item.title);
   if (!exact && records.length > 1) throw new AppError(`Назва інгредієнта «${item.title}» неоднозначна. Вкажіть точне написання назви.`);
-  const record = exact ?? records[0];
-  const resolved: Reference = record ? { id: record.id, title: record.title, category: record.category, updatedAt: record.updatedAt.toISOString(), amount: item.amount } : { ...item, id: null, updatedAt: null };
+  let record = exact ?? records[0];
+  if (!record) {
+    const candidates = await prisma.ingredient.findMany({
+      where: { title: { contains: item.title.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" } },
+      orderBy: [{ title: "asc" }, { id: "asc" }], take: 6, select: { id: true, title: true, category: true, updatedAt: true },
+    });
+    if (candidates.length > 1) throw new AppError(`Інгредієнт «${item.title}» неоднозначний. Оберіть точну назву: ${candidateNames(candidates)}. Повторіть повний запит із вибраною назвою.`);
+    record = candidates[0];
+  }
+  const resolved: Reference = record ? { id: record.id, title: record.title, category: record.category, updatedAt: record.updatedAt.toISOString(), amount: item.amount } : { ...item, category: item.category ?? "OTHER", id: null, updatedAt: null };
   cache.set(key, resolved);
   return resolved;
 }
@@ -56,11 +65,22 @@ export async function prepareRecipeMutation(intent: RecipeIntent, selected: Reco
   if (intent.composition) {
     if (intent.composition.mode === "replace") after.ingredients = [];
     const seen = new Set<string>();
+    const seenIds = new Set<number>();
     for (const change of intent.composition.items) {
       const key = change.title.toLocaleLowerCase("uk");
       if (seen.has(key)) throw new AppError(`Повторна зміна інгредієнта «${change.title}» в одному запиті.`);
       seen.add(key);
-      const index = after.ingredients.findIndex((item) => item.title.toLocaleLowerCase("uk") === key);
+      const matches = matchNames(change.title, before.ingredients);
+      if ((change.action === "remove" || change.action === "setAmount") && intent.composition.mode === "patch") {
+        if (matches.length > 1) throw new AppError(`Інгредієнт «${change.title}» неоднозначний у складі. Оберіть точну назву: ${candidateNames(matches)}. Повторіть повний запит із вибраною назвою.`);
+        if (!matches.length) throw new AppError(`Інгредієнт «${change.title}» не знайдено в складі. Доступні: ${candidateNames(before.ingredients) || "склад порожній"}.`);
+        const id = matches[0].id!;
+        if (seenIds.has(id)) throw new AppError(`Повторна зміна інгредієнта «${matches[0].title}» в одному запиті.`);
+        seenIds.add(id);
+      }
+      const index = change.action === "add"
+        ? after.ingredients.findIndex((item) => item.title.toLocaleLowerCase("uk") === key)
+        : after.ingredients.findIndex((item) => item.id === matches[0]?.id);
       if (change.action === "remove") {
         if (intent.composition.mode === "replace" || index < 0) throw new AppError(`Інгредієнт «${change.title}» не знайдено в складі.`);
         after.ingredients.splice(index, 1);
