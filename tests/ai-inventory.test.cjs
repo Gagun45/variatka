@@ -96,15 +96,14 @@ require.extensions[".ts"] = (mod, file) => mod._compile(ts.transpileModule(fs.re
 const schemas = require("../zod/ai-search.schema.ts");
 const { ingredientWhere, recipeWhere, stuffWhere } = require("../lib/ai/inventory-search.ts");
 const actions = require("../lib/actions/ai.actions.ts");
-const { generateIngredientDraft } = require("../lib/ai/ingredient-draft.ts");
 const ingredientActions = require("../lib/actions/ingredient.actions.ts");
 const stuffActions = require("../lib/actions/stuff.actions.ts");
 
 const ingredient = { entity: "ingredient", text: null, category: null, isInStock: null, isSaved: null };
 const recipe = { entity: "recipe", text: null, category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] };
 const stuff = { entity: "stuff", text: null, category: null, isInStock: null, stockMin: null, stockMax: null };
-const plan = (search) => ({ operation: "search", search, mutation: null, ingredient: null, assumptions: [], message: "Пошук" });
-const request = (extra = {}) => ({ prompt: "Покажи спеції", selected: null, previousSearch: null, ...extra });
+const plan = (search) => ({ command: { kind: "search", search }, assumptions: [], message: "Пошук" });
+const request = (extra = {}) => ({ prompt: "Покажи спеції", selected: null, previousSearch: null, clarification: null, ...extra });
 const row = (id) => ({ id, title: `Запис ${id}`, category: "SPICES", isInStock: true, inStock: 3, spicy: 1, isHidden: false, isConfirmed: true });
 
 beforeEach(() => {
@@ -216,7 +215,7 @@ test("selection and follow-up read current recipe composition; only identity is 
   assert.equal(selected.data.ingredients[0].amount, "20 г");
   assert.equal(state.apiCalls.length, 0);
   state.records.recipe.ingredients[0].amount = "30 г";
-  state.plan = { ...plan(null), operation: "viewSelected" };
+  state.plan = { ...plan(null), command: { kind: "viewSelected" } };
   const reply = await actions.askInventoryAssistant(request({ prompt: "Покажи її склад", selected: selection }));
   assert.equal(reply.data.record.ingredients[0].amount, "30 г");
   assert.deepEqual(JSON.parse(state.apiCalls[0].input).selected, { ...selection, title: "Запис 5" });
@@ -234,7 +233,7 @@ test("ingredient and stuff details come from database records, without the AI", 
 test("non-admin callers cannot trigger any provider or database reads", async (t) => {
   t.mock.method(console, "error", () => {});
   state.admin = false;
-  for (const result of [await actions.askInventoryAssistant(request()), await actions.searchInventoryRecords(ingredient), await actions.getInventoryRecord({ entity: "recipe", id: 1 }), await actions.proposeIngredient("Додай сіль")]) assert.equal(result.ok, false);
+  for (const result of [await actions.askInventoryAssistant(request()), await actions.searchInventoryRecords(ingredient), await actions.getInventoryRecord({ entity: "recipe", id: 1 }), await actions.confirmInventoryMutation({ kind: "createStuff", after: { title: "Стрічка", description: "", category: "DECOR", inStock: 0 } })]) assert.equal(result.ok, false);
   assert.equal(state.authChecks, 4);
   assert.equal(state.reads.length, 0);
   assert.equal(state.apiCalls.length, 0);
@@ -245,7 +244,7 @@ test("invalid ranges, missing selection and deleted records fail without fabrica
   assert.equal((await actions.searchInventoryRecords({ ...stuff, stockMin: 10, stockMax: 2 })).ok, false);
   assert.equal((await actions.searchInventoryRecords({ ...recipe, spicyMin: 4, spicyMax: 1 })).ok, false);
   assert.equal(state.reads.length, 0);
-  state.plan = { ...plan(null), operation: "viewSelected" };
+  state.plan = { ...plan(null), command: { kind: "viewSelected" } };
   assert.equal((await actions.askInventoryAssistant(request())).ok, false);
   const apiCount = state.apiCalls.length;
   assert.equal((await actions.askInventoryAssistant(request({ selected: { entity: "recipe", id: 999 } }))).ok, false);
@@ -254,24 +253,32 @@ test("invalid ranges, missing selection and deleted records fail without fabrica
 
 test("unsupported and contradictory model plans cannot cause a search or mutation", async (t) => {
   t.mock.method(console, "error", () => {});
-  state.plan = { ...plan(null), operation: "unsupported", message: "Зміна поки не підтримується." };
+  state.plan = { ...plan(null), command: { kind: "unsupported" }, message: "Зміна поки не підтримується." };
   const reply = await actions.askInventoryAssistant(request({ prompt: "Видали всі рецепти" }));
   assert.equal(reply.data.operation, "unsupported");
-  state.plan = { ...plan(ingredient), operation: "viewSelected" };
+  state.plan = { ...plan(null), command: { kind: "viewSelected", search: ingredient } };
   assert.equal((await actions.askInventoryAssistant(request())).ok, false);
-  state.plan = { ...plan(null), operation: "deleteRecipe" };
+  state.plan = { ...plan(null), command: { kind: "deleteRecipe" } };
   assert.equal((await actions.askInventoryAssistant(request())).ok, false);
   assert.equal(state.reads.length, 0);
 });
 
-test("ingredient creation preview still works through both new and existing entry points", async () => {
-  const draft = { title: "Куркума", description: "", category: "SPICES", isInStock: false };
-  state.plan = { ...plan(null), operation: "createIngredient", ingredient: draft, assumptions: ["Наявність не вказана"] };
+test("ingredient creation uses the common preview and confirmation pipeline", async () => {
+  const data = { title: "Куркума", description: "", category: "SPICES", isInStock: false, isSaved: false };
+  state.plan = mutationPlan({ kind: "createIngredient", data });
   const reply = await actions.askInventoryAssistant(request({ prompt: "Додай інгредієнт куркума" }));
-  assert.deepEqual(reply.data.draft.ingredient, draft);
-  state.plan = { operation: state.plan.operation, ingredient: draft, assumptions: state.plan.assumptions, message: state.plan.message };
-  assert.deepEqual((await generateIngredientDraft("Додай куркуму")).ingredient, draft);
-  assert.equal(state.reads.length, 0);
+  assert.equal(reply.ok, true);
+  assert.equal(reply.data.operation, "mutation");
+  assert.equal(reply.data.preview.kind, "createIngredient");
+  assert.deepEqual(reply.data.preview.after, data);
+  assert.equal(state.writes.length, 0);
+  state.allowWrites = true;
+  const saved = await actions.confirmInventoryMutation(reply.data.preview);
+  assert.equal(saved.ok, true);
+  assert.equal(saved.data.operation, "created");
+  assert.equal(saved.data.entity, "ingredient");
+  assert.equal(state.records.ingredient.title, data.title);
+  assert.equal(state.apiCalls.length, 1);
 });
 
 test("strict model JSON Schema has required fields and uses supported anyOf branches", async () => {
@@ -309,7 +316,7 @@ const ingredientRecord = (overrides = {}) => ({ id: 1, title: "Куркума", 
 const stuffRecord = (overrides = {}) => ({ id: 2, title: "Слоїчки 250 мл", description: "Скляні", category: "JARS", inStock: 10, updatedAt: new Date("2026-10-22T10:00:00.000Z"), ...overrides });
 const ingredientPatch = (values = {}) => ({ title: null, description: null, category: null, isInStock: null, isSaved: null, ...values });
 const stuffPatch = (values = {}) => ({ title: null, description: null, category: null, stock: null, ...values });
-function mutationPlan(mutation) { return { ...plan(null), operation: "mutation", mutation }; }
+function mutationPlan(mutation) { return { ...plan(null), command: { kind: "mutation", intent: mutation } }; }
 async function previewMutation(intent, entity = "ingredient") {
   return actions.previewInventoryMutation(intent, { entity, id: entity === "ingredient" ? 1 : 2 });
 }
@@ -527,4 +534,135 @@ test("manual CRUD shares validation, preserves saved state, and accepts optional
   assert.equal(edit.ok, true);
   assert.equal(state.records.ingredient.isSaved, true);
   assert.equal("isSaved" in state.writes.at(-1).args.data, false);
+});
+
+function clarificationPlan(question, continuesPrevious = false) {
+  return { command: { kind: "clarify", continuesPrevious }, assumptions: [], message: question };
+}
+
+test("a short stock answer resumes the original request and still requires confirmation", async () => {
+  state.records.stuff = stuffRecord();
+  const selected = { entity: "stuff", id: 2 };
+  state.plan = clarificationPlan("Який точний залишок встановити?");
+  const first = await actions.askInventoryAssistant(request({ prompt: "Встанови інший залишок обраного матеріалу", selected, previousSearch: stuff }));
+  assert.equal(first.ok, true);
+  assert.equal(first.data.operation, "clarify");
+  assert.equal(first.data.clarification.originalPrompt, "Встанови інший залишок обраного матеріалу");
+  assert.deepEqual(first.data.clarification.turns, []);
+  assert.deepEqual(first.data.clarification.selected, selected);
+  state.plan = mutationPlan({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "set", value: 30 } }) });
+  const answer = await actions.askInventoryAssistant(request({ prompt: "30", selected, previousSearch: stuff, clarification: first.data.clarification }));
+  assert.equal(answer.ok, true);
+  assert.equal(answer.data.operation, "mutation");
+  assert.equal(answer.data.preview.before.inStock, 10);
+  assert.equal(answer.data.preview.after.inStock, 30);
+  const sent = JSON.parse(state.apiCalls[1].input);
+  assert.equal(sent.prompt, "30");
+  assert.equal(sent.clarification.originalPrompt, first.data.clarification.originalPrompt);
+  assert.equal(sent.clarification.question, "Який точний залишок встановити?");
+  assert.equal(state.writes.length, 0);
+  assert.equal("clarification" in answer.data, false);
+});
+
+test("multiple clarification turns preserve earlier questions and answers without inventing a summary", async () => {
+  state.plan = clarificationPlan("Яку назву інгредієнта вказати?");
+  const first = await actions.askInventoryAssistant(request({ prompt: "Створи інгредієнт, але спочатку уточни назву та категорію" }));
+  state.plan = clarificationPlan("Яку категорію обрати?", true);
+  const second = await actions.askInventoryAssistant(request({ prompt: "Куркума", clarification: first.data.clarification }));
+  assert.equal(second.ok, true);
+  assert.equal(second.data.clarification.originalPrompt, first.data.clarification.originalPrompt);
+  assert.deepEqual(second.data.clarification.turns, [{ question: "Яку назву інгредієнта вказати?", answer: "Куркума" }]);
+  state.plan = mutationPlan({ kind: "createIngredient", data: { title: "Куркума", description: "", category: "SPICES", isInStock: false, isSaved: false } });
+  const third = await actions.askInventoryAssistant(request({ prompt: "Спеції", clarification: second.data.clarification }));
+  assert.equal(third.data.preview.after.title, "Куркума");
+  const context = JSON.parse(state.apiCalls[2].input).clarification;
+  assert.equal(context.turns[0].answer, "Куркума");
+  assert.equal(context.question, "Яку категорію обрати?");
+  assert.equal(state.writes.length, 0);
+});
+
+test("an independent clarification replaces the previous pending request", async () => {
+  state.plan = clarificationPlan("Скільки слоїчків?");
+  const first = await actions.askInventoryAssistant(request({ prompt: "Створи новий матеріал слоїчки та уточни кількість" }));
+  state.plan = clarificationPlan("Який саме інгредієнт?", false);
+  const second = await actions.askInventoryAssistant(request({ prompt: "Інший запит: знайди інгредієнт", clarification: first.data.clarification }));
+  assert.equal(second.data.clarification.originalPrompt, "Інший запит: знайди інгредієнт");
+  assert.deepEqual(second.data.clarification.turns, []);
+  assert.equal(second.data.clarification.question, "Який саме інгредієнт?");
+});
+
+test("clearing clarification removes the original request from subsequent model input", async () => {
+  state.plan = clarificationPlan("Який залишок?");
+  const first = await actions.askInventoryAssistant(request({ prompt: "Уточни залишок для нового матеріалу" }));
+  assert.equal(first.data.operation, "clarify");
+  state.plan = plan(ingredient);
+  const next = await actions.askInventoryAssistant(request({ prompt: "Покажи всі інгредієнти", clarification: null }));
+  assert.equal(next.data.operation, "search");
+  const sent = JSON.parse(state.apiCalls[1].input);
+  assert.equal(sent.clarification, null);
+  assert.equal(state.apiCalls[1].input.includes("Уточни залишок"), false);
+});
+
+test("clarifications remain bound to the selected record and its previous search", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.stuff = stuffRecord();
+  const selected = { entity: "stuff", id: 2 };
+  state.plan = clarificationPlan("Який залишок?");
+  const first = await actions.askInventoryAssistant(request({ prompt: "Встанови залишок", selected, previousSearch: stuff }));
+  const calls = state.apiCalls.length;
+  const mismatch = await actions.askInventoryAssistant(request({ prompt: "30", selected: { entity: "stuff", id: 3 }, clarification: first.data.clarification }));
+  assert.equal(mismatch.ok, false);
+  assert.equal(state.apiCalls.length, calls);
+  state.plan = clarificationPlan("Потрібна точна кількість?", true);
+  const next = await actions.askInventoryAssistant(request({ prompt: "так", selected, previousSearch: ingredient, clarification: first.data.clarification }));
+  assert.equal(next.ok, true);
+  assert.deepEqual(JSON.parse(state.apiCalls.at(-1).input).previousSearch, stuff);
+  assert.deepEqual(next.data.clarification.previousSearch, stuff);
+  assert.equal(state.writes.length, 0);
+});
+
+test("oversized or exhausted clarification contexts are rejected with no database writes", async (t) => {
+  t.mock.method(console, "error", () => {});
+  const context = {
+    originalPrompt: "Створи матеріал", question: "Який саме?", selected: null, previousSearch: null,
+    turns: Array.from({ length: schemas.MAX_CLARIFICATION_TURNS }, () => ({ question: "Який саме?", answer: "Уточнення" })),
+  };
+  state.plan = clarificationPlan("Ще одне питання?", true);
+  const exhausted = await actions.askInventoryAssistant(request({ prompt: "Уточнення", clarification: context }));
+  assert.equal(exhausted.ok, false);
+  assert.match(exhausted.message, /ліміт уточнень/);
+  const calls = state.apiCalls.length;
+  for (const invalid of [{ ...context, originalPrompt: "x".repeat(2001) }, { ...context, turns: [...context.turns, context.turns[0]] }, { ...context, question: "" }]) {
+    assert.equal((await actions.askInventoryAssistant(request({ clarification: invalid }))).ok, false);
+  }
+  assert.equal(state.apiCalls.length, calls);
+  assert.equal(state.writes.length, 0);
+});
+
+test("the model cannot continue a nonexistent clarification or mix command payloads", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.plan = clarificationPlan("Яка кількість?", true);
+  assert.equal((await actions.askInventoryAssistant(request())).ok, false);
+  state.plan = { message: "Пошук", assumptions: [], command: { kind: "search", search: ingredient, intent: { kind: "deleteStuff", targetName: null } } };
+  assert.equal((await actions.askInventoryAssistant(request())).ok, false);
+  assert.equal(state.reads.length, 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test("ingredient and stuff creation use the same typed command and preview actions", async () => {
+  for (const [kind, entity, data] of [
+    ["createIngredient", "ingredient", { title: "Куркума", description: "", category: "SPICES", isInStock: true, isSaved: true }],
+    ["createStuff", "stuff", { title: "Слоїчки", description: "", category: "JARS", inStock: 30 }],
+  ]) {
+    const prepared = await actions.previewInventoryMutation({ kind, data }, { entity, id: 1 });
+    assert.equal(prepared.ok, true);
+    assert.deepEqual(prepared.data, { kind, after: data });
+    state.allowWrites = true;
+    const saved = await actions.confirmInventoryMutation(prepared.data);
+    assert.equal(saved.ok, true);
+    assert.equal(saved.data.operation, "created");
+    assert.equal(saved.data.entity, entity);
+  }
+  assert.equal(state.records.ingredient.isSaved, true);
+  assert.equal(state.apiCalls.length, 0);
 });

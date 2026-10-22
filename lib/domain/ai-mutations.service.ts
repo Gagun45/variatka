@@ -6,14 +6,11 @@ import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { searchInventory } from "./ai-inventory.service";
 import { ingredientWrites, stuffWrites } from "./inventory-write.service";
+import { assertNever, mutationDefinitions } from "../ai/mutation-definitions";
 
 type PreparedMutation =
   | { kind: "ready"; preview: InventoryMutationPreview }
   | { kind: "choose"; intent: InventoryMutationIntent; results: InventorySearchResult };
-
-export function mutationEntity(intent: InventoryMutationIntent): "ingredient" | "stuff" {
-  return intent.kind.endsWith("Ingredient") ? "ingredient" : "stuff";
-}
 
 const notEmpty = (value: unknown) => value !== null;
 const patchValues = (patch: object) => Object.fromEntries(Object.entries(patch).filter(([, value]) => notEmpty(value)));
@@ -23,8 +20,13 @@ function ensureChanged(before: object, after: object) {
 }
 
 export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false): Promise<PreparedMutation> {
-  if (intent.kind === "createStuff") return { kind: "ready", preview: { kind: "createStuff", after: intent.data } };
-  const entity = mutationEntity(intent);
+  switch (intent.kind) {
+    case "createIngredient": return { kind: "ready", preview: { kind: intent.kind, after: intent.data } };
+    case "createStuff": return { kind: "ready", preview: { kind: intent.kind, after: intent.data } };
+    case "updateIngredient": case "deleteIngredient": case "updateStuff": case "deleteStuff": break;
+    default: return assertNever(intent);
+  }
+  const entity = mutationDefinitions[intent.kind].entity;
   let selection = selected;
   if (intent.targetName !== null && !explicitlyChosen) {
     // Only a unique exact title is resolved automatically. Other matches require selection.
@@ -79,21 +81,30 @@ export async function prepareInventoryMutation(intent: InventoryMutationIntent, 
 }
 
 export async function applyInventoryMutation(preview: InventoryMutationPreview) {
-  const entity = preview.kind.endsWith("Ingredient") ? "ingredient" as const : "stuff" as const;
-  if (preview.kind === "createStuff") {
-    const record = await stuffWrites.create(preview.after);
-    return { operation: "created" as const, entity, id: record.id, title: record.title };
+  const entity = mutationDefinitions[preview.kind].entity;
+  switch (preview.kind) {
+    case "createIngredient": {
+      const record = await ingredientWrites.create(preview.after);
+      return { operation: "created" as const, entity, id: record.id, title: record.title };
+    }
+    case "createStuff": {
+      const record = await stuffWrites.create(preview.after);
+      return { operation: "created" as const, entity, id: record.id, title: record.title };
+    }
+    case "updateIngredient": {
+      const record = await ingredientWrites.update(preview.target.id, preview.after, preview.target.updatedAt);
+      return { operation: "updated" as const, entity, id: record.id, title: record.title };
+    }
+    case "updateStuff": {
+      const record = await stuffWrites.update(preview.target.id, preview.after, preview.target.updatedAt);
+      return { operation: "updated" as const, entity, id: record.id, title: record.title };
+    }
+    case "deleteIngredient":
+      await ingredientWrites.delete(preview.target.id, preview.target.updatedAt);
+      return { operation: "deleted" as const, entity, id: preview.target.id, title: preview.target.title };
+    case "deleteStuff":
+      await stuffWrites.delete(preview.target.id, preview.target.updatedAt);
+      return { operation: "deleted" as const, entity, id: preview.target.id, title: preview.target.title };
+    default: return assertNever(preview);
   }
-  const { id, updatedAt } = preview.target;
-  if (preview.kind === "updateIngredient") {
-    const record = await ingredientWrites.update(id, preview.after, updatedAt);
-    return { operation: "updated" as const, entity, id, title: record.title };
-  }
-  if (preview.kind === "updateStuff") {
-    const record = await stuffWrites.update(id, preview.after, updatedAt);
-    return { operation: "updated" as const, entity, id, title: record.title };
-  }
-  if (preview.kind === "deleteIngredient") await ingredientWrites.delete(id, updatedAt);
-  else await stuffWrites.delete(id, updatedAt);
-  return { operation: "deleted" as const, entity, id, title: preview.target.title };
 }

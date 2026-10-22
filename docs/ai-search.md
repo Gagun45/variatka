@@ -68,7 +68,7 @@ Then:
 
 The previous validated filters are provided to the model, so it can preserve the category and change availability. A new independent request starts a fresh search. A successful new search clears the old record selection; select a result again for record-specific questions.
 
-Messages, the last search and selection live only in this mounted page. Reloading or leaving the page resets them; there is no persistent chat history.
+When the assistant asks for essential missing information, short answers continue the [pending clarification](ai-crud.md#clarification-questions). Messages, the last search, selection and clarification context live only in this mounted page. Reloading or leaving the page resets them; there is no persistent chat history.
 
 ## 6. Load additional results
 
@@ -92,7 +92,7 @@ Loading more uses a database action directly, without another AI call. Searches 
 
 1. `zod/ai-search.schema.ts`: allowed filters, selected-record reference, request/plan contracts and pagination validation.
 2. `lib/ai/structured-output.ts`: shared OpenAI transport, strict output validation, timeout and error handling.
-3. `lib/ai/inventory-assistant.ts`: instructions and planning for search, selected-record details, ingredient drafts and unsupported requests.
+3. `lib/ai/inventory-assistant.ts`: one typed command for search, selected-record details, ingredient/stuff mutation previews, clarification and unsupported requests. `lib/ai/clarification.ts` preserves bounded question/answer context.
 4. `lib/ai/inventory-search.ts`: typed Prisma filter builders, including relations, literal text escaping and availability rules.
 5. `lib/domain/ai-inventory.service.ts`: bounded database reads, range checks and detail projection. No order/customer data is queried.
 6. `lib/actions/ai.actions.ts`: authenticated chat routing, direct search/pagination and selection/detail actions.
@@ -108,6 +108,6 @@ npx tsc --noEmit
 npm run build
 ```
 
-The tests use Node's built-in runner and the installed TypeScript compiler, with mocked database/authentication/API boundaries. They cover query construction, filter validation, auth before reads/API calls, selection refresh, stale records, pagination, structured-output schema compatibility, malformed/refused responses and ingredient-draft regression. They require no real key and never access your database. They do not verify live model interpretation or real database query execution.
+The tests use Node's built-in runner and the installed TypeScript compiler, with mocked database/authentication/API boundaries. They cover query construction, filter validation, auth before reads/API calls, selection refresh, stale records, pagination, structured-output schema compatibility, malformed/refused responses unified creation and clarification regressions. They require no real key and never access your database. They do not verify live model interpretation or real database query execution.
 
 For a browser smoke test, run the prompts above against known records, verify displayed filters/results, select a recipe and ask for its composition, refine a search, load more, and refresh to check that context clears. Also verify a non-admin is redirected and an ingredient creation preview still saves only after confirmation.

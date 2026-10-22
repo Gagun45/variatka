@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { inventoryCategoryLabels } from "@/lib/ai/inventory-labels";
 import type { InventoryMutationPreview } from "@/zod/ai-mutation.schema";
+import { mutationDefinitions } from "@/lib/ai/mutation-definitions";
 
 const labels: Record<string, string> = { title: "Назва", description: "Опис", category: "Категорія", isInStock: "У наявності", isSaved: "Збережений", inStock: "Залишок" };
 function display(key: string, value: unknown) {
@@ -22,23 +23,35 @@ export default function InventoryMutationView({ preview, assumptions, busy, onCh
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const deleting = preview.kind === "deleteIngredient" || preview.kind === "deleteStuff";
-  const creating = preview.kind === "createStuff";
+  const definition = mutationDefinitions[preview.kind];
+  const deleting = definition.action === "delete";
+  const creating = preview.kind === "createIngredient" || preview.kind === "createStuff";
   const before = "before" in preview ? preview.before : null;
   const after = "after" in preview ? preview.after : null;
   const changes = before ? Object.entries(before).filter(([key, value]) => !after || value !== after[key as keyof typeof after]) : [];
 
+  function editCreationField(field: "title" | "description", value: string) {
+    if (preview.kind === "createIngredient") onChange({ ...preview, after: { ...preview.after, [field]: value } });
+    else if (preview.kind === "createStuff") onChange({ ...preview, after: { ...preview.after, [field]: value } });
+  }
+
   return <form onSubmit={(event) => { event.preventDefault(); onConfirm(); }} className={`space-y-4 rounded-xl border p-5 ${deleting ? "border-destructive" : ""}`}>
-    <h2 className="text-lg font-semibold">{deleting ? "Перегляд видалення" : creating ? "Новий матеріал" : "Перегляд змін"}</h2>
-    {"target" in preview && <p className="break-words font-medium">{preview.kind.endsWith("Ingredient") ? "Інгредієнт" : "Матеріал"}: {preview.target.title} · #{preview.target.id}</p>}
+    <h2 className="text-lg font-semibold">{deleting ? "Перегляд видалення" : creating ? definition.entity === "ingredient" ? "Новий інгредієнт" : "Новий матеріал" : "Перегляд змін"}</h2>
+    {"target" in preview && <p className="break-words font-medium">{definition.entity === "ingredient" ? "Інгредієнт" : "Матеріал"}: {preview.target.title} · #{preview.target.id}</p>}
     <p className="text-sm text-muted-foreground">{deleting ? "Цей запис буде видалено без можливості відновлення через помічника. Перевірте назву та підтвердьте видалення." : "Ще нічого не збережено. Перевірте запропоновані значення."}</p>
     {assumptions.length > 0 && <div className="rounded-lg bg-muted p-3 text-sm"><p className="font-medium">Запропоновані значення:</p><ul className="list-disc pl-5">{assumptions.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
     <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
-      {preview.kind === "createStuff" ? <>
-        <label className="block space-y-1"><span>Назва</span><Input required maxLength={200} value={preview.after.title} onChange={(event) => onChange({ ...preview, after: { ...preview.after, title: event.target.value } })} /></label>
-        <label className="block space-y-1"><span>Опис</span><Textarea maxLength={10000} value={preview.after.description ?? ""} onChange={(event) => onChange({ ...preview, after: { ...preview.after, description: event.target.value } })} /></label>
-        <label className="block space-y-1"><span>Категорія</span><select className="block w-full rounded-md border bg-background p-2" value={preview.after.category} onChange={(event) => onChange({ ...preview, after: { ...preview.after, category: event.target.value as "DECOR" | "JARS" } })}><option value="JARS">Слоїчки</option><option value="DECOR">Пакування та декор</option></select></label>
-        <label className="block space-y-1"><span>Залишок</span><Input type="number" min={0} max={2147483647} step={1} required value={preview.after.inStock} onChange={(event) => onChange({ ...preview, after: { ...preview.after, inStock: event.target.valueAsNumber } })} /></label>
+      {creating ? <>
+        <label className="block space-y-1"><span>Назва</span><Input required maxLength={200} value={preview.after.title} onChange={(event) => editCreationField("title", event.target.value)} /></label>
+        <label className="block space-y-1"><span>Опис</span><Textarea maxLength={10000} value={preview.after.description ?? ""} onChange={(event) => editCreationField("description", event.target.value)} /></label>
+        {preview.kind === "createIngredient" ? <>
+          <label className="block space-y-1"><span>Категорія</span><select className="block w-full rounded-md border bg-background p-2" value={preview.after.category} onChange={(event) => onChange({ ...preview, after: { ...preview.after, category: event.target.value as "SPICES" | "OTHER" } })}><option value="SPICES">Спеції</option><option value="OTHER">Інше</option></select></label>
+          <label className="flex items-center gap-2"><input type="checkbox" checked={preview.after.isInStock} onChange={(event) => onChange({ ...preview, after: { ...preview.after, isInStock: event.target.checked } })} />У наявності</label>
+          <label className="flex items-center gap-2"><input type="checkbox" checked={preview.after.isSaved} onChange={(event) => onChange({ ...preview, after: { ...preview.after, isSaved: event.target.checked } })} />Збережений</label>
+        </> : <>
+          <label className="block space-y-1"><span>Категорія</span><select className="block w-full rounded-md border bg-background p-2" value={preview.after.category} onChange={(event) => onChange({ ...preview, after: { ...preview.after, category: event.target.value as "DECOR" | "JARS" } })}><option value="JARS">Слоїчки</option><option value="DECOR">Пакування та декор</option></select></label>
+          <label className="block space-y-1"><span>Залишок</span><Input type="number" min={0} max={2147483647} step={1} required value={Number.isNaN(preview.after.inStock) ? "" : preview.after.inStock} onChange={(event) => onChange({ ...preview, after: { ...preview.after, inStock: event.target.valueAsNumber } })} /></label>
+        </>}
       </> : <>
         <div className="overflow-x-auto"><table className="w-full text-left text-sm">
           <thead><tr className="border-b"><th className="p-2">Поле</th><th className="p-2">Було</th><th className="p-2">{deleting ? "Після видалення" : "Буде"}</th></tr></thead>

@@ -1,5 +1,4 @@
-import type { IngredientDraft } from "@/zod/ai.schema";
-import type { InventorySearch, RecordSelection } from "@/zod/ai-search.schema";
+import type { Clarification, InventorySearch, RecordSelection } from "@/zod/ai-search.schema";
 import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 
 export type InventoryResult = RecordSelection & {
@@ -22,7 +21,7 @@ export type InventoryRecord = InventoryResult & {
 export type AssistantReply =
   | { operation: "search"; message: string; results: InventorySearchResult }
   | { operation: "viewSelected"; message: string; record: InventoryRecord }
-  | { operation: "createIngredient"; message: string; draft: IngredientDraft }
+  | { operation: "clarify"; message: string; clarification: Clarification }
   | { operation: "mutation"; message: string; assumptions: string[]; preview: InventoryMutationPreview }
   | { operation: "chooseMutationTarget"; message: string; assumptions: string[]; intent: InventoryMutationIntent; results: InventorySearchResult }
   | { operation: "unsupported"; message: string };

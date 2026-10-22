@@ -1,7 +1,5 @@
 "use server";
 
-import { aiPromptSchema } from "@/zod/ai.schema";
-import { generateIngredientDraft } from "../ai/ingredient-draft";
 import { AppError } from "../error";
 import { safeAction } from "./action.wrapper";
 import { requireAdmin } from "./user.actions";
@@ -17,17 +15,10 @@ import {
 import { readInventoryRecord, searchInventory } from "../domain/ai-inventory.service";
 import { planInventoryRequest } from "../ai/inventory-assistant";
 import type { AssistantReply } from "../ai/inventory.types";
+import { prepareClarification, validateClarificationSelection } from "../ai/clarification";
+import { assertNever } from "../ai/mutation-definitions";
 import { inventoryMutationIntentSchema, inventoryMutationPreviewSchema, type InventoryMutationIntent, type InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import { applyInventoryMutation, prepareInventoryMutation } from "../domain/ai-mutations.service";
-
-export async function proposeIngredient(prompt: string) {
-  return safeAction("proposeIngredient", async () => {
-    await requireAdmin();
-    const parsed = aiPromptSchema.safeParse(prompt);
-    if (!parsed.success) throw new AppError("Введіть запит довжиною від 1 до 2000 символів.");
-    return generateIngredientDraft(parsed.data);
-  });
-}
 
 export async function searchInventoryRecords(search: InventorySearch, page = 0) {
   return safeAction("searchInventoryRecords", async () => {
@@ -53,29 +44,31 @@ export async function askInventoryAssistant(request: AssistantRequest) {
     await requireAdmin();
     const parsed = assistantRequestSchema.safeParse(request);
     if (!parsed.success) throw new AppError("Некоректний запит. Максимум — 2000 символів.");
+    validateClarificationSelection(parsed.data);
     const selected = parsed.data.selected ? await readInventoryRecord(parsed.data.selected) : null;
     const plan = await planInventoryRequest(parsed.data, selected);
-    if (plan.operation === "search" && plan.search) {
-      return { operation: "search", message: "Результати пошуку за вашим запитом:", results: await searchInventory(plan.search) };
+    const command = plan.command;
+    switch (command.kind) {
+      case "search":
+        return { operation: "search", message: "Результати пошуку за вашим запитом:", results: await searchInventory(command.search) };
+      case "viewSelected":
+        if (!selected) throw new AppError("Спочатку знайдіть та оберіть запис.");
+        return { operation: "viewSelected", message: `Актуальні дані: ${selected.title}`, record: selected };
+      case "mutation": {
+        const prepared = await prepareInventoryMutation(command.intent, parsed.data.selected);
+        if (prepared.kind === "choose") return {
+          operation: "chooseMutationTarget", message: "Оберіть запис для цієї зміни. Після вибору з’явиться перегляд для підтвердження.",
+          assumptions: plan.assumptions, intent: prepared.intent, results: prepared.results,
+        };
+        return { operation: "mutation", message: "Перевірте запропоновану операцію. Ще нічого не збережено.", assumptions: plan.assumptions, preview: prepared.preview };
+      }
+      case "clarify":
+        return { operation: "clarify", message: plan.message, clarification: prepareClarification(parsed.data, plan.message, command.continuesPrevious) };
+      case "unsupported":
+        return { operation: "unsupported", message: plan.message };
+      default:
+        return assertNever(command);
     }
-    if (plan.operation === "viewSelected") {
-      if (!selected) throw new AppError("Спочатку знайдіть та оберіть запис.");
-      return { operation: "viewSelected", message: `Актуальні дані: ${selected.title}`, record: selected };
-    }
-    if (plan.operation === "createIngredient" && plan.ingredient) {
-      return { operation: "createIngredient", message: plan.message, draft: {
-        operation: "createIngredient", message: plan.message, assumptions: plan.assumptions, ingredient: plan.ingredient,
-      } };
-    }
-    if (plan.operation === "mutation" && plan.mutation) {
-      const prepared = await prepareInventoryMutation(plan.mutation, parsed.data.selected);
-      if (prepared.kind === "choose") return {
-        operation: "chooseMutationTarget", message: "Оберіть запис для цієї зміни. Після вибору з’явиться перегляд для підтвердження.",
-        assumptions: plan.assumptions, intent: prepared.intent, results: prepared.results,
-      };
-      return { operation: "mutation", message: "Перевірте запропоновану операцію. Ще нічого не збережено.", assumptions: plan.assumptions, preview: prepared.preview };
-    }
-    return { operation: "unsupported", message: plan.message };
   });
 }
 

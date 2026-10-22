@@ -38,7 +38,7 @@ Why: hiding the page alone does not protect server operations.
 Опис: мелений чорний перець.
 ```
 
-The page shows a proposal with title, description, category, and stock status. Adjust fields if needed and click **Підтвердити створення**. A success message links to the saved ingredient. The ingredient query cache is invalidated so lists refresh.
+The page shows a proposal with title, description, category, stock status, and saved status. Adjust fields if needed and click **Підтвердити створення**. A success message links to the saved ingredient. The ingredient query cache is invalidated so lists refresh.
 
 Why: AI interprets the request; your existing application code performs the write only after confirmation. The model never receives database access.
 
@@ -48,9 +48,9 @@ Why: AI interprets the request; your existing application code performs the writ
 Додай інгредієнт куркума.
 ```
 
-The assistant is instructed to propose `SPICES`, an empty description, and `isInStock=false`, and explain every inferred/defaulted field in Ukrainian. Other ingredients use `OTHER`. Review these suggestions: schema validation enforces field types, but the model can still misunderstand meaning.
+The assistant is instructed to propose `SPICES`, an empty description, and `isInStock=false` / `isSaved=false`, and explain every inferred/defaulted field in Ukrainian. Other ingredients use `OTHER`. Review these suggestions: schema validation enforces field types, but the model can still misunderstand meaning.
 
-For a revised creation proposal, send the full request again or edit the preview directly. Search follow-ups can use the last search and explicitly selected record. Visible messages and context are local to this page and disappear on reload. A new prompt replaces the pending creation preview.
+For a revised creation proposal, send the full request again or edit the preview directly. Search follow-ups can use the last search and explicitly selected record. When the assistant asks a clarification question, short replies continue that pending request; see [clarification examples](ai-crud.md#clarification-questions). Visible messages and context are local to this page and disappear on reload. A new prompt replaces the pending creation preview.
 
 Why: transient context avoids conversation persistence and keeps this version easy to move into a floating panel later.
 
@@ -59,7 +59,7 @@ Why: transient context avoids conversation persistence and keeps this version ea
 - Generate a preview, then cancel or reload. No ingredient should be created.
 - Confirm one preview. It should create one ingredient and remove the confirmation form.
 - Try the exact same title again. The existing duplicate-title check should reject it; the preview remains editable. Title uniqueness follows the existing database behavior (case-sensitive).
-- Try `Зміни ціну яловичини на 200 грн`. The assistant should explain that only ingredient creation is available.
+- Try `Зміни ціну яловичини на 200 грн`. The assistant should explain that price fields are unavailable.
 - Try asking for several ingredients. The assistant should ask for one at a time.
 - Try an unclear request. The assistant should request clarification rather than invent a name.
 - Without the key, the page should report missing configuration. Provider failures, quota errors, malformed responses, refusals, and incomplete responses cannot create ingredients.
@@ -69,11 +69,11 @@ Why: these checks cover the boundary between a proposal and an actual database w
 
 ## 7. Understand the code
 
-1. `zod/ai.schema.ts` defines prompt limits and the draft contract. It reuses the ingredient fields and restricts the operation to `createIngredient` or `unsupported`.
-2. `lib/ai/structured-output.ts` sends requests to OpenAI using built-in `fetch`; `ingredient-draft.ts` retains the original draft-only entry point. Zod generates the strict JSON Schema, and validates the result again locally. The request has a 30-second timeout, an output limit, and `store: false` (this disables response storage, not all provider retention policies). The new search planner also sends selected record identity and previous search filters; there is no inventory dump.
-3. `lib/actions/ai.actions.ts` authenticates the admin, validates the request, and routes searches, selected-record reads and proposals. The separate confirmation action performs approved ingredient/stuff mutations through the shared write service.
-4. `app/(admin)/admin/ai/_components/AiAssistant.tsx` displays messages and an editable preview. Confirmation calls the existing `createIngredient` action directly, so it needs no second AI request.
-5. `lib/actions/ingredient.actions.ts` checks admin access and delegates creation/edit/deletion to the shared inventory write service, which validates input, normalizes new titles and handles database uniqueness. This server validation also covers the existing manual creation flow.
+1. `zod/ai.schema.ts` defines prompt limits. `zod/ai-search.schema.ts` defines a typed command and bounded clarification context; `zod/ai-mutation.schema.ts` defines creation/update/delete intents and previews for both ingredients and stuff.
+2. `lib/ai/structured-output.ts` sends requests to OpenAI using built-in `fetch`. Zod generates the strict JSON Schema and validates the response locally. The request has a 30-second timeout, an output limit, and `store: false` (this disables response storage, not all provider retention policies). Only selected-record identity, previous search filters and bounded clarification context accompany the prompt; there is no inventory dump or full chat history.
+3. `lib/actions/ai.actions.ts` authenticates the admin and routes the validated command to a search, detail read, clarification or mutation preview. Ingredient creation uses the same path as stuff creation; the old ingredient-only planner has been removed.
+4. `InventoryMutationView.tsx` displays the common confirmation UI. Creation fields remain editable. Every write, including ingredient creation, calls `confirmInventoryMutation` and shares the same success, cache invalidation and search-refresh handling.
+5. `lib/domain/inventory-write.service.ts` validates and performs confirmed writes. Manual ingredient/stuff actions reuse this service. `lib/ai/mutation-definitions.ts` explicitly maps operation kinds to entities/actions; exhaustive command switches prevent silently routing future operations to the wrong entity.
 
 No autonomous agent loop, streaming, tool SDK, or separate REST API is required for this initial operation. These are drafts of operations, not provider function calls.
 
@@ -81,14 +81,14 @@ No autonomous agent loop, streaming, tool SDK, or separate REST API is required 
 
 For each new operation:
 
-1. Define its allowed input and draft schema. As operations diverge, use a discriminated union keyed by `operation`.
+1. Define its allowed input and draft schema. As operations diverge, extend the typed `command` / mutation `kind` unions and explicit operation definitions.
 2. Update the AI instructions and output contract to describe precisely what is supported.
-3. Add the relevant preview UI and an explicit confirmation handler that calls an admin-only server action with server-side validation.
+3. Extend the common preview UI and confirmation dispatcher that calls an admin-only server action with server-side validation.
 4. For updates/deletes, resolve a real database ID on the server and preview the target and proposed changes. Do not trust an AI-invented ID.
 5. Add checks for unsupported requests, wrong targets, validation failures, authorization, and duplicate submissions.
 
 The price example requires a database price field and defined units first: this application's Ingredient model currently has neither.
 
-For personal use this version has no distributed rate limiter or persistent chat history. The UI allows one request at a time per mounted page, but this is not a server quota. Add server-side rate limits before expanding access to many admins. Database title uniqueness protects against identical duplicate ingredients, including concurrent writes; simultaneous duplicates may use the generic application error.
+For personal use this version has no distributed rate limiter or persistent chat history. The UI allows one request at a time per mounted page, but this is not a server quota. Add server-side rate limits before expanding access to many admins. Database title uniqueness protects against identical duplicate ingredients, including concurrent writes; duplicate-title database errors return a clear application error.
 
 Official references: [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [API keys](https://platform.openai.com/api-keys).

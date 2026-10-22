@@ -4,18 +4,15 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { askInventoryAssistant, confirmInventoryMutation, getInventoryRecord, previewInventoryMutation, searchInventoryRecords } from "@/lib/actions/ai.actions";
-import { createIngredient } from "@/lib/actions/ingredient.actions";
 import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
 import { stuffKeys } from "@/features/stuff/stuff.keys";
 import { recipeKeys } from "@/features/recipe/recipe.keys";
 import { frontendUrls } from "@/lib/urls";
-import type { IngredientDraft } from "@/zod/ai.schema";
-import type { IIngredientFormValues } from "@/zod/ingredient.schema";
 import type { InventoryRecord, InventoryResult, InventorySearchResult } from "@/lib/ai/inventory.types";
-import type { InventorySearch } from "@/zod/ai-search.schema";
+import { mutationDefinitions } from "@/lib/ai/mutation-definitions";
+import type { Clarification, InventorySearch } from "@/zod/ai-search.schema";
 import { InventoryRecordView, InventorySearchView } from "./InventorySearchView";
 import InventoryMutationView from "./InventoryMutationView";
 import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
@@ -25,12 +22,11 @@ type Message = { role: "user" | "assistant"; text: string };
 export default function AiAssistant() {
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [draft, setDraft] = useState<IngredientDraft | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [created, setCreated] = useState<{ id: number; title: string } | null>(null);
   const [results, setResults] = useState<InventorySearchResult | null>(null);
   const [selected, setSelected] = useState<InventoryRecord | null>(null);
+  const [clarification, setClarification] = useState<Clarification | null>(null);
   const [previousSearch, setPreviousSearch] = useState<InventorySearch | null>(null);
   const [mutation, setMutation] = useState<InventoryMutationPreview | null>(null);
   const [pendingIntent, setPendingIntent] = useState<InventoryMutationIntent | null>(null);
@@ -39,19 +35,12 @@ export default function AiAssistant() {
   const pending = useRef(false);
   const queryClient = useQueryClient();
 
-  function editIngredient(patch: Partial<IIngredientFormValues>) {
-    setDraft((old) => old?.ingredient
-      ? { ...old, ingredient: { ...old.ingredient, ...patch } } : old);
-  }
-
   async function propose(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending.current || !prompt.trim()) return;
     pending.current = true;
     setBusy(true);
     setError("");
-    setDraft(null);
-    setCreated(null);
     setMutation(null);
     setPendingIntent(null);
     setNotice(null);
@@ -64,22 +53,22 @@ export default function AiAssistant() {
         prompt: request,
         selected: selected ? { entity: selected.entity, id: selected.id } : null,
         previousSearch,
+        clarification,
       });
       if (!result.ok) { setError(result.message); return; }
       setMessages((old) => [...old, { role: "assistant", text: result.data.message }]);
       const reply = result.data;
+      setClarification(reply.operation === "clarify" ? reply.clarification : null);
       if (reply.operation === "search") {
         setResults(reply.results);
         setPreviousSearch(reply.results.search);
         setSelected(null);
       } else if (reply.operation === "viewSelected") {
         setSelected(reply.record);
-      } else if (reply.operation === "createIngredient") {
-        setDraft(reply.draft);
       } else if (reply.operation === "mutation") {
         setMutation(reply.preview);
         setAssumptions(reply.assumptions);
-        const entity = reply.preview.kind.endsWith("Ingredient") ? "ingredient" : "stuff";
+        const entity = mutationDefinitions[reply.preview.kind].entity;
         if ("target" in reply.preview && (selected?.entity !== entity || selected.id !== reply.preview.target.id)) setSelected(null);
       } else if (reply.operation === "chooseMutationTarget") {
         setResults(reply.results);
@@ -102,7 +91,7 @@ export default function AiAssistant() {
     setBusy(true);
     setError("");
     setMutation(null);
-    setDraft(null);
+    setClarification(null);
     try {
       const result = await getInventoryRecord({ entity: record.entity, id: record.id });
       if (!result.ok) { setError(result.message); setSelected(null); return; }
@@ -140,26 +129,6 @@ export default function AiAssistant() {
     }
   }
 
-  async function confirm(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (pending.current || draft?.operation !== "createIngredient" || !draft.ingredient) return;
-    pending.current = true;
-    setBusy(true);
-    setError("");
-    try {
-      const result = await createIngredient(draft.ingredient);
-      if (!result.ok) { setError(result.message); return; }
-      setCreated({ id: result.data.id, title: result.data.title });
-      setDraft(null);
-      void queryClient.invalidateQueries({ queryKey: ingredientKeys.ingredients });
-    } catch {
-      setError("Не вдалося підтвердити створення. Перевірте список інгредієнтів перед повторною спробою.");
-    } finally {
-      pending.current = false;
-      setBusy(false);
-    }
-  }
-
   async function confirmMutation() {
     if (pending.current || !mutation) return;
     pending.current = true;
@@ -172,7 +141,6 @@ export default function AiAssistant() {
       setMutation(null);
       setPendingIntent(null);
       setNotice(saved);
-      setCreated(null);
       void queryClient.invalidateQueries({ queryKey: saved.entity === "ingredient" ? ingredientKeys.ingredients : stuffKeys.stuff });
       if (saved.entity === "ingredient") {
         void queryClient.invalidateQueries({ queryKey: recipeKeys.recipes });
@@ -225,48 +193,23 @@ export default function AiAssistant() {
 
       {results && <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} />}
       {pendingIntent && <div className="space-y-2 rounded-lg bg-muted p-3"><p role="status">Оберіть один запис вище для підготовки зміни. Ще нічого не збережено.</p><Button type="button" variant="outline" disabled={busy} onClick={() => { setPendingIntent(null); setError(""); }}>Скасувати операцію</Button></div>}
-      {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); setMutation(null); setDraft(null); setPendingIntent(null); setError(""); }} />}
+      {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); setMutation(null); setPendingIntent(null); setClarification(null); setError(""); }} />}
       {mutation && <InventoryMutationView preview={mutation} assumptions={assumptions} busy={busy} onChange={setMutation} onConfirm={confirmMutation} onCancel={() => { setMutation(null); setError(""); }} />}
 
-      {draft?.operation === "createIngredient" && draft.ingredient && (
-        <form onSubmit={confirm} className="space-y-4 rounded-xl border p-5">
-          <h2 className="text-lg font-semibold">Попередній перегляд</h2>
-          <p className="text-sm text-muted-foreground">Ще нічого не збережено. Можна змінити будь-яке поле нижче.</p>
-          {draft.assumptions.length > 0 && <div className="rounded-lg bg-muted p-3 text-sm">
-            <p className="font-medium">Запропоновані значення:</p>
-            <ul className="list-disc pl-5">{draft.assumptions.map((item, index) => <li key={index}>{item}</li>)}</ul>
-          </div>}
-          <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
-            <label className="block space-y-1"><span>Назва</span>
-              <Input required maxLength={200} value={draft.ingredient.title} onChange={(e) => editIngredient({ title: e.target.value })} />
-            </label>
-            <label className="block space-y-1"><span>Опис</span>
-              <Textarea maxLength={2000} value={draft.ingredient.description} onChange={(e) => editIngredient({ description: e.target.value })} />
-            </label>
-            <label className="block space-y-1"><span>Категорія</span>
-              <select className="block w-full rounded-md border bg-background p-2" value={draft.ingredient.category} onChange={(e) => editIngredient({ category: e.target.value as IIngredientFormValues["category"] })}>
-                <option value="SPICES">Спеції</option><option value="OTHER">Інше</option>
-              </select>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={draft.ingredient.isInStock} onChange={(e) => editIngredient({ isInStock: e.target.checked })} />У наявності
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={!draft.ingredient.title.trim()}>Підтвердити створення</Button>
-              <Button type="button" variant="outline" onClick={() => { setDraft(null); setError(""); }}>Скасувати</Button>
-            </div>
-          </fieldset>
-        </form>
-      )}
-
-      {created && <p role="status" className="rounded-xl border p-4">Створено: <Link className="underline" href={frontendUrls.ingredients.view(created.id)}>{created.title}</Link></p>}
       {notice && <p role="status" className="rounded-xl border p-4">{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</p>}
       {error && <p role="alert" className="text-destructive">{error}</p>}
       {busy && <p role="status" className="text-muted-foreground">Обробка…</p>}
 
+      {clarification && <section aria-label="Уточнення запиту" className="space-y-2 rounded-lg border p-4">
+        <p className="font-medium">{clarification.question}</p>
+        <p className="text-sm text-muted-foreground">Відповідь нижче продовжить попередній запит. Ще нічого не збережено.</p>
+        <details className="text-sm"><summary className="cursor-pointer">Запит, який уточнюємо</summary><p className="mt-2 whitespace-pre-wrap break-words">{clarification.originalPrompt}</p></details>
+        <Button type="button" variant="outline" disabled={busy} onClick={() => { setClarification(null); setError(""); }}>Скасувати уточнення</Button>
+      </section>}
+
       <form onSubmit={propose} className="space-y-3">
-        <label htmlFor="ai-prompt" className="font-medium">Ваш запит</label>
-        <Textarea id="ai-prompt" required maxLength={2000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Покажи приховані непідтверджені соуси" />
+        <label htmlFor="ai-prompt" className="font-medium">{clarification ? "Ваша відповідь" : "Ваш запит"}</label>
+        <Textarea id="ai-prompt" required maxLength={2000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={clarification ? "Напишіть відповідь на уточнення" : "Покажи приховані непідтверджені соуси"} />
         <Button type="submit" disabled={busy || !prompt.trim()}>Надіслати</Button>
       </form>
     </main>

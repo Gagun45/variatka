@@ -31,6 +31,7 @@ export const stuffPatchSchema = z.strictObject({
 
 const targetName = title.nullable();
 export const inventoryMutationIntentSchema = z.union([
+  z.strictObject({ kind: z.literal("createIngredient"), data: ingredientWriteSchema.extend({ title }) }),
   z.strictObject({ kind: z.literal("createStuff"), data: stuffWriteSchema.extend({ title }) }),
   z.strictObject({ kind: z.literal("updateIngredient"), targetName, patch: ingredientPatchSchema }),
   z.strictObject({ kind: z.literal("updateStuff"), targetName, patch: stuffPatchSchema }),
@@ -40,6 +41,7 @@ export const inventoryMutationIntentSchema = z.union([
 
 const target = z.strictObject({ id: inventoryIdSchema, title: storedTitle, updatedAt: inventoryVersionSchema });
 export const inventoryMutationPreviewSchema = z.union([
+  z.strictObject({ kind: z.literal("createIngredient"), after: ingredientWriteSchema }),
   z.strictObject({ kind: z.literal("createStuff"), after: stuffWriteSchema }),
   z.strictObject({ kind: z.literal("updateIngredient"), target, before: ingredientWriteSchema, after: ingredientWriteSchema }),
   z.strictObject({ kind: z.literal("updateStuff"), target, before: stuffWriteSchema, after: stuffWriteSchema }),

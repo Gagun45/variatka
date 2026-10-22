@@ -6,7 +6,7 @@ No new packages, environment variables or database migrations are required. Use 
 
 ## 1. Create a record
 
-Existing ingredient creation still works:
+Ingredient and stuff creation share the same editable preview and confirmation flow:
 
 ```text
 Створи інгредієнт куркума, категорія спеції, є в наявності.
@@ -18,7 +18,7 @@ For stuff:
 Створи новий матеріал «Слоїчки 250 мл», категорія слоїчки, залишок 30, опис: скляні слоїчки.
 ```
 
-Check the editable creation form, then click **Підтвердити створення**. Missing stuff description defaults to empty, stock to 0, and category is inferred as JARS or DECOR where clear. Proposed defaults are explained. Existing ingredient defaults are unchanged. Titles must be nonblank and unique within their entity type; the database's existing uniqueness remains case-sensitive.
+Check the editable creation form, then click **Підтвердити створення**. Missing stuff description defaults to empty, stock to 0, and category is inferred as JARS or DECOR where clear. Proposed defaults are explained. Ingredient creation defaults saved status to false unless explicitly requested; the preview lets you edit it. Titles must be nonblank and unique within their entity type; the database's existing uniqueness remains case-sensitive.
 
 Why: AI proposes values; the application validates and saves them only after confirmation. Confirmation itself does not call OpenAI.
 
@@ -83,6 +83,32 @@ The server computes the resulting total from the current database value. A write
 
 Why: calculating the total on the server prevents the model from guessing current stock. The preview shows the exact final quantity you are approving.
 
+## Clarification questions
+
+When a supported request is missing essential information, the assistant asks a question and shows an **Уточнення запиту** panel. Your next message answers that question in the context of the original request.
+
+For example, select a stuff record, then send:
+
+```text
+Встанови інший залишок обраного матеріалу.
+```
+
+If the assistant asks `Який залишок встановити?`, reply:
+
+```text
+30
+```
+
+The resulting preview should show the selected record's current stock → 30. It still needs **Підтвердити зміни**; even an answer such as `так` cannot save anything automatically.
+
+Another example: `Створи інгредієнт` → assistant asks for the name → `Куркума` → creation preview with proposed defaults. If more questions are needed, the original request and previous question/answer pairs are preserved, without a model-generated summary.
+
+Click **Скасувати уточнення** to discard the pending request. Selecting/clearing a record cancels it too, so a short answer cannot accidentally apply to a different selection. Completion, unsupported responses and new searches clear it. A clearly independent full request can replace it; use the cancel button when switching tasks to make that explicit.
+
+Clarification retains the original prompt, the pending question, at most four prior question/answer pairs, and the original selection/search context. It is validated on the server and exists only in this mounted page. If the limit is reached, cancel and send a complete request. Network/API failures keep the pending context so you can retry. This is targeted clarification memory, not general persistent conversation history.
+
+Why: a reply such as `30` needs the original operation and target to have a useful meaning. Keeping this context bounded avoids resending the entire visible conversation.
+
 ## 5. Confirm or cancel
 
 Click **Підтвердити зміни** to save an update, or **Скасувати** to discard it. A pending target-choice operation also has a cancel button. Selecting another record or sending a new prompt clears the previous preview.
@@ -113,12 +139,12 @@ Why: deletion must preserve existing recipe relationships and cannot remove an i
 
 ## Implementation map
 
-1. `zod/ai-mutation.schema.ts` defines allowed intents/patches, typed previews and version/ID validation. Unknown fields and unsupported entity operations are rejected.
-2. `lib/ai/inventory-assistant.ts` plans the new operations with null for unspecified patch fields. It does not execute writes.
-3. `lib/domain/ai-mutations.service.ts` resolves targets, reads current values, merges patches, calculates stock and prepares previews. It dispatches confirmed previews to the shared write service.
+1. `zod/ai-mutation.schema.ts` defines allowed intents/patches (including both creation commands), typed previews and version/ID validation. Unknown fields and unsupported entity operations are rejected.
+2. `lib/ai/inventory-assistant.ts` produces one typed search/view/mutation/clarify/unsupported command. `lib/ai/clarification.ts` builds bounded clarification state from the actual original request and answers; the model does not invent that state. No planning or clarification call executes writes.
+3. `lib/domain/ai-mutations.service.ts` resolves targets, reads current values, merges patches, calculates stock and prepares previews. `lib/ai/mutation-definitions.ts` supplies explicit entity/action mappings, while exhaustive switches dispatch each allowed kind. It dispatches confirmed previews to the shared write service.
 4. `lib/domain/inventory-write.service.ts` implements validated ingredient/stuff creation, editing and deletion, uniqueness errors, atomic version checks and deletion restrictions. Existing manual actions reuse this service; stock inputs must now be whole numbers in manual forms as well.
 5. `lib/actions/ai.actions.ts` independently checks admin access and validates preparation/confirmation input on the server. Browser payloads are never trusted based on TypeScript types alone.
-6. `InventoryMutationView.tsx` shows editable stuff creation, before/after changes and explicit deletion confirmation. `AiAssistant.tsx` manages pending target selection, previews and refreshes.
+6. `InventoryMutationView.tsx` shows editable ingredient/stuff creation, before/after changes and explicit deletion confirmation. `AiAssistant.tsx` manages pending target selection, previews, clarification context and the common post-confirmation refresh path.
 
 ## Test before deploying
 
@@ -128,7 +154,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-Automated checks use mocked API/auth/database/storage boundaries; they do not modify live data or test live model interpretation. They cover search regressions, CRUD previews/confirmation, field preservation, stock set/adjust rules, stale/repeated writes, ambiguous targets, protected deletes, cleanup failures and manual action validation.
+Automated checks use mocked API/auth/database/storage boundaries; they do not modify live data or test live model interpretation. They cover search regressions, CRUD previews/confirmation, field preservation, stock set/adjust rules, stale/repeated writes, ambiguous targets, protected deletes, cleanup failures manual action validation, unified creation dispatch, bounded clarification chains and selection-context mismatches.
 
 In the browser, use clearly named test records:
 
@@ -138,6 +164,7 @@ In the browser, use clearly named test records:
 4. Cancel a proposal and verify nothing changes.
 5. Generate a stock preview, change the record manually in another tab, then confirm the stale preview: it must fail.
 6. Try deleting an ingredient used in a recipe: it must fail. Delete the unreferenced test records through explicit confirmation.
-7. Verify search, record details and existing manual ingredient/stuff forms still work.
+7. Ask for a stock change without a quantity, answer the clarification with `30`, and verify a preview appears without a write. Cancel clarification and start an independent search; verify the old request is not reused.
+8. Verify search, record details and existing manual ingredient/stuff forms still work. Create an ingredient while search results are visible and verify that confirmation refreshes the results using the same behavior as stuff creation.
 
 Use the same smoke test after deployment with your existing production API environment variables. No recipe or order AI writes are included in this step.
