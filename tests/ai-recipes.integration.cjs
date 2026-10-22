@@ -330,9 +330,157 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal(after.updatedAt.toISOString(), recipe.updatedAt.toISOString());
     });
 
+    await t.test("multiple batch choices preserve every operation and resume without another model call", async () => {
+      const jarA = await client.stuff.create({ data: stuffData("Choice jar 250", { inStock: 10 }) });
+      const jarB = await client.stuff.create({ data: stuffData("Choice jar 500", { inStock: 20 }) });
+      const garlicA = await client.ingredient.create({ data: ingredientData("Choice garlic fresh", { isInStock: true }) });
+      const garlicB = await client.ingredient.create({ data: ingredientData("Choice garlic dried", { isInStock: true }) });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "batch", intent: { kind: "list", operations: [
+        { kind: "updateStuff", targetName: "Choice jar", patch: stuffPatch({ stock: { mode: "adjust", value: 5 } }) },
+        { kind: "updateIngredient", targetName: "Choice garlic", patch: ingredientPatch({ isInStock: false }) },
+        { kind: "createStuff", data: stuffData("Choice new decor", { category: "DECOR", inStock: 7 }) },
+      ] } } };
+      const initial = await actions.askInventoryAssistant({ prompt: "Зміни банки й часник та створи декор", selected: null, previousSearch: null, clarification: null });
+      assert.equal(initial.ok, true);
+      assert.equal(initial.data.operation, "chooseRecord");
+      const providerCalls = apiCalls;
+      assert.equal(initial.data.question.candidates.length, 2);
+      assert.equal(await client.stuff.count({ where: { title: "Choice new decor" } }), 0);
+      const first = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "stuff", id: jarB.id } }, page: null });
+      assert.equal(first.ok, true);
+      assert.equal(first.data.operation, "chooseRecord");
+      assert.equal(first.data.question.name, "Choice garlic");
+      await client.stuff.create({ data: stuffData("Choice jar later", { inStock: 99 }) });
+      assert.equal((await client.stuff.findUnique({ where: { id: jarB.id } })).inStock, 20);
+      const final = await actions.resumeInventoryWrite({ pending: first.data.pending, choice: { key: first.data.question.key, selection: { entity: "ingredient", id: garlicA.id } }, page: null });
+      assert.equal(final.ok, true);
+      assert.equal(final.data.operation, "batch");
+      assert.equal(final.data.preview.items.length, 3);
+      assert.equal(apiCalls, providerCalls);
+      assert.equal(final.data.preview.items.find((item) => item.kind === "updateStuff").after.inStock, 25);
+      assert.equal(await client.stuff.count({ where: { title: "Choice new decor" } }), 0);
+      const confirmed = await actions.confirmInventoryBatch(final.data.preview);
+      assert.equal(confirmed.ok, true);
+      assert.equal((await client.stuff.findUnique({ where: { id: jarB.id } })).inStock, 25);
+      assert.equal((await client.stuff.findUnique({ where: { id: jarA.id } })).inStock, 10);
+      assert.equal((await client.ingredient.findUnique({ where: { id: garlicA.id } })).isInStock, false);
+      assert.equal((await client.ingredient.findUnique({ where: { id: garlicB.id } })).isInStock, true);
+    });
+
+    await t.test("recipe composition choices stay scoped to the recipe and preserve the batch", async (subtest) => {
+      subtest.mock.method(console, "error", () => {});
+      const draft = await prepareInventoryBatch({ kind: "list", operations: [recipeIntent("Scoped recipe", ["Scoped garlic fresh", "Scoped garlic dried", "Scoped salt"])] }, null);
+      await applyInventoryBatch(draft);
+      const fresh = await client.ingredient.findUnique({ where: { title: "Scoped garlic fresh" } });
+      const outside = await client.ingredient.create({ data: ingredientData("Scoped garlic outside") });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "batch", intent: { kind: "list", operations: [
+        { kind: "createStuff", data: stuffData("Scoped extra jar", { inStock: 9 }) },
+        { kind: "updateRecipe", targetName: "Scoped recipe", patch: recipePatch({ description: "Keep this description" }), composition: { mode: "patch", items: [{ action: "setAmount", title: "Scoped garlic", amount: "8 г", category: null }] } },
+      ] } } };
+      const initial = await actions.askInventoryAssistant({ prompt: "Зміни часник у рецепті та створи банку", selected: null, previousSearch: null, clarification: null });
+      assert.equal(initial.ok, true);
+      assert.equal(initial.data.operation, "chooseRecord");
+      assert.equal(initial.data.question.candidates.length, 2);
+      assert.equal(initial.data.question.candidates.some((item) => item.id === outside.id), false);
+      const invalid = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "ingredient", id: outside.id } }, page: null });
+      assert.equal(invalid.ok, false);
+      assert.equal(await client.stuff.count({ where: { title: "Scoped extra jar" } }), 0);
+      const final = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "ingredient", id: fresh.id } }, page: null });
+      assert.equal(final.ok, true);
+      assert.equal(final.data.preview.items.length, 2);
+      const recipe = final.data.preview.items.find((item) => item.kind === "updateRecipe");
+      assert.equal(recipe.after.fields.description, "Keep this description");
+      assert.equal(recipe.after.ingredients.find((item) => item.id === fresh.id).amount, "8 г");
+      assert.equal(recipe.after.ingredients.filter((item) => item.id !== fresh.id).every((item) => item.amount === "10 г"), true);
+    });
+
+    await t.test("recipe creation ingredient choices reuse inventory and retain proposed missing creates", async () => {
+      await client.ingredient.create({ data: ingredientData("New recipe herb A") });
+      const herbB = await client.ingredient.create({ data: ingredientData("New recipe herb B", { category: "OTHER" }) });
+      const intent = recipeIntent("New choice recipe", ["New recipe herb", "New missing spice"]);
+      modelPlan = { message: "Перегляд", assumptions: ["Рецепт прихований"], command: { kind: "mutation", intent } };
+      const initial = await actions.askInventoryAssistant({ prompt: "Створи рецепт з травою", selected: null, previousSearch: null, clarification: null });
+      assert.equal(initial.data.operation, "chooseRecord");
+      const calls = apiCalls;
+      const final = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "ingredient", id: herbB.id } }, page: null });
+      assert.equal(final.ok, true);
+      assert.equal(apiCalls, calls);
+      assert.equal(final.data.preview.items.length, 2);
+      assert.deepEqual(final.data.assumptions, ["Рецепт прихований"]);
+      const recipe = final.data.preview.items.find((item) => item.kind === "createRecipe");
+      assert.equal(recipe.after.ingredients[0].id, herbB.id);
+      assert.equal(recipe.after.ingredients[0].category, "OTHER");
+      assert.equal(await client.recipe.count({ where: { title: intent.data.title } }), 0);
+      assert.equal(await client.ingredient.count({ where: { title: "New missing spice" } }), 0);
+    });
+
+    await t.test("candidate pagination can choose beyond the first page without truncation or AI calls", async () => {
+      await client.stuff.createMany({ data: Array.from({ length: 23 }, (_, index) => stuffData(`Paged jar ${String(index).padStart(2, "0")}`)) });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "updateStuff", targetName: "Paged jar", patch: stuffPatch({ stock: { mode: "set", value: 3 } }) } } };
+      const initial = await actions.askInventoryAssistant({ prompt: "Зміни залишок банки", selected: null, previousSearch: null, clarification: null });
+      assert.equal(initial.data.question.candidates.length, 20);
+      assert.equal(initial.data.question.hasMore, true);
+      const calls = apiCalls;
+      const next = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: null, page: { key: initial.data.question.key, number: 1 } });
+      assert.equal(next.data.question.candidates.length, 3);
+      assert.equal(next.data.question.hasMore, false);
+      const last = next.data.question.candidates[2];
+      const final = await actions.resumeInventoryWrite({ pending: next.data.pending, choice: { key: next.data.question.key, selection: { entity: last.entity, id: last.id } }, page: null });
+      assert.equal(final.ok, true);
+      assert.equal(final.data.preview.target.id, last.id);
+      assert.equal(final.data.preview.after.inStock, 3);
+      assert.equal(apiCalls, calls);
+    });
+
+    await t.test("deleted choices and forged entity/key selections fail without writes", async (subtest) => {
+      subtest.mock.method(console, "error", () => {});
+      const a = await client.stuff.create({ data: stuffData("Stale choice A") });
+      await client.stuff.create({ data: stuffData("Stale choice B") });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "deleteStuff", targetName: "Stale choice" } } };
+      const initial = await actions.askInventoryAssistant({ prompt: "Видали банку", selected: null, previousSearch: null, clarification: null });
+      const invalidEntity = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "ingredient", id: a.id } }, page: null });
+      assert.equal(invalidEntity.ok, false);
+      const invalidKey = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: "99:target", selection: { entity: "stuff", id: a.id } }, page: null });
+      assert.equal(invalidKey.ok, false);
+      await client.stuff.delete({ where: { id: a.id } });
+      const removed = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "stuff", id: a.id } }, page: null });
+      assert.equal(removed.ok, false);
+      assert.equal(removed.code, "STALE_PREVIEW");
+      assert.equal(await client.stuff.count({ where: { title: "Stale choice B" } }), 1);
+      const duplicateDecisions = await actions.resumeInventoryWrite({ pending: { ...initial.data.pending, decisions: [ { key: "0:target", selection: { entity: "stuff", id: a.id }, title: "Stale choice A" }, { key: "0:target", selection: { entity: "stuff", id: a.id }, title: "Stale choice A" } ] }, choice: null, page: null });
+      assert.equal(duplicateDecisions.ok, false);
+    });
+
+    await t.test("recipe target selection can be followed by composition selection in one request", async () => {
+      const creation = await prepareInventoryBatch({ kind: "list", operations: [recipeIntent("Pick recipe A", ["Pick garlic A", "Pick garlic B"]), recipeIntent("Pick recipe B", ["Pick garlic A", "Pick garlic B"])] }, null);
+      await applyInventoryBatch(creation);
+      const recipeB = await client.recipe.findUnique({ where: { title: "Pick recipe B" } });
+      const garlicB = await client.ingredient.findUnique({ where: { title: "Pick garlic B" } });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "updateRecipe", targetName: "Pick recipe", patch: recipePatch({ notes: "Preserved note" }), composition: { mode: "patch", items: [{ action: "setAmount", title: "Pick garlic", amount: "9 г", category: null }] } } } };
+      const first = await actions.askInventoryAssistant({ prompt: "Зміни часник у рецепті", selected: null, previousSearch: null, clarification: null });
+      assert.equal(first.data.operation, "chooseRecord");
+      assert.equal(first.data.question.candidates[0].entity, "recipe");
+      const second = await actions.resumeInventoryWrite({ pending: first.data.pending, choice: { key: first.data.question.key, selection: { entity: "recipe", id: recipeB.id } }, page: null });
+      assert.equal(second.data.operation, "chooseRecord");
+      assert.equal(second.data.question.candidates[0].entity, "ingredient");
+      const ready = await actions.resumeInventoryWrite({ pending: second.data.pending, choice: { key: second.data.question.key, selection: { entity: "ingredient", id: garlicB.id } }, page: null });
+      assert.equal(ready.ok, true);
+      assert.equal(ready.data.preview.items[0].target.id, recipeB.id);
+      assert.equal(ready.data.preview.items[0].after.fields.notes, "Preserved note");
+      const confirmed = await actions.confirmInventoryBatch(ready.data.preview);
+      assert.equal(confirmed.ok, true);
+      const changed = await client.recipe.findUnique({ where: { id: recipeB.id }, include: { ingredients: true } });
+      assert.equal(changed.ingredients.find((item) => item.ingredientId === garlicB.id).amount, "9 г");
+      const untouched = await client.recipe.findUnique({ where: { title: "Pick recipe A" }, include: { ingredients: true } });
+      assert.equal(untouched.ingredients.every((item) => item.amount === "10 г"), true);
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;
+      const resume = await actions.resumeInventoryWrite({ pending: { command: { kind: "mutation", intent: { kind: "createStuff", data: stuffData("Forbidden resumed jar") } }, selected: null, assumptions: [], decisions: [] }, choice: null, page: null });
+      assert.equal(resume.ok, false);
+      assert.equal(await client.stuff.count({ where: { title: "Forbidden resumed jar" } }), 0);
       const reply = await actions.confirmInventoryBatch({ items: [{ kind: "createStuff", after: stuffData("Forbidden jar") }], unchanged: [] });
       assert.equal(reply.ok, false);
       assert.equal(await client.stuff.count({ where: { title: "Forbidden jar" } }), 0);

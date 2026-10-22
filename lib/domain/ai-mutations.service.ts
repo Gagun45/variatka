@@ -1,7 +1,7 @@
+import type { OperationResolution } from "./ai-resolution.service";
 import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import { ingredientWriteSchema, stuffWriteSchema } from "@/zod/ai-mutation.schema";
 import type { RecordSelection } from "@/zod/ai-search.schema";
-import type { InventorySearchResult } from "../ai/inventory.types";
 import { AppError, NoChangesError } from "../error";
 import { prisma } from "../prisma";
 import { resolveMutationTarget } from "./ai-target.service";
@@ -11,9 +11,7 @@ import type { Prisma } from "@prisma/client";
 import { ingredientWrites, stuffWrites } from "./inventory-write.service";
 import { assertNever, mutationDefinitions } from "../ai/mutation-definitions";
 
-type PreparedMutation =
-  | { kind: "ready"; preview: InventoryMutationPreview }
-  | { kind: "choose"; intent: InventoryMutationIntent; results: InventorySearchResult };
+type PreparedMutation = { kind: "ready"; preview: InventoryMutationPreview };
 
 const notEmpty = (value: unknown) => value !== null;
 const patchValues = (patch: object) => Object.fromEntries(Object.entries(patch).filter(([, value]) => notEmpty(value)));
@@ -22,18 +20,17 @@ function ensureChanged(before: object, after: object) {
   if (JSON.stringify(before) === JSON.stringify(after)) throw new NoChangesError(`Змін не потрібно. ${"title" in before ? `«${before.title}»` : "Запис"} уже має потрібні значення.`);
 }
 
-export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false, allowReferencedDelete = false, cache?: IngredientResolutionCache): Promise<PreparedMutation> {
+export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false, allowReferencedDelete = false, cache?: IngredientResolutionCache, resolution?: OperationResolution): Promise<PreparedMutation> {
   switch (intent.kind) {
-    case "createRecipe": case "updateRecipe": case "deleteRecipe": return prepareRecipeMutation(intent, selected, explicitlyChosen, cache);
+    case "createRecipe": case "updateRecipe": case "deleteRecipe": return prepareRecipeMutation(intent, selected, explicitlyChosen, cache, resolution);
     case "createIngredient": return { kind: "ready", preview: { kind: intent.kind, after: intent.data } };
     case "createStuff": return { kind: "ready", preview: { kind: intent.kind, after: intent.data } };
     case "updateIngredient": case "deleteIngredient": case "updateStuff": case "deleteStuff": break;
     default: return assertNever(intent);
   }
   const entity = mutationDefinitions[intent.kind].entity;
-  const resolution = await resolveMutationTarget(intent, selected, explicitlyChosen);
-  if (resolution.kind === "choose") return resolution;
-  const selection = resolution.selection;
+  const targetResolution = await resolveMutationTarget(intent, selected, explicitlyChosen, resolution);
+  const selection = targetResolution.selection;
 
   if (entity === "ingredient" && (intent.kind === "updateIngredient" || intent.kind === "deleteIngredient")) {
     const record = await prisma.ingredient.findUnique({ where: { id: selection.id }, select: {

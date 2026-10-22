@@ -1,9 +1,9 @@
+import type { WriteResolution } from "./ai-resolution.service";
 import { MAX_BATCH_OPERATIONS, type BatchIntent, type BatchPreview } from "@/zod/ai-batch.schema";
 import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import type { RecordSelection } from "@/zod/ai-search.schema";
 import type { RecipeSnapshot } from "@/zod/ai-recipe.schema";
 import { assertNever } from "../ai/mutation-definitions";
-import { candidateNames } from "../ai/name-resolution";
 import { AppError, NoChangesError } from "../error";
 import { prisma } from "../prisma";
 import { prepareInventoryMutation, applyInventoryMutation } from "./ai-mutations.service";
@@ -15,7 +15,7 @@ import { completeBatchPreview } from "../ai/batch-preview";
 const key = (title: string) => title.toLocaleLowerCase("uk");
 export { completeBatchPreview } from "../ai/batch-preview";
 
-export async function prepareInventoryBatch(intent: BatchIntent, selected: RecordSelection | null): Promise<BatchPreview> {
+export async function prepareInventoryBatch(intent: BatchIntent, selected: RecordSelection | null, resolution?: WriteResolution): Promise<BatchPreview> {
   const cache: IngredientResolutionCache = new Map();
   const items: InventoryMutationPreview[] = [];
   const unchanged: string[] = [];
@@ -46,10 +46,9 @@ export async function prepareInventoryBatch(intent: BatchIntent, selected: Recor
       operations.push({ intent: operation, selected: { entity: item.entity, id: item.id }, chosen: true });
     }
   }
-  for (const operation of operations) {
+  for (const [index, operation] of operations.entries()) {
     try {
-      const prepared = await prepareInventoryMutation(operation.intent, operation.selected, operation.chosen, true, cache);
-      if (prepared.kind === "choose") throw new AppError(`Назва «${"targetName" in prepared.intent ? prepared.intent.targetName : "запис"}» у пакеті неоднозначна. Варіанти: ${candidateNames(prepared.results.items)}. Повторіть повний запит із точною назвою.`);
+      const prepared = await prepareInventoryMutation(operation.intent, operation.selected, operation.chosen, true, cache, resolution ? { state: resolution, index } : undefined);
       items.push(prepared.preview);
     } catch (error) {
       if (!(error instanceof NoChangesError)) throw error;

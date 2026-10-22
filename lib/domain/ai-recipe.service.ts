@@ -1,7 +1,7 @@
+import { WriteResolution, type OperationResolution } from "./ai-resolution.service";
 import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import { recipeWriteSchema, type RecipeSnapshot } from "@/zod/ai-recipe.schema";
 import type { RecordSelection } from "@/zod/ai-search.schema";
-import { matchNames, candidateNames } from "../ai/name-resolution";
 import { AppError, NoChangesError } from "../error";
 import { prisma } from "../prisma";
 import { resolveMutationTarget } from "./ai-target.service";
@@ -10,26 +10,15 @@ type RecipeIntent = Extract<InventoryMutationIntent, { kind: "createRecipe" | "u
 type Reference = RecipeSnapshot["ingredients"][number];
 export type IngredientResolutionCache = Map<string, Reference>;
 
-async function resolveIngredient(item: { title: string; amount: string; category: "SPICES" | "OTHER" | null }, cache: IngredientResolutionCache): Promise<Reference> {
+async function resolveIngredient(item: { title: string; amount: string; category: "SPICES" | "OTHER" | null }, cache: IngredientResolutionCache, resolution: OperationResolution, slot = ""): Promise<Reference> {
   // Exact spellings may identify different legacy records whose titles differ only by case.
   const key = item.title;
   const cached = cache.get(key);
   if (cached) return { ...cached, amount: item.amount };
-  const records = await prisma.ingredient.findMany({ where: { title: { equals: item.title, mode: "insensitive" } }, take: 3, select: { id: true, title: true, category: true, updatedAt: true } });
-  const exact = records.find((record) => record.title === item.title);
-  if (!exact && records.length > 1) throw new AppError(`Назва інгредієнта «${item.title}» неоднозначна. Вкажіть точне написання назви.`);
-  let record = exact ?? records[0];
-  if (!record) {
-    const candidates = await prisma.ingredient.findMany({
-      where: { title: { contains: item.title.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" } },
-      orderBy: [{ title: "asc" }, { id: "asc" }], take: 6, select: { id: true, title: true, category: true, updatedAt: true },
-    });
-    if (candidates.length > 1) throw new AppError(`Інгредієнт «${item.title}» неоднозначний. Оберіть точну назву: ${candidateNames(candidates)}. Повторіть повний запит із вибраною назвою.`);
-    record = candidates[0];
-  }
-  const resolved: Reference = record ? { id: record.id, title: record.title, category: record.category, updatedAt: record.updatedAt.toISOString(), amount: item.amount } : { ...item, category: item.category ?? "OTHER", id: null, updatedAt: null };
-  cache.set(key, resolved);
-  return resolved;
+  const record = await resolution.state.inventory("ingredient", item.title, `${resolution.index}:ingredient:${slot}`, `Операція ${resolution.index + 1}: інгредієнт рецепта`, true);
+  const reference: Reference = record ? { id: record.id, title: record.title, category: record.category as Reference["category"], updatedAt: record.updatedAt.toISOString(), amount: item.amount } : { ...item, category: item.category ?? "OTHER", id: null, updatedAt: null };
+  cache.set(key, reference);
+  return reference;
 }
 
 function checkComposition(items: Reference[]) {
@@ -38,15 +27,15 @@ function checkComposition(items: Reference[]) {
   if (items.length > 50) throw new AppError("Один рецепт може містити до 50 інгредієнтів у цьому перегляді.");
 }
 
-export async function prepareRecipeMutation(intent: RecipeIntent, selected: RecordSelection | null, explicitlyChosen: boolean, cache: IngredientResolutionCache = new Map()) {
+export async function prepareRecipeMutation(intent: RecipeIntent, selected: RecordSelection | null, explicitlyChosen: boolean, cache: IngredientResolutionCache = new Map(), resolution: OperationResolution = { state: new WriteResolution({ decisions: [] }), index: 0 }) {
   if (intent.kind === "createRecipe") {
-    const ingredients = await Promise.all(intent.ingredients.map((item) => resolveIngredient(item, cache)));
+    const ingredients: Reference[] = [];
+    for (const [index, item] of intent.ingredients.entries()) ingredients.push(await resolveIngredient(item, cache, resolution, String(index)));
     checkComposition(ingredients);
     const preview: InventoryMutationPreview = { kind: "createRecipe", after: { fields: intent.data, ingredients } };
     return { kind: "ready" as const, preview };
   }
-  const target = await resolveMutationTarget(intent, selected, explicitlyChosen);
-  if (target.kind === "choose") return target;
+  const target = await resolveMutationTarget(intent, selected, explicitlyChosen, resolution);
   const record = await prisma.recipe.findUnique({ where: { id: target.selection.id }, select: {
     id: true, updatedAt: true, title: true, description: true, notes: true, confirmationNotes: true, category: true, series: true, spicy: true, isHidden: true, isConfirmed: true, isSaved: true,
     _count: { select: { orderItems: true } },
@@ -66,21 +55,20 @@ export async function prepareRecipeMutation(intent: RecipeIntent, selected: Reco
     if (intent.composition.mode === "replace") after.ingredients = [];
     const seen = new Set<string>();
     const seenIds = new Set<number>();
-    for (const change of intent.composition.items) {
+    for (const [changeIndex, change] of intent.composition.items.entries()) {
       const key = change.title.toLocaleLowerCase("uk");
       if (seen.has(key)) throw new AppError(`Повторна зміна інгредієнта «${change.title}» в одному запиті.`);
       seen.add(key);
-      const matches = matchNames(change.title, before.ingredients);
-      if ((change.action === "remove" || change.action === "setAmount") && intent.composition.mode === "patch") {
-        if (matches.length > 1) throw new AppError(`Інгредієнт «${change.title}» неоднозначний у складі. Оберіть точну назву: ${candidateNames(matches)}. Повторіть повний запит із вибраною назвою.`);
-        if (!matches.length) throw new AppError(`Інгредієнт «${change.title}» не знайдено в складі. Доступні: ${candidateNames(before.ingredients) || "склад порожній"}.`);
-        const id = matches[0].id!;
-        if (seenIds.has(id)) throw new AppError(`Повторна зміна інгредієнта «${matches[0].title}» в одному запиті.`);
-        seenIds.add(id);
+      const matched: Reference | null = (change.action === "remove" || change.action === "setAmount") && intent.composition.mode === "patch"
+        ? resolution.state.composition(change.title, before.ingredients, `${resolution.index}:composition:${changeIndex}`, `Операція ${resolution.index + 1}: склад рецепта «${record.title}»`)
+        : null;
+      if (matched?.id !== undefined && matched.id !== null) {
+        if (seenIds.has(matched.id)) throw new AppError(`Повторна зміна інгредієнта «${matched.title}» в одному запиті.`);
+        seenIds.add(matched.id);
       }
       const index = change.action === "add"
         ? after.ingredients.findIndex((item) => item.title.toLocaleLowerCase("uk") === key)
-        : after.ingredients.findIndex((item) => item.id === matches[0]?.id);
+        : after.ingredients.findIndex((item) => item.id === matched?.id);
       if (change.action === "remove") {
         if (intent.composition.mode === "replace" || index < 0) throw new AppError(`Інгредієнт «${change.title}» не знайдено в складі.`);
         after.ingredients.splice(index, 1);
@@ -91,7 +79,7 @@ export async function prepareRecipeMutation(intent: RecipeIntent, selected: Reco
           after.ingredients[index] = { ...after.ingredients[index], amount: change.amount };
         } else {
           if (index >= 0) throw new AppError(`Інгредієнт «${change.title}» вже є у складі. Вкажіть зміну кількості.`);
-          after.ingredients.push(await resolveIngredient({ ...change, amount: change.amount }, cache));
+          after.ingredients.push(await resolveIngredient({ ...change, amount: change.amount }, cache, resolution, `change:${changeIndex}`));
         }
       }
     }

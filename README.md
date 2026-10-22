@@ -14,6 +14,8 @@ For Ukrainian terminology, visible request context and reset behavior, see the [
 
 For request states, failed prompts and save/refresh recovery, see the [recovery guide](docs/ai-recovery.md).
 
+For clickable candidate selection that preserves single and batch requests, see the [ambiguity guide](docs/ai-ambiguity.md).
+
 First, run the development server:
 
 ```bash

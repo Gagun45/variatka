@@ -420,10 +420,11 @@ test("ambiguous names return candidates; choosing one prepares a preview without
   state.plan = mutationPlan(intent);
   const reply = await actions.askInventoryAssistant(request());
   assert.equal(reply.ok, true);
-  assert.equal(reply.data.operation, "chooseMutationTarget");
-  assert.equal(reply.data.results.items.length, 2);
+  assert.equal(reply.data.operation, "chooseRecord");
+  assert.equal(reply.data.question.candidates.length, 2);
   state.records.stuff = stuffRecord();
-  const preview = await actions.previewInventoryMutation(reply.data.intent, { entity: "stuff", id: 2 });
+  const resumed = await actions.resumeInventoryWrite({ pending: reply.data.pending, choice: { key: reply.data.question.key, selection: { entity: "stuff", id: 2 } }, page: null });
+  const preview = resumed.ok ? { ok: true, data: resumed.data.preview } : resumed;
   assert.equal(preview.ok, true);
   assert.equal(preview.data.kind, "deleteStuff");
   assert.equal(preview.data.target.title, "Слоїчки 250 мл");
@@ -904,6 +905,16 @@ test("single and batch previews render shared cards while creation forms remain 
     const deletion = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: { kind: "deleteStuff", target: item.target, before } }));
     assert.ok(deletion.includes("Підтвердити видалення"));
     assert.ok(deletion.includes("Запис буде видалено повністю"));
+    const Choice = require("../app/(admin)/admin/ai/_components/RecordChoiceView.tsx").default;
+    const choice = renderToStaticMarkup(React.createElement(Choice, {
+      question: { key: "0:target", name: "Банка", context: "Операція 1", candidates: [{ entity: "stuff", id: 2, title: "Банка 250", summary: "Слоїчки" }], page: 0, hasMore: true },
+      prompt: "Зміни банку та часник", busy: false, onChoose() {}, onPage() {}, onCancel() {},
+    }));
+    assert.ok(choice.includes("Обрати Банка 250"));
+    assert.ok(choice.includes("Зміни банку та часник"));
+    assert.ok(choice.includes("Скасувати весь запит"));
+    assert.ok(choice.includes("Далі"));
+    assert.equal(choice.includes('type="submit"'), false);
   } finally {
     if (originalTsx) require.extensions[".tsx"] = originalTsx;
     else delete require.extensions[".tsx"];
@@ -927,5 +938,23 @@ test("unquoted partial names in mixed batches reach server resolution without lo
   assert.ok(instructions.includes("never hypothetical database ambiguity"));
   assert.ok(instructions.includes('updateStuff targetName="банка"'));
   assert.equal(instructions.includes("Every operation must include its exact target name"), false);
+  assert.equal(state.writes.length, 0);
+});
+
+
+test("resuming ambiguity requires admin and validates the continuation before reads", async (t) => {
+  t.mock.method(console, "error", () => {});
+  const pending = { command: { kind: "mutation", intent: { kind: "deleteStuff", targetName: "Банка" } }, selected: null, assumptions: [], decisions: [] };
+  state.admin = false;
+  assert.equal((await actions.resumeInventoryWrite({ pending, choice: null, page: null })).ok, false);
+  assert.equal(state.reads.length, 0);
+  state.admin = true;
+  for (const bad of [
+    { pending, choice: { key: "0:target", selection: { entity: "stuff", id: -1 } }, page: null },
+    { pending, choice: null, page: { key: "0:target", number: -1 } },
+    { pending: { ...pending, unknown: true }, choice: null, page: null },
+  ]) assert.equal((await actions.resumeInventoryWrite(bad)).ok, false);
+  assert.equal(state.reads.length, 0);
+  assert.equal(state.apiCalls.length, 0);
   assert.equal(state.writes.length, 0);
 });

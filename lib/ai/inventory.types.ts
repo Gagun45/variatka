@@ -1,5 +1,7 @@
 import type { Clarification, InventorySearch, RecordSelection } from "@/zod/ai-search.schema";
-import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
+import type { PendingWrite } from "@/zod/ai-resolution.schema";
+import type { RecordChoice } from "../domain/ai-resolution.service";
+import type { InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import type { BatchPreview } from "@/zod/ai-batch.schema";
 
 export type InventoryResult = RecordSelection & {
@@ -26,7 +28,7 @@ export type AssistantReply =
   | { operation: "search"; message: string; results: InventorySearchResult }
   | { operation: "viewSelected"; message: string; record: InventoryRecord }
   | { operation: "clarify"; message: string; clarification: Clarification }
-  | { operation: "mutation"; message: string; assumptions: string[]; preview: InventoryMutationPreview }
-  | { operation: "batch"; message: string; assumptions: string[]; preview: BatchPreview }
-  | { operation: "chooseMutationTarget"; message: string; assumptions: string[]; intent: InventoryMutationIntent; results: InventorySearchResult }
+  | { operation: "mutation"; message: string; assumptions: string[]; preview: InventoryMutationPreview; resolved?: PendingWrite }
+  | { operation: "batch"; message: string; assumptions: string[]; preview: BatchPreview; resolved?: PendingWrite }
+  | { operation: "chooseRecord"; message: string; question: RecordChoice; pending: PendingWrite }
   | { operation: "unsupported"; message: string };
