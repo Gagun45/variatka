@@ -17,6 +17,8 @@ import {
 import { readInventoryRecord, searchInventory } from "../domain/ai-inventory.service";
 import { planInventoryRequest } from "../ai/inventory-assistant";
 import type { AssistantReply } from "../ai/inventory.types";
+import { inventoryMutationIntentSchema, inventoryMutationPreviewSchema, type InventoryMutationIntent, type InventoryMutationPreview } from "@/zod/ai-mutation.schema";
+import { applyInventoryMutation, prepareInventoryMutation } from "../domain/ai-mutations.service";
 
 export async function proposeIngredient(prompt: string) {
   return safeAction("proposeIngredient", async () => {
@@ -65,6 +67,35 @@ export async function askInventoryAssistant(request: AssistantRequest) {
         operation: "createIngredient", message: plan.message, assumptions: plan.assumptions, ingredient: plan.ingredient,
       } };
     }
+    if (plan.operation === "mutation" && plan.mutation) {
+      const prepared = await prepareInventoryMutation(plan.mutation, parsed.data.selected);
+      if (prepared.kind === "choose") return {
+        operation: "chooseMutationTarget", message: "Оберіть запис для цієї зміни. Після вибору з’явиться перегляд для підтвердження.",
+        assumptions: plan.assumptions, intent: prepared.intent, results: prepared.results,
+      };
+      return { operation: "mutation", message: "Перевірте запропоновану операцію. Ще нічого не збережено.", assumptions: plan.assumptions, preview: prepared.preview };
+    }
     return { operation: "unsupported", message: plan.message };
+  });
+}
+
+export async function previewInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection) {
+  return safeAction("previewInventoryMutation", async () => {
+    await requireAdmin();
+    const parsed = inventoryMutationIntentSchema.safeParse(intent);
+    const selection = recordSelectionSchema.safeParse(selected);
+    if (!parsed.success || !selection.success) throw new AppError("Некоректна операція або вибір запису.");
+    const prepared = await prepareInventoryMutation(parsed.data, selection.data, true);
+    if (prepared.kind !== "ready") throw new AppError("Оберіть один запис.");
+    return prepared.preview;
+  });
+}
+
+export async function confirmInventoryMutation(preview: InventoryMutationPreview) {
+  return safeAction("confirmInventoryMutation", async () => {
+    await requireAdmin();
+    const parsed = inventoryMutationPreviewSchema.safeParse(preview);
+    if (!parsed.success) throw new AppError("Некоректний перегляд. Повторіть запит.");
+    return applyInventoryMutation(parsed.data);
   });
 }

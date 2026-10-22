@@ -1,6 +1,6 @@
 # AI ingredient assistant: setup and implementation guide
 
-The assistant lives at `/admin/ai` (also linked as **AI-помічник** in admin navigation). For ingredient creation, write a Ukrainian request, review/edit the proposed ingredient, then click **Підтвердити створення**. No packages or database migrations are needed. The assistant also supports [search and record selection across ingredients, recipes and stuff](ai-search.md).
+The assistant lives at `/admin/ai` (also linked as **AI-помічник** in admin navigation). For ingredient creation, write a Ukrainian request, review/edit the proposed ingredient, then click **Підтвердити створення**. No packages or database migrations are needed. The assistant also supports [search and record selection](ai-search.md) and [complete ingredient/stuff CRUD](ai-crud.md).
 
 ## 1. Create an OpenAI API key
 
@@ -71,9 +71,9 @@ Why: these checks cover the boundary between a proposal and an actual database w
 
 1. `zod/ai.schema.ts` defines prompt limits and the draft contract. It reuses the ingredient fields and restricts the operation to `createIngredient` or `unsupported`.
 2. `lib/ai/structured-output.ts` sends requests to OpenAI using built-in `fetch`; `ingredient-draft.ts` retains the original draft-only entry point. Zod generates the strict JSON Schema, and validates the result again locally. The request has a 30-second timeout, an output limit, and `store: false` (this disables response storage, not all provider retention policies). The new search planner also sends selected record identity and previous search filters; there is no inventory dump.
-3. `lib/actions/ai.actions.ts` authenticates the admin, validates the request, and routes searches, selected-record reads and ingredient proposals. It performs no database writes.
+3. `lib/actions/ai.actions.ts` authenticates the admin, validates the request, and routes searches, selected-record reads and proposals. The separate confirmation action performs approved ingredient/stuff mutations through the shared write service.
 4. `app/(admin)/admin/ai/_components/AiAssistant.tsx` displays messages and an editable preview. Confirmation calls the existing `createIngredient` action directly, so it needs no second AI request.
-5. `lib/actions/ingredient.actions.ts` checks admin access, validates submitted fields on the server, trims the title, checks for duplicates, and writes through Prisma. This server validation also covers the existing manual creation flow.
+5. `lib/actions/ingredient.actions.ts` checks admin access and delegates creation/edit/deletion to the shared inventory write service, which validates input, normalizes new titles and handles database uniqueness. This server validation also covers the existing manual creation flow.
 
 No autonomous agent loop, streaming, tool SDK, or separate REST API is required for this initial operation. These are drafts of operations, not provider function calls.
 

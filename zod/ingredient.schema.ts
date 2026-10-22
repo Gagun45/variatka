@@ -3,9 +3,9 @@ import { INGREDIENT_CATEGORIES } from "@/lib/enumslist/ingredient.constants";
 import z from "zod";
 
 export const ingredientSchema = z.object({
-  title: z.string().min(1, "Ingredient title is required"),
+  title: z.string().trim().min(1, "Ingredient title is required").max(200),
 
-  description: z.string(),
+  description: z.string().max(10000),
 
   isInStock: z.boolean(),
 

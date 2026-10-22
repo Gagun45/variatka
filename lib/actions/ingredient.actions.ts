@@ -1,6 +1,6 @@
 "use server";
 
-import { IIngredientFormValues, ingredientSchema } from "@/zod/ingredient.schema";
+import { IIngredientFormValues } from "@/zod/ingredient.schema";
 import { AppError } from "../error";
 import { prisma } from "../prisma";
 import { IIngredient, ingredientArgs } from "../prisma.args";
@@ -8,6 +8,7 @@ import { storageHelper } from "../r2/storage.helper";
 import { IActionResponse } from "../types";
 import { safeAction } from "./action.wrapper";
 import { requireAdmin } from "./user.actions";
+import { ingredientWrites } from "../domain/inventory-write.service";
 
 export const getIngredients = async (): Promise<
   IActionResponse<IIngredient[]>
@@ -43,24 +44,7 @@ export const createIngredient = async (
 ): Promise<IActionResponse<IIngredient>> => {
   return safeAction("createIngredient", async () => {
     await requireAdmin();
-    const parsed = ingredientSchema.safeParse(dto);
-    if (!parsed.success || !parsed.data.title.trim()) {
-      throw new AppError("Перевірте поля інгредієнта.");
-    }
-    const data = { ...parsed.data, title: parsed.data.title.trim() };
-    const { title } = data;
-
-    const existingIngredient = await prisma.ingredient.findUnique({
-      where: { title },
-    });
-    if (existingIngredient)
-      throw new AppError("An ingredient with this title already exists.");
-
-    const newIngredient = await prisma.ingredient.create({
-      data,
-      ...ingredientArgs,
-    });
-    return newIngredient;
+    return ingredientWrites.create({ ...dto, isSaved: false });
   });
 };
 
@@ -70,22 +54,7 @@ export const editIngredient = async (
 ): Promise<IActionResponse<IIngredient>> => {
   return safeAction("editIngredient", async () => {
     await requireAdmin();
-    const existingIngredient = await prisma.ingredient.findFirst({
-      where: {
-        title: dto.title,
-        NOT: {
-          id,
-        },
-      },
-    });
-    if (existingIngredient)
-      throw new AppError("An ingredient with this title already exists.");
-    const updatedIngredient = await prisma.ingredient.update({
-      where: { id },
-      data: dto,
-      ...ingredientArgs,
-    });
-    return updatedIngredient;
+    return ingredientWrites.update(id, dto);
   });
 };
 
@@ -94,28 +63,7 @@ export const deleteIngredient = async (
 ): Promise<IActionResponse<number>> => {
   return safeAction("deleteIngredient", async () => {
     await requireAdmin();
-    const ingredient = await prisma.ingredient.findUnique({
-      where: { id },
-      select: {
-        imageKey: true,
-        _count: {
-          select: {
-            recipeIngredients: true,
-          },
-        },
-      },
-    });
-    if (!ingredient) throw new AppError("Ingredient not found");
-
-    if (ingredient._count.recipeIngredients > 0)
-      throw new AppError("Cannot delete ingredients used in recipes");
-    if (ingredient.imageKey) {
-      await storageHelper.delete(ingredient.imageKey);
-    }
-    await prisma.ingredient.delete({
-      where: { id },
-    });
-    return id;
+    return ingredientWrites.delete(id);
   });
 };
 

@@ -14,22 +14,73 @@ const originalKey = process.env.OPENAI_API_KEY;
 const originalModel = process.env.OPENAI_MODEL;
 let state;
 
+function project(record, select) {
+  if (!record || !select) return record;
+  return Object.fromEntries(Object.entries(select).map(([key, config]) => {
+    const value = record[key];
+    return [key, config === true ? value : Array.isArray(value) ? value.map((item) => project(item, config.select)) : project(value, config.select)];
+  }));
+}
+
+function matches(record, where) {
+  if (!record) return false;
+  if (where.id !== undefined && record.id !== where.id) return false;
+  if (where.updatedAt !== undefined && record.updatedAt.getTime() !== where.updatedAt.getTime()) return false;
+  if (where.recipeIngredients?.none && record._count.recipeIngredients > 0) return false;
+  return true;
+}
+
+function dbError(code) { return Object.assign(new Error(code), { code }); }
+
+function canWrite() {
+  assert.equal(state.allowWrites, true, "Search/proposals must never write");
+  if (state.writeError) throw dbError(state.writeError);
+}
+
 const prisma = Object.fromEntries(["ingredient", "recipe", "stuff"].map((entity) => [entity, {
   findMany: async (args) => {
     state.reads.push({ entity, args });
-    return state.rows[entity].slice(args.skip, args.skip + args.take);
+    let rows = state.rows[entity];
+    if (args.where.title?.equals) rows = rows.filter((record) => record.title.toLowerCase() === args.where.title.equals.toLowerCase());
+    const skip = args.skip ?? 0;
+    return rows.slice(skip, skip + args.take).map((record) => project(record, args.select));
   },
   findUnique: async (args) => {
     state.reads.push({ entity, args });
+    const record = state.records[entity];
+    return matches(record, args.where) ? project(record, args.select) : null;
+  },
+  create: async (args) => {
+    canWrite();
+    const record = { id: 100, updatedAt: new Date(), ...args.data };
+    state.records[entity] = record;
+    state.writes.push({ entity, method: "create", args });
+    return record;
+  },
+  update: async (args) => {
+    canWrite();
+    const record = state.records[entity];
+    if (!matches(record, args.where)) throw dbError("P2025");
+    state.writes.push({ entity, method: "update", args });
+    state.records[entity] = { ...record, ...args.data };
     return state.records[entity];
   },
-  create: async () => { throw new Error("Search must never write"); },
-  update: async () => { throw new Error("Search must never write"); },
-  delete: async () => { throw new Error("Search must never write"); },
+  delete: async (args) => {
+    canWrite();
+    const record = state.records[entity];
+    if (!matches(record, args.where)) throw dbError("P2025");
+    state.writes.push({ entity, method: "delete", args });
+    state.records[entity] = null;
+    return project(record, args.select);
+  },
 }]));
 
 Module._load = function (id, parent, main) {
   if (id === "../prisma") return { prisma };
+  if (id === "../r2/storage.helper") return { storageHelper: { delete: async (key) => {
+    state.storageDeletes.push(key);
+    if (state.storageError) throw new Error("Mock R2 error");
+  } } };
   if (id === "./user.actions") return { requireAdmin: async () => {
     state.authChecks++;
     if (!state.admin) throw new Error("Forbidden");
@@ -46,16 +97,18 @@ const schemas = require("../zod/ai-search.schema.ts");
 const { ingredientWhere, recipeWhere, stuffWhere } = require("../lib/ai/inventory-search.ts");
 const actions = require("../lib/actions/ai.actions.ts");
 const { generateIngredientDraft } = require("../lib/ai/ingredient-draft.ts");
+const ingredientActions = require("../lib/actions/ingredient.actions.ts");
+const stuffActions = require("../lib/actions/stuff.actions.ts");
 
 const ingredient = { entity: "ingredient", text: null, category: null, isInStock: null, isSaved: null };
 const recipe = { entity: "recipe", text: null, category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] };
 const stuff = { entity: "stuff", text: null, category: null, isInStock: null, stockMin: null, stockMax: null };
-const plan = (search) => ({ operation: "search", search, ingredient: null, assumptions: [], message: "Пошук" });
+const plan = (search) => ({ operation: "search", search, mutation: null, ingredient: null, assumptions: [], message: "Пошук" });
 const request = (extra = {}) => ({ prompt: "Покажи спеції", selected: null, previousSearch: null, ...extra });
 const row = (id) => ({ id, title: `Запис ${id}`, category: "SPICES", isInStock: true, inStock: 3, spicy: 1, isHidden: false, isConfirmed: true });
 
 beforeEach(() => {
-  state = { admin: true, authChecks: 0, apiCalls: [], reads: [], rows: { ingredient: [], recipe: [], stuff: [] }, records: { ingredient: null, recipe: null, stuff: null }, plan: plan(ingredient) };
+  state = { admin: true, authChecks: 0, apiCalls: [], reads: [], writes: [], storageDeletes: [], allowWrites: false, rows: { ingredient: [], recipe: [], stuff: [] }, records: { ingredient: null, recipe: null, stuff: null }, plan: plan(ingredient) };
   process.env.OPENAI_API_KEY = "mock-key";
   process.env.OPENAI_MODEL = "gpt-6-luna";
   global.fetch = async (_url, options) => {
@@ -250,4 +303,228 @@ test("refusals, incomplete and malformed provider responses return errors withou
     assert.equal((await actions.askInventoryAssistant(request())).ok, false);
   }
   assert.equal(state.reads.length, 0);
+});
+
+const ingredientRecord = (overrides = {}) => ({ id: 1, title: "Куркума", description: null, category: "SPICES", isInStock: true, isSaved: true, updatedAt: new Date("2026-10-22T10:00:00.000Z"), imageKey: null, _count: { recipeIngredients: 0 }, ...overrides });
+const stuffRecord = (overrides = {}) => ({ id: 2, title: "Слоїчки 250 мл", description: "Скляні", category: "JARS", inStock: 10, updatedAt: new Date("2026-10-22T10:00:00.000Z"), ...overrides });
+const ingredientPatch = (values = {}) => ({ title: null, description: null, category: null, isInStock: null, isSaved: null, ...values });
+const stuffPatch = (values = {}) => ({ title: null, description: null, category: null, stock: null, ...values });
+function mutationPlan(mutation) { return { ...plan(null), operation: "mutation", mutation }; }
+async function previewMutation(intent, entity = "ingredient") {
+  return actions.previewInventoryMutation(intent, { entity, id: entity === "ingredient" ? 1 : 2 });
+}
+
+test("ingredient patch preserves unspecified fields and null descriptions; confirmation writes once", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.ingredient = ingredientRecord();
+  const intent = { kind: "updateIngredient", targetName: null, patch: ingredientPatch({ isInStock: false }) };
+  const result = await previewMutation(intent);
+  assert.equal(result.ok, true);
+  assert.equal(state.writes.length, 0);
+  assert.deepEqual(result.data.after, { title: "Куркума", description: null, category: "SPICES", isInStock: false, isSaved: true });
+  state.allowWrites = true;
+  assert.equal((await actions.confirmInventoryMutation(result.data)).ok, true);
+  assert.equal(state.records.ingredient.isInStock, false);
+  assert.equal(state.records.ingredient.isSaved, true);
+  assert.equal((await actions.confirmInventoryMutation(result.data)).ok, false);
+  assert.equal(state.writes.length, 1);
+  assert.equal(state.apiCalls.length, 0);
+});
+
+test("ingredient rename, category, description clearing and saved status can be combined", async () => {
+  state.records.ingredient = ingredientRecord({ description: "Старий опис" });
+  const result = await previewMutation({ kind: "updateIngredient", targetName: null, patch: ingredientPatch({ title: "  Куркума мелена  ", description: "", category: "OTHER", isSaved: false }) });
+  assert.equal(result.ok, true);
+  assert.equal(result.data.after.title, "Куркума мелена");
+  assert.equal(result.data.after.description, "");
+  assert.equal(result.data.after.isSaved, false);
+  assert.equal(result.data.after.isInStock, true);
+  assert.equal(result.data.after.category, "OTHER");
+});
+
+test("unrelated updates preserve existing title whitespace rather than silently renaming", async () => {
+  state.records.stuff = stuffRecord({ title: "  Слоїчки 250 мл  " });
+  const preview = await previewMutation({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "set", value: 12 } }) }, "stuff");
+  assert.equal(preview.data.after.title, "  Слоїчки 250 мл  ");
+  state.allowWrites = true;
+  assert.equal((await actions.confirmInventoryMutation(preview.data)).ok, true);
+  assert.equal(state.records.stuff.title, "  Слоїчки 250 мл  ");
+});
+
+test("stuff stock previews compute signed adjustments and exact totals on the server", async () => {
+  state.records.stuff = stuffRecord();
+  for (const [mode, value, expected] of [["adjust", 5, 15], ["adjust", -3, 7], ["set", 30, 30], ["set", 0, 0]]) {
+    const result = await previewMutation({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode, value } }) }, "stuff");
+    assert.equal(result.ok, true);
+    assert.equal(result.data.after.inStock, expected);
+    assert.equal(result.data.after.description, "Скляні");
+    assert.equal(state.writes.length, 0);
+  }
+});
+
+test("stock underflow, overflow, fractions and no-op patches cannot produce writes", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.stuff = stuffRecord();
+  for (const stock of [{ mode: "adjust", value: -11 }, { mode: "adjust", value: 2147483647 }, { mode: "set", value: -1 }, { mode: "set", value: 1.5 }, { mode: "adjust", value: 0 }]) {
+    assert.equal((await previewMutation({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock }) }, "stuff")).ok, false);
+  }
+  state.records.ingredient = ingredientRecord();
+  assert.equal((await previewMutation({ kind: "updateIngredient", targetName: null, patch: ingredientPatch() })).ok, false);
+  assert.equal(state.writes.length, 0);
+});
+
+test("stale stock previews cannot overwrite intervening stock updates", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.stuff = stuffRecord();
+  const preview = await previewMutation({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "adjust", value: 5 } }) }, "stuff");
+  state.records.stuff.inStock = 20;
+  state.records.stuff.updatedAt = new Date("2026-10-22T10:01:00.000Z");
+  state.allowWrites = true;
+  const result = await actions.confirmInventoryMutation(preview.data);
+  assert.equal(result.ok, false);
+  assert.match(result.message, /змінився/);
+  assert.equal(state.records.stuff.inStock, 20);
+  assert.equal(state.writes.length, 0);
+});
+
+test("named mutations resolve a unique exact title rather than an unrelated selection", async () => {
+  state.rows.stuff = [stuffRecord()];
+  state.records.stuff = stuffRecord();
+  state.records.ingredient = ingredientRecord();
+  state.plan = mutationPlan({ kind: "updateStuff", targetName: "слоїчки 250 мл", patch: stuffPatch({ stock: { mode: "set", value: 30 } }) });
+  const reply = await actions.askInventoryAssistant(request({ selected: { entity: "ingredient", id: 1 } }));
+  assert.equal(reply.ok, true);
+  assert.equal(reply.data.operation, "mutation");
+  assert.equal(reply.data.preview.target.id, 2);
+  assert.equal(reply.data.preview.after.inStock, 30);
+  assert.equal(state.writes.length, 0);
+});
+
+test("ambiguous names return candidates; choosing one prepares a preview without writing", async () => {
+  state.rows.stuff = [stuffRecord(), stuffRecord({ id: 3, title: "Слоїчки 500 мл" })];
+  const intent = { kind: "deleteStuff", targetName: "Слоїчки" };
+  state.plan = mutationPlan(intent);
+  const reply = await actions.askInventoryAssistant(request());
+  assert.equal(reply.ok, true);
+  assert.equal(reply.data.operation, "chooseMutationTarget");
+  assert.equal(reply.data.results.items.length, 2);
+  state.records.stuff = stuffRecord();
+  const preview = await actions.previewInventoryMutation(reply.data.intent, { entity: "stuff", id: 2 });
+  assert.equal(preview.ok, true);
+  assert.equal(preview.data.kind, "deleteStuff");
+  assert.equal(preview.data.target.title, "Слоїчки 250 мл");
+  assert.equal(state.writes.length, 0);
+});
+
+test("missing/mismatched selections and missing targets cannot prepare updates", async (t) => {
+  t.mock.method(console, "error", () => {});
+  const intent = { kind: "updateStuff", targetName: null, patch: stuffPatch({ title: "Нова назва" }) };
+  assert.equal((await actions.previewInventoryMutation(intent, { entity: "ingredient", id: 1 })).ok, false);
+  assert.equal((await actions.previewInventoryMutation(intent, { entity: "recipe", id: 1 })).ok, false);
+  state.plan = mutationPlan(intent);
+  assert.equal((await actions.askInventoryAssistant(request())).ok, false);
+  state.plan = mutationPlan({ ...intent, targetName: "Невідоме" });
+  assert.equal((await actions.askInventoryAssistant(request())).ok, false);
+  assert.equal(state.writes.length, 0);
+});
+
+test("stuff creation remains a draft until confirmed and duplicate titles return a clear error", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.plan = mutationPlan({ kind: "createStuff", data: { title: "Стрічка", description: "", category: "DECOR", inStock: 0 } });
+  const reply = await actions.askInventoryAssistant(request());
+  assert.equal(reply.ok, true);
+  assert.equal(reply.data.preview.kind, "createStuff");
+  assert.equal(state.writes.length, 0);
+  state.allowWrites = true;
+  const saved = await actions.confirmInventoryMutation(reply.data.preview);
+  assert.equal(saved.ok, true);
+  assert.equal(saved.data.operation, "created");
+  assert.equal(state.records.stuff.inStock, 0);
+  state.writeError = "P2002";
+  const duplicate = await actions.confirmInventoryMutation(reply.data.preview);
+  assert.equal(duplicate.ok, false);
+  assert.match(duplicate.message, /назвою вже існує/);
+});
+
+test("used ingredients cannot be deleted, including if attached after the preview", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.ingredient = ingredientRecord({ _count: { recipeIngredients: 1 }, imageKey: "ingredient-image" });
+  const intent = { kind: "deleteIngredient", targetName: null };
+  assert.equal((await previewMutation(intent)).ok, false);
+  state.records.ingredient._count.recipeIngredients = 0;
+  const preview = await previewMutation(intent);
+  state.records.ingredient._count.recipeIngredients = 1;
+  state.allowWrites = true;
+  assert.equal((await actions.confirmInventoryMutation(preview.data)).ok, false);
+  assert.equal(state.writes.length, 0);
+  assert.equal(state.storageDeletes.length, 0);
+});
+
+test("stale deletes never remove images; confirmed deletes clean up only after deleting the row", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.ingredient = ingredientRecord({ imageKey: "ingredient-image" });
+  const preview = await previewMutation({ kind: "deleteIngredient", targetName: null });
+  state.records.ingredient.updatedAt = new Date("2026-10-22T10:01:00.000Z");
+  state.allowWrites = true;
+  assert.equal((await actions.confirmInventoryMutation(preview.data)).ok, false);
+  assert.equal(state.storageDeletes.length, 0);
+  const fresh = await previewMutation({ kind: "deleteIngredient", targetName: null });
+  state.storageError = true;
+  const deleted = await actions.confirmInventoryMutation(fresh.data);
+  assert.equal(deleted.ok, true);
+  assert.equal(deleted.data.operation, "deleted");
+  assert.equal(state.records.ingredient, null);
+  assert.deepEqual(state.storageDeletes, ["ingredient-image"]);
+  assert.deepEqual(state.writes[0].args.where.recipeIngredients, { none: {} });
+  assert.equal((await actions.confirmInventoryMutation(fresh.data)).ok, false);
+  assert.equal(state.storageDeletes.length, 1);
+});
+
+test("stuff delete requires confirmation and an unchanged version", async () => {
+  state.records.stuff = stuffRecord();
+  const preview = await previewMutation({ kind: "deleteStuff", targetName: null }, "stuff");
+  assert.equal(state.records.stuff.inStock, 10);
+  state.allowWrites = true;
+  assert.equal((await actions.confirmInventoryMutation(preview.data)).ok, true);
+  assert.equal(state.records.stuff, null);
+});
+
+test("mutation actions require admin before reads or writes, even with a valid preview", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.stuff = stuffRecord();
+  const intent = { kind: "deleteStuff", targetName: null };
+  const preview = await previewMutation(intent, "stuff");
+  state.admin = false;
+  state.reads = [];
+  assert.equal((await actions.previewInventoryMutation(intent, { entity: "stuff", id: 2 })).ok, false);
+  assert.equal((await actions.confirmInventoryMutation(preview.data)).ok, false);
+  assert.equal((await ingredientActions.createIngredient({ title: "Сіль", description: "", category: "SPICES", isInStock: true })).ok, false);
+  assert.equal((await stuffActions.createStuff({ title: "Стрічка", category: "DECOR", inStock: 1 })).ok, false);
+  assert.equal(state.reads.length, 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test("tampered previews reject extra fields, fractional stock and invalid categories", async (t) => {
+  t.mock.method(console, "error", () => {});
+  const data = { title: "Матеріал", description: "", category: "JARS", inStock: 1 };
+  for (const after of [{ ...data, id: 999 }, { ...data, inStock: 1.5 }, { ...data, category: "SPICES" }, { ...data, title: " " }]) {
+    assert.equal((await actions.confirmInventoryMutation({ kind: "createStuff", after })).ok, false);
+  }
+  assert.equal(state.writes.length, 0);
+});
+
+test("manual CRUD shares validation, preserves saved state, and accepts optional stuff descriptions", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.allowWrites = true;
+  const invalidStuff = await stuffActions.createStuff({ title: "Слоїчки", category: "JARS", inStock: 1.5 });
+  assert.equal(invalidStuff.ok, false);
+  const created = await stuffActions.createStuff({ title: "  Стрічка  ", category: "DECOR", inStock: 3 });
+  assert.equal(created.ok, true);
+  assert.equal(created.data.title, "Стрічка");
+  assert.equal(created.data.description, null);
+  state.records.ingredient = ingredientRecord();
+  const edit = await ingredientActions.editIngredient(1, { title: "Куркума", description: "Опис", category: "SPICES", isInStock: false });
+  assert.equal(edit.ok, true);
+  assert.equal(state.records.ingredient.isSaved, true);
+  assert.equal("isSaved" in state.writes.at(-1).args.data, false);
 });

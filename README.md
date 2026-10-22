@@ -6,6 +6,8 @@ For the admin AI ingredient assistant, see the [step-by-step setup and implement
 
 For natural-language inventory search, record selection and follow-up questions, see the [AI search guide](docs/ai-search.md).
 
+For ingredient/stuff creation, editing, availability, stock and deletion with confirmation, see the [AI CRUD guide](docs/ai-crud.md).
+
 First, run the development server:
 
 ```bash

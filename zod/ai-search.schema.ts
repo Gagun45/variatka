@@ -1,5 +1,6 @@
 import z from "zod";
 import { ingredientDraftSchema, aiPromptSchema } from "./ai.schema";
+import { inventoryMutationIntentSchema } from "./ai-mutation.schema";
 
 const text = z.string().trim().min(1).max(200).nullable();
 const flag = z.boolean().nullable();
@@ -61,8 +62,9 @@ export const assistantRequestSchema = z.strictObject({
 });
 
 export const assistantPlanSchema = ingredientDraftSchema.extend({
-  operation: z.enum(["search", "viewSelected", "createIngredient", "unsupported"]),
+  operation: z.enum(["search", "viewSelected", "createIngredient", "mutation", "unsupported"]),
   search: inventorySearchSchema.nullable(),
+  mutation: inventoryMutationIntentSchema.nullable(),
 });
 
 export type InventorySearch = z.infer<typeof inventorySearchSchema>;

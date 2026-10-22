@@ -1,6 +1,6 @@
 # AI search and record selection
 
-The admin assistant at `/admin/ai` now searches ingredients, recipes and stuff, displays matching records, and lets you select one for detail questions. Existing ingredient creation with preview/confirmation remains available. Search, selection and detail questions make no database changes.
+The admin assistant at `/admin/ai` searches ingredients, recipes and stuff, displays matching records, and lets you select one for detail questions. [Ingredient and stuff CRUD](ai-crud.md) is also available with preview/confirmation. Search, selection and detail questions make no database changes.
 
 ## 1. Start with your existing setup
 
@@ -86,7 +86,7 @@ Loading more uses a database action directly, without another AI call. Searches 
 - Stuff stock is a nonnegative integer; stock/spiciness range bounds are inclusive. Spiciness is 0–4. For example, “less than 10” becomes a maximum of 9.
 - Searches do not default to public-only recipes: admins can find hidden and unconfirmed recipes.
 - Prompts are limited to 2000 characters, text filters to 200, and included/excluded ingredient lists to 8 terms each. Pagination is bounded. Unsupported filters such as prices or dates should produce a clarification rather than silently changing the query.
-- Updates/deletes and creating recipes/stuff are still unsupported. Only the existing create-ingredient preview can lead to a write, after confirmation. Orders are excluded.
+- Ingredients and stuff support create/update/delete through separate confirmation previews. Recipe writes and orders remain excluded; see the [CRUD guide](ai-crud.md).
 
 ## Implementation map
 
@@ -98,7 +98,7 @@ Loading more uses a database action directly, without another AI call. Searches 
 6. `lib/actions/ai.actions.ts`: authenticated chat routing, direct search/pagination and selection/detail actions.
 7. `InventorySearchView.tsx` and `AiAssistant.tsx`: filters/results, selection, detail panels and transient session context.
 
-This still uses structured plans rather than a provider tool-calling loop. Adding future mutations should reuse the resolved selection and require a before/after preview plus explicit confirmation.
+This still uses structured plans rather than a provider tool-calling loop. Ingredient/stuff mutations reuse resolved selections with before/after previews and explicit confirmation. The same approach can be extended to recipe writes later.
 
 ## Verification
 
