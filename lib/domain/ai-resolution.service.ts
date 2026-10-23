@@ -2,7 +2,7 @@ import type { PendingWrite, ResumeWrite } from "@/zod/ai-resolution.schema";
 import type { RecordSelection } from "@/zod/ai-search.schema";
 import type { InventoryResult } from "../ai/inventory.types";
 import { inventoryCategoryLabels } from "../ai/inventory-labels";
-import { candidateNames, matchNames } from "../ai/name-resolution";
+import { candidateNames, matchNames, literalNames } from "../ai/name-resolution";
 import { AppError } from "../error";
 import { prisma } from "../prisma";
 
@@ -25,6 +25,17 @@ async function records(entity: Entity, name: string, mode: "exact" | "partial", 
   const args = { where: { title }, select, orderBy: [{ title: "asc" as const }, { id: "asc" as const }], skip: page * PAGE_SIZE, take: PAGE_SIZE + 1 };
   return entity === "ingredient" ? prisma.ingredient.findMany(args) : entity === "stuff" ? prisma.stuff.findMany(args) : prisma.recipe.findMany(args);
 }
+async function tolerantRecords(entity: Entity, name: string) {
+  const rows: RecordData[] = [];
+  for (let page = 0; ; page++) {
+    const args = { where: {}, select, orderBy: [{ title: "asc" as const }, { id: "asc" as const }], skip: page * 250, take: 250 };
+    const chunk = entity === "ingredient" ? await prisma.ingredient.findMany(args) : entity === "stuff" ? await prisma.stuff.findMany(args) : await prisma.recipe.findMany(args);
+    rows.push(...chunk);
+    if (chunk.length < 250) break;
+  }
+  return matchNames(name, rows);
+}
+
 async function record(entity: Entity, id: number) {
   const args = { where: { id }, select };
   return entity === "ingredient" ? prisma.ingredient.findUnique(args) : entity === "stuff" ? prisma.stuff.findUnique(args) : prisma.recipe.findUnique(args);
@@ -60,28 +71,30 @@ export class WriteResolution {
     const { saved, selection } = this.chosen(key, entity);
     if (saved && selection) {
       const current = await record(entity, selection.id);
-      if (!current || current.title !== saved.title || !current.title.toLocaleLowerCase("uk").includes(name.toLocaleLowerCase("uk"))) throw new AppError(`Обраний запис «${saved.title}» змінився або видалений. Підготуйте новий запит.`, "STALE_PREVIEW");
+      if (!current || current.title !== saved.title || !matchNames(name, [current]).length) throw new AppError(`Обраний запис «${saved.title}» змінився або видалений. Підготуйте новий запит.`, "STALE_PREVIEW");
       return current;
     }
     const exact = await records(entity, name, "exact");
     // Literal spelling wins over case-only legacy alternatives.
     const literal = exact.find((item) => item.title === name);
     const mode = exact.length ? "exact" : "partial";
-    const first = literal ? [literal] : exact.length ? exact : await records(entity, name, "partial");
+    const partial = exact.length ? [] : await records(entity, name, "partial");
+    const approximate = !exact.length && !partial.length;
+    const first = literal ? [literal] : exact.length ? exact : partial.length ? partial : await tolerantRecords(entity, name);
     if (selection) {
       const current = await record(entity, selection.id);
-      const matches = current && (literal ? current.id === literal.id : mode === "exact" ? current.title.toLocaleLowerCase("uk") === name.toLocaleLowerCase("uk") : current.title.toLocaleLowerCase("uk").includes(name.toLocaleLowerCase("uk")));
+      const matches = current && (literal ? current.id === literal.id : mode === "exact" ? current.title.toLocaleLowerCase("uk") === name.toLocaleLowerCase("uk") : approximate ? first.some((row) => row.id === current.id) : current.title.toLocaleLowerCase("uk").includes(name.toLocaleLowerCase("uk")));
       if (!matches || !current) throw new AppError("Обраний запис більше не відповідає запиту. Оновіть варіанти або змініть запит.", "STALE_PREVIEW");
       this.remember(key, entity, current);
       return current;
     }
-    if (first.length === 1) { this.remember(key, entity, first[0]); return first[0]; }
+    if (first.length === 1 && !approximate) { this.remember(key, entity, first[0]); return first[0]; }
     if (!first.length) {
       if (allowMissing) return null;
       throw new AppError(`Запис «${name}» не знайдено. Уточніть назву.`, "NOT_FOUND");
     }
     const page = this.input?.page?.key === key ? this.input.page.number : 0;
-    const rows = page === 0 ? first : await records(entity, name, mode, page);
+    const rows = approximate ? first.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE + 1) : page === 0 ? first : await records(entity, name, mode, page);
     this.question(key, name, context, entity, rows, page);
     return null;
   }
@@ -90,11 +103,11 @@ export class WriteResolution {
     const candidates = matchNames(name, items);
     if (selection) {
       const chosen = (saved ? items : candidates).find((item) => item.id === selection.id);
-      if (!chosen || (saved && (chosen.title !== saved.title || !chosen.title.toLocaleLowerCase("uk").includes(name.toLocaleLowerCase("uk"))))) throw new AppError("Обраний інгредієнт більше не відповідає складу рецепта.", "STALE_PREVIEW");
+      if (!chosen || (saved && (chosen.title !== saved.title || !matchNames(name, [chosen]).length))) throw new AppError("Обраний інгредієнт більше не відповідає складу рецепта.", "STALE_PREVIEW");
       this.remember(key, "ingredient", { ...chosen, id: selection.id });
       return chosen;
     }
-    if (candidates.length === 1 && candidates[0].id !== null) {
+    if (candidates.length === 1 && literalNames(name, items).length > 0 && candidates[0].id !== null) {
       this.remember(key, "ingredient", { ...candidates[0], id: candidates[0].id });
       return candidates[0];
     }

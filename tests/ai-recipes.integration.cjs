@@ -475,6 +475,48 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal(untouched.ingredients.every((item) => item.amount === "10 г"), true);
     });
 
+    await t.test("tolerant search preserves SQL filters and approximate writes require choice before confirmation", async () => {
+      const pepper = await client.ingredient.create({ data: ingredientData("Чорний перець мелений", { isInStock: true }) });
+      const turmeric = await client.ingredient.create({ data: ingredientData("Куркума") });
+      const filters = { entity: "ingredient", text: "перець чорний", category: null, isInStock: true, isSaved: null };
+      const reordered = await actions.searchInventoryRecords(filters);
+      assert.equal(reordered.ok, true);
+      assert.deepEqual(reordered.data.items.map((row) => row.id), [pepper.id]);
+      assert.equal((await actions.searchInventoryRecords({ ...filters, isInStock: false })).data.items.length, 0);
+      assert.deepEqual((await actions.searchInventoryRecords({ ...filters, text: "куркумма", isInStock: false })).data.items.map((row) => row.id), [turmeric.id]);
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "updateIngredient", targetName: "куркумма", patch: ingredientPatch({ isInStock: true }) } } };
+      const initial = await actions.askInventoryAssistant({ prompt: "Познач інгредієнт куркумма як наявний", selected: null, previousSearch: null, clarification: null });
+      assert.equal(initial.ok, true);
+      assert.equal(initial.data.operation, "chooseRecord");
+      assert.deepEqual(initial.data.question.candidates.map((row) => row.id), [turmeric.id]);
+      assert.equal((await client.ingredient.findUnique({ where: { id: turmeric.id } })).isInStock, false);
+      const ready = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "ingredient", id: turmeric.id } }, page: null });
+      assert.equal(ready.ok, true);
+      assert.equal(ready.data.operation, "mutation");
+      assert.equal((await client.ingredient.findUnique({ where: { id: turmeric.id } })).isInStock, false);
+      assert.equal((await actions.confirmInventoryMutation(ready.data.preview)).ok, true);
+      assert.equal((await client.ingredient.findUnique({ where: { id: turmeric.id } })).isInStock, true);
+    });
+
+    await t.test("recipe ingredient filters and dependency resolution tolerate spelling without duplicate creation", async () => {
+      const turmeric = await client.ingredient.findUnique({ where: { title: "Куркума" } });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "createRecipe", data: recipeData("Tolerance sauce"), ingredients: [named("куркумма")] } } };
+      const initial = await actions.askInventoryAssistant({ prompt: "Створи рецепт з куркуммою", selected: null, previousSearch: null, clarification: null });
+      assert.equal(initial.data.operation, "chooseRecord");
+      const ready = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "ingredient", id: turmeric.id } }, page: null });
+      assert.equal(ready.ok, true);
+      assert.deepEqual(ready.data.preview.items.map((item) => item.kind), ["createRecipe"]);
+      assert.equal((await actions.confirmInventoryBatch(ready.data.preview)).ok, true);
+      assert.equal(await client.ingredient.count({ where: { title: "куркумма" } }), 0);
+      const search = { entity: "recipe", text: null, category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: ["куркумма"], excludeIngredients: [] };
+      const included = await actions.searchInventoryRecords(search);
+      assert.equal(included.ok, true);
+      assert.deepEqual(included.data.items.map((row) => row.title), ["Tolerance sauce"]);
+      const excluded = await actions.searchInventoryRecords({ ...search, text: "Tolerance sauce", includeIngredients: [], excludeIngredients: ["куркумма"] });
+      assert.equal(excluded.ok, true);
+      assert.equal(excluded.data.items.length, 0);
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;

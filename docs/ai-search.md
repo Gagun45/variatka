@@ -26,7 +26,7 @@ Try these prompts individually:
 | Покажи негострі рецепти серії Nomly Gold | Recipes, NOMLYGOLD, spiciness 0 |
 | Які рецепти можна приготувати з наявних інгредієнтів? | Nonempty recipes with every ingredient available |
 | Знайди слоїчки із залишком менше 10 | Stuff, JARS, stock at most 9 |
-| Знайди все з назвою або описом «перець» | All three types, literal text search |
+| Знайди все з назвою або описом «перець» | All three types, title/description search |
 
 The result panel displays the actual applied filters. Check them before interpreting the results: AI can misunderstand a sentence even when the filter values are valid. If the requested entity or condition is unclear/unsupported, the assistant is instructed to ask for clarification.
 
@@ -78,7 +78,7 @@ Loading more uses a database action directly, without another AI call. Searches 
 
 ## Search semantics and limits
 
-- Title/description matching is a case-insensitive literal substring search. Ingredient inclusion/exclusion matches ingredient titles. AI is instructed to normalize Ukrainian word forms or use a clear stem; there is no linguistic search engine, synonym dictionary, or vector search. Rephrase or shorten a term if needed.
+- Title/description search ranks exact and substring matches ahead of tolerant word-order, normalization and spelling matches. Ingredient inclusion/exclusion also uses tolerant title matching. There is no synonym dictionary or vector search; see [name matching](ai-name-matching.md).
 - Specified filters are combined with AND. All included ingredient terms must match; none of the excluded terms may match. This is based on recorded composition, not inferred dietary/allergen guarantees.
 - Ingredient availability is a boolean, not a quantity.
 - Recipe finished-product availability means at least one variant has positive stock. A recipe without variants is unavailable.

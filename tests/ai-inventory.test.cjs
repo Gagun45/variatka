@@ -41,9 +41,14 @@ const prisma = Object.fromEntries(["ingredient", "recipe", "stuff"].map((entity)
   findMany: async (args) => {
     state.reads.push({ entity, args });
     let rows = state.rows[entity];
+    if (args.where.id?.in) rows = rows.filter((record) => args.where.id.in.includes(record.id));
+    if (args.where.title?.contains) {
+      const query = args.where.title.contains.replace(/\\([%_\\])/g, "$1").toLowerCase();
+      rows = rows.filter((record) => record.title.toLowerCase().includes(query));
+    }
     if (args.where.title?.equals) rows = rows.filter((record) => record.title.toLowerCase() === args.where.title.equals.toLowerCase());
     const skip = args.skip ?? 0;
-    return rows.slice(skip, skip + args.take).map((record) => project(record, args.select));
+    return rows.slice(skip, args.take === undefined ? undefined : skip + args.take).map((record) => project(record, args.select));
   },
   findUnique: async (args) => {
     state.reads.push({ entity, args });
@@ -741,7 +746,7 @@ test("name matching prefers exact titles, allows unique substrings and retains a
   assert.deepEqual(matchNames("часник", names), [names[0]]);
   assert.deepEqual(matchNames("сушений", names), [names[2]]);
   assert.equal(matchNames("час", names).length, 3);
-  assert.deepEqual(matchNames("часнк", names), []);
+  assert.equal(matchNames("часнк", names).length, 3);
   assert.deepEqual(matchNames("%", names), []);
 });
 
@@ -956,5 +961,78 @@ test("resuming ambiguity requires admin and validates the continuation before re
   ]) assert.equal((await actions.resumeInventoryWrite(bad)).ok, false);
   assert.equal(state.reads.length, 0);
   assert.equal(state.apiCalls.length, 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test("tolerant names support word order, spelling, inflection, punctuation and units without changing sizes", () => {
+  const { nameMatchScore, matchNames } = require("../lib/ai/name-resolution.ts");
+  for (const [query, title] of [
+    ["перець чорний", "Чорний перець мелений"],
+    ["куркумма", "Куркума"],
+    ["часником", "Часник сушений"],
+    ["слоїчки 250мл", "Слоїчки — 250 мл"],
+    ["м'ята", "М’ята"],
+  ]) assert.notEqual(nameMatchScore(query, title), null, `${query}: ${title}`);
+  for (const [query, title] of [
+    ["слоїчки 250 мл", "Слоїчки 500 мл"],
+    ["250", "Слоїчки 1250 мл"],
+    ["сіль", "Ваніль"],
+    ["перець чорний", "Перець червоний"],
+    ["сіль сіль", "Сіль"],
+    ["куркума", "Часник"],
+  ]) assert.equal(nameMatchScore(query, title), null, `${query}: ${title}`);
+  assert.deepEqual(matchNames("Куркума", [{ title: "Куркума мелена" }, { title: "Куркума" }]), [{ title: "Куркума" }]);
+});
+
+test("reordered and typo searches return real records with deterministic ranked pagination", async () => {
+  state.rows.ingredient = [
+    { ...row(1), title: "Чорний перець мелений" },
+    { ...row(2), title: "Червоний перець" },
+    { ...row(3), title: "Куркума" },
+  ];
+  const reordered = await actions.searchInventoryRecords({ ...ingredient, text: "перець чорний" });
+  assert.equal(reordered.ok, true);
+  assert.deepEqual(reordered.data.items.map((item) => item.id), [1]);
+  const typo = await actions.searchInventoryRecords({ ...ingredient, text: "куркумма" });
+  assert.equal(typo.ok, true);
+  assert.deepEqual(typo.data.items.map((item) => item.id), [3]);
+  state.rows.ingredient = Array.from({ length: 260 }, (_, i) => ({ ...row(i + 1), title: `Куркума мелена ${String(i).padStart(3, "0")}` }));
+  const first = await actions.searchInventoryRecords({ ...ingredient, text: "мелена куркума" });
+  const second = await actions.searchInventoryRecords({ ...ingredient, text: "мелена куркума" }, 1);
+  assert.equal(first.data.items.length, 20);
+  assert.equal(first.data.hasMore, true);
+  assert.equal(second.data.items.length, 20);
+  assert.equal(first.data.items.some((item) => second.data.items.some((other) => item.id === other.id)), false);
+  assert.equal(state.writes.length, 0);
+});
+
+test("a single approximate write match needs an explicit choice and can resume safely", async () => {
+  const { WriteResolution, RecordChoiceRequired } = require("../lib/domain/ai-resolution.service.ts");
+  const target = ingredientRecord({ title: "Куркума" });
+  state.rows.ingredient = [target];
+  state.records.ingredient = target;
+  await assert.rejects(new WriteResolution({ decisions: [] }).inventory("ingredient", "куркумма", "0:target", "Запис"), (error) => {
+    assert.equal(error instanceof RecordChoiceRequired, true);
+    assert.deepEqual(error.question.candidates.map((item) => item.id), [target.id]);
+    return true;
+  });
+  const choice = { key: "0:target", selection: { entity: "ingredient", id: target.id } };
+  const resolution = new WriteResolution({ decisions: [] }, { choice });
+  assert.equal((await resolution.inventory("ingredient", "куркумма", "0:target", "Запис")).id, target.id);
+  resolution.validateChoice();
+  assert.equal((await new WriteResolution({ decisions: resolution.decisions }).inventory("ingredient", "куркумма", "0:target", "Запис")).id, target.id);
+  state.records.ingredient = { ...target, title: "Змінена назва" };
+  await assert.rejects(new WriteResolution({ decisions: resolution.decisions }).inventory("ingredient", "куркумма", "0:target", "Запис"), /змінився/);
+  assert.equal(state.writes.length, 0);
+});
+
+test("approximate recipe ingredients need selection instead of duplicate creation or automatic composition edits", async () => {
+  const { WriteResolution, RecordChoiceRequired } = require("../lib/domain/ai-resolution.service.ts");
+  const target = ingredientRecord({ title: "Куркума" });
+  state.rows.ingredient = [target];
+  const resolution = new WriteResolution({ decisions: [] });
+  await assert.rejects(resolution.inventory("ingredient", "куркумма", "0:ingredient:0", "Склад", true), RecordChoiceRequired);
+  const items = [{ id: target.id, title: target.title, amount: "5 г", category: "SPICES" }];
+  assert.throws(() => resolution.composition("куркумма", items, "0:composition:0", "Склад"), RecordChoiceRequired);
   assert.equal(state.writes.length, 0);
 });

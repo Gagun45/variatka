@@ -3,6 +3,7 @@ import type { InventoryRecord, InventoryResult, InventorySearchResult } from "..
 import { ingredientWhere, recipeWhere, stuffWhere } from "../ai/inventory-search";
 import { inventoryCategoryLabels as categories, inventorySeriesLabels as series } from "../ai/inventory-labels";
 import { AppError } from "../error";
+import { nameMatchScore } from "../ai/name-resolution";
 import { prisma } from "../prisma";
 
 export const SEARCH_PAGE_SIZE = 20;
@@ -18,6 +19,42 @@ export function validateSearchRanges(search: InventorySearch) {
   }
 }
 
+// Match compact lookup fields in bounded database pages, never send the catalogue
+// to the model. Structured category/status filters are still applied by PostgreSQL.
+async function textMatches(search: Exclude<InventorySearch, { entity: "all" }>) {
+  const text = search.text!;
+  const recipeFilters = search.entity === "recipe" ? await recipeSearchWhere({ ...search, text: null }) : {};
+  const found: { id: number; title: string; score: number }[] = [];
+  for (let page = 0; ; page++) {
+    const args = { where: {}, select: { id: true, title: true, description: true }, orderBy: [{ title: "asc" as const }, { id: "asc" as const }], skip: page * 250, take: 250 };
+    const rows = search.entity === "ingredient" ? await prisma.ingredient.findMany({ ...args, where: ingredientWhere({ ...search, text: null }) }) : search.entity === "stuff" ? await prisma.stuff.findMany({ ...args, where: stuffWhere({ ...search, text: null }) }) : await prisma.recipe.findMany({ ...args, where: recipeFilters });
+    for (const row of rows) {
+      const titleScore = nameMatchScore(text, row.title);
+      const descriptionScore = row.description ? nameMatchScore(text, row.description) : null;
+      const score = titleScore ?? (descriptionScore === null ? null : descriptionScore + 10);
+      if (score !== null) found.push({ id: row.id, title: row.title, score });
+    }
+    if (rows.length < 250) break;
+  }
+  return found.sort((a, b) => a.score - b.score || a.title.localeCompare(b.title, "uk") || a.id - b.id);
+}
+
+async function recipeSearchWhere(search: Extract<InventorySearch, { entity: "recipe" }>) {
+  if (!search.includeIngredients.length && !search.excludeIngredients.length) return recipeWhere(search);
+  const ingredients: { id: number; title: string }[] = [];
+  for (let page = 0; ; page++) {
+    const chunk = await prisma.ingredient.findMany({ where: {}, select: { id: true, title: true }, orderBy: [{ title: "asc" }, { id: "asc" }], skip: page * 250, take: 250 });
+    ingredients.push(...chunk);
+    if (chunk.length < 250) break;
+  }
+  const where = recipeWhere({ ...search, includeIngredients: [], excludeIngredients: [] });
+  const AND = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+  const ids = (name: string) => ingredients.filter((row) => nameMatchScore(name, row.title) !== null).map((row) => row.id);
+  for (const name of search.includeIngredients) AND.push({ ingredients: { some: { ingredientId: { in: ids(name) } } } });
+  for (const name of search.excludeIngredients) AND.push({ ingredients: { none: { ingredientId: { in: ids(name) } } } });
+  return { ...where, AND };
+}
+
 export async function searchInventory(search: InventorySearch, page = 0): Promise<InventorySearchResult> {
   validateSearchRanges(search);
   const paging = { skip: page * SEARCH_PAGE_SIZE, take: SEARCH_PAGE_SIZE + 1, orderBy: [{ title: "asc" as const }, { id: "asc" as const }] };
@@ -31,16 +68,23 @@ export async function searchInventory(search: InventorySearch, page = 0): Promis
     return { search, page, items: groups.flatMap((group) => group.items), hasMore: groups.some((group) => group.hasMore) };
   }
 
+  const matching = search.text ? await textMatches(search) : null;
+  const textFilter = matching ? { id: { in: matching.slice(page * SEARCH_PAGE_SIZE, (page + 1) * SEARCH_PAGE_SIZE + 1).map((row) => row.id) } } : {};
+  const readPaging = matching ? { orderBy: paging.orderBy } : paging;
   let items: InventoryResult[];
   if (search.entity === "ingredient") {
-    const records = await prisma.ingredient.findMany({ ...paging, where: ingredientWhere(search), select: { id: true, title: true, category: true, isInStock: true } });
+    const records = await prisma.ingredient.findMany({ ...readPaging, where: { ...ingredientWhere({ ...search, text: null }), ...textFilter }, select: { id: true, title: true, category: true, isInStock: true } });
     items = records.map((record) => ({ entity: "ingredient", id: record.id, title: record.title, summary: `${categories[record.category]} · ${stockLabel(record.isInStock)}` }));
   } else if (search.entity === "stuff") {
-    const records = await prisma.stuff.findMany({ ...paging, where: stuffWhere(search), select: { id: true, title: true, category: true, inStock: true } });
+    const records = await prisma.stuff.findMany({ ...readPaging, where: { ...stuffWhere({ ...search, text: null }), ...textFilter }, select: { id: true, title: true, category: true, inStock: true } });
     items = records.map((record) => ({ entity: "stuff", id: record.id, title: record.title, summary: `${categories[record.category]} · Залишок: ${record.inStock}` }));
   } else {
-    const records = await prisma.recipe.findMany({ ...paging, where: recipeWhere(search), select: { id: true, title: true, category: true, isHidden: true, isConfirmed: true, spicy: true } });
+    const records = await prisma.recipe.findMany({ ...readPaging, where: { ...await recipeSearchWhere({ ...search, text: null }), ...textFilter }, select: { id: true, title: true, category: true, isHidden: true, isConfirmed: true, spicy: true } });
     items = records.map((record) => ({ entity: "recipe", id: record.id, title: record.title, summary: `${categories[record.category]} · Гострота: ${record.spicy}/4 · ${record.isHidden ? "Прихований" : "Видимий"} · ${record.isConfirmed ? "Підтверджений" : "Не підтверджений"}` }));
+  }
+  if (matching) {
+    const ranks = new Map(matching.map((row, index) => [row.id, index]));
+    items = items.filter((item) => ranks.has(item.id)).sort((a, b) => ranks.get(a.id)! - ranks.get(b.id)!);
   }
   return { search, page, hasMore: items.length > SEARCH_PAGE_SIZE, items: items.slice(0, SEARCH_PAGE_SIZE) };
 }
