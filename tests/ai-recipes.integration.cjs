@@ -602,6 +602,93 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal(edited.code, "CONFLICT");
     });
 
+    await t.test("expanded search fields execute against stored columns and relationships", async (sub) => {
+      const linked = await client.ingredient.create({ data: ingredientData("Stored ingredient linked", { description: null }) });
+      const unused = await client.ingredient.create({ data: ingredientData("Stored ingredient unused", { description: "Опис", imageKey: "ingredient-photo" }) });
+      const a = await client.recipe.create({ data: { ...recipeData("Stored fields A", { notes: "менше оцту; перевірити 50%_", confirmationNotes: "Контроль солі" }), ingredients: { create: [{ ingredientId: linked.id, amount: "5 г" }] }, variants: { create: [{ label: "250 г", inStock: 0 }, { label: "500 г", inStock: 9 }] } } });
+      const b = await client.recipe.create({ data: { ...recipeData("Stored fields B", { description: "менше оцту", imageKey: "recipe-photo" }), variants: { create: [{ label: "250 г", inStock: 7 }] } } });
+      const c = await client.recipe.create({ data: { ...recipeData("Stored fields C", { notes: "менше оцту", imageKey: "", confirmationNotes: "" }), variants: { create: [{ label: "250 г", inStock: 0 }] } } });
+      const d = await client.recipe.create({ data: recipeData("Stored fields D", { description: "Опис", imageKey: "other-photo" }) });
+      const base = { entity: "recipe", text: null, titleText: "Stored fields", category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] };
+      async function ids(search) {
+        const result = await actions.searchInventoryRecords(search);
+        assert.equal(result.ok, true, result.message);
+        return result.data.items.map((row) => row.id);
+      }
+      await sub.test("photo absence and scoped notes prompts keep their actual conditions", async () => {
+        for (const [prompt, filters, expected] of [
+          ["Покажи рецепти без фото", { hasImage: false }, [a.id, c.id]],
+          ["Знайди рецепти, де в нотатках є менше оцту", { notesText: "менше оцту" }, [a.id, c.id]],
+        ]) {
+          modelPlan = { message: "Пошук", assumptions: [], command: { kind: "search", search: { ...base, ...filters } } };
+          const result = await actions.askInventoryAssistant({ prompt, selected: null, previousSearch: null, clarification: null });
+          assert.equal(result.ok, true);
+          assert.deepEqual(result.data.results.items.map((row) => row.id), expected);
+        }
+        assert.deepEqual(await ids({ ...base, notesText: "50%_" }), [a.id]);
+        assert.deepEqual(await ids({ ...base, notesText: "50%X" }), []);
+        assert.deepEqual((await ids({ ...base, text: "менше оцту" })).sort((x, y) => x - y), [a.id, b.id, c.id]);
+        assert.deepEqual(await ids({ ...base, confirmationNotesText: "Контроль солі" }), [a.id]);
+        assert.deepEqual(await ids({ ...base, text: "Контроль солі" }), [a.id]);
+        assert.deepEqual(await ids({ ...base, descriptionText: "менше оцту" }), [b.id]);
+      });
+      await sub.test("missing text/composition and ingredient usage preserve null, empty and false", async () => {
+        assert.deepEqual(await ids({ ...base, hasImage: true }), [b.id, d.id]);
+        assert.deepEqual(await ids({ ...base, hasDescription: false }), [a.id, c.id]);
+        assert.deepEqual(await ids({ ...base, hasDescription: true }), [b.id, d.id]);
+        assert.deepEqual(await ids({ ...base, hasNotes: false }), [b.id, d.id]);
+        assert.deepEqual(await ids({ ...base, hasConfirmationNotes: false }), [b.id, c.id, d.id]);
+        assert.deepEqual(await ids({ ...base, hasIngredients: false }), [b.id, c.id, d.id]);
+        assert.deepEqual(await ids({ ...base, hasIngredients: true }), [a.id]);
+        assert.deepEqual(await ids({ ...base, hasVariants: false }), [d.id]);
+        assert.deepEqual(await ids({ ...base, hasVariants: true }), [a.id, b.id, c.id]);
+        const ingredients = { entity: "ingredient", text: null, titleText: "Stored ingredient", category: null, isInStock: null, isSaved: null };
+        assert.deepEqual(await ids({ ...ingredients, usedInRecipes: false, hasImage: true }), [unused.id]);
+        assert.deepEqual(await ids({ ...ingredients, usedInRecipes: true, hasDescription: false }), [linked.id]);
+      });
+      await sub.test("variant label and stock refer to the same variant, and missing variants are not zero stock", async () => {
+        assert.deepEqual(await ids({ ...base, variantLabel: "250 г", variantInStock: true }), [b.id]);
+        assert.deepEqual(await ids({ ...base, variantLabel: "250 г", variantInStock: false }), [a.id, c.id]);
+        assert.deepEqual(await ids({ ...base, variantLabel: "250 г", variantStockMin: 2, variantStockMax: 8 }), [b.id]);
+        assert.deepEqual(await ids({ ...base, variantLabel: "250 г", variantStockMin: 8 }), []);
+        assert.deepEqual(await ids({ ...base, isInStock: true }), [a.id, b.id]);
+      });
+      await sub.test("new filters survive clarification/refinement and frozen atomic batch previews", async () => {
+        modelPlan = { message: "Пошук", assumptions: [], command: { kind: "search", search: { ...base, hasImage: false, notesText: "менше оцту", isHidden: true } } };
+        const result = await actions.askInventoryAssistant({ prompt: "А лише приховані", selected: null, previousSearch: { ...base, hasImage: false, notesText: "менше оцту" }, clarification: null });
+        assert.equal(result.ok, true);
+        assert.deepEqual(result.data.results.items.map((row) => row.id), [a.id, c.id]);
+        const preview = await prepareInventoryBatch({ kind: "filter", search: { ...base, hasImage: false, notesText: "менше оцту" }, change: { kind: "updateRecipes", patch: recipePatch({ isSaved: true }) } }, null);
+        assert.deepEqual(preview.items.map((row) => row.target.id), [a.id, c.id]);
+        const late = await client.recipe.create({ data: recipeData("Stored fields late", { notes: "менше оцту" }) });
+        await applyInventoryBatch(preview);
+        assert.equal((await client.recipe.findUnique({ where: { id: a.id } })).isSaved, true);
+        assert.equal((await client.recipe.findUnique({ where: { id: c.id } })).isSaved, true);
+        assert.equal((await client.recipe.findUnique({ where: { id: late.id } })).isSaved, false);
+      });
+    });
+
+    await t.test("calendar-date filters use inclusive/exclusive Kyiv boundaries for every entity", async () => {
+      const instants = ["2026-10-22T20:59:59.999Z", "2026-10-22T21:00:00.000Z", "2026-10-23T20:59:59.999Z", "2026-10-23T21:00:00.000Z"];
+      for (const [index, instant] of instants.entries()) {
+        const timestamps = { createdAt: new Date(instant), updatedAt: new Date(instant) };
+        await client.stuff.create({ data: { ...stuffData(`Calendar fixture ${index}`), ...timestamps } });
+        await client.ingredient.create({ data: { ...ingredientData(`Calendar fixture ${index}`), ...timestamps } });
+        await client.recipe.create({ data: { ...recipeData(`Calendar fixture ${index}`), ...timestamps } });
+      }
+      const filters = { entity: "all", text: null, titleText: "Calendar fixture", createdFrom: "2026-10-23", createdBefore: "2026-10-24", updatedFrom: "2026-10-23", updatedBefore: "2026-10-24" };
+      const found = await actions.searchInventoryRecords(filters);
+      assert.equal(found.ok, true);
+      assert.equal(found.data.items.length, 6);
+      const hit = found.data.items.find((row) => row.entity === "stuff");
+      const detail = await actions.getInventoryRecord({ entity: hit.entity, id: hit.id });
+      assert.equal(detail.ok, true);
+      assert.match(detail.data.fields.find((field) => field.label === "Створено (Київ)").value, /23\.10\./);
+      for (const entity of ["ingredient", "recipe", "stuff"]) assert.deepEqual(found.data.items.filter((row) => row.entity === entity).map((row) => row.title), ["Calendar fixture 1", "Calendar fixture 2"]);
+      const packaging = { entity: "stuff", text: null, titleText: "Calendar fixture", category: null, isInStock: null, stockMin: null, stockMax: null, hasDescription: false };
+      assert.equal((await actions.searchInventoryRecords(packaging)).data.items.length, 4);
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;

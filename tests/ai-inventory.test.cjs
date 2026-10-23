@@ -111,9 +111,9 @@ const actions = require("../lib/actions/ai.actions.ts");
 const ingredientActions = require("../lib/actions/ingredient.actions.ts");
 const stuffActions = require("../lib/actions/stuff.actions.ts");
 
-const ingredient = { entity: "ingredient", text: null, category: null, isInStock: null, isSaved: null };
-const recipe = { entity: "recipe", text: null, category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] };
-const stuff = { entity: "stuff", text: null, category: null, isInStock: null, stockMin: null, stockMax: null };
+const ingredient = schemas.inventorySearchSchema.parse({ entity: "ingredient", text: null, category: null, isInStock: null, isSaved: null });
+const recipe = schemas.inventorySearchSchema.parse({ entity: "recipe", text: null, category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] });
+const stuff = schemas.inventorySearchSchema.parse({ entity: "stuff", text: null, category: null, isInStock: null, stockMin: null, stockMax: null });
 const plan = (search) => ({ command: { kind: "search", search }, assumptions: [], message: "Пошук" });
 const request = (extra = {}) => ({ prompt: "Покажи спеції", selected: null, previousSearch: null, clarification: null, ...extra });
 const row = (id) => ({ id, title: `Запис ${id}`, category: "SPICES", isInStock: true, inStock: 3, spicy: 1, isHidden: false, isConfirmed: true });
@@ -304,6 +304,7 @@ test("strict model JSON Schema has required fields and uses supported anyOf bran
       assert.deepEqual([...schema.required].sort(), Object.keys(schema.properties).sort());
     }
     assert.equal("oneOf" in schema, false);
+    assert.equal("default" in schema, false);
     for (const value of Object.values(schema)) {
       if (Array.isArray(value)) value.forEach(inspect); else inspect(value);
     }
@@ -1141,4 +1142,67 @@ test("a newly appeared near match requires another review instead of inheriting 
   const state2 = new WriteResolution({ decisions: state1.decisions });
   await assert.rejects(state2.ingredientCreation("Куркумма", "0:createIngredient"), RecordChoiceRequired);
   assert.equal(state.writes.length, 0);
+});
+
+test("expanded search schemas preserve legacy inputs and reject unsupported fields and malformed dates", () => {
+  const legacy = { entity: "ingredient", text: null, category: null, isInStock: null, isSaved: null };
+  const parsed = schemas.inventorySearchSchema.parse(legacy);
+  assert.equal(parsed.hasImage, null);
+  assert.equal(parsed.createdFrom, null);
+  for (const value of [
+    { ...stuff, hasImage: false }, { ...ingredient, notesText: "secret" },
+    { ...recipe, createdFrom: "23/10/2026" }, { ...recipe, createdFrom: "2026-02-30" },
+    { ...recipe, variantStockMin: -1 }, { ...recipe, variantStockMax: 0.5 },
+    { entity: "all", text: null, hasImage: false },
+  ]) assert.equal(schemas.inventorySearchSchema.safeParse(value).success, false);
+});
+
+test("Kyiv calendar boundaries handle summer, winter, daylight saving and local today", () => {
+  const { inventoryDayStart, inventoryToday } = require("../lib/ai/search-dates.ts");
+  assert.equal(inventoryDayStart("2026-10-23").toISOString(), "2026-10-22T21:00:00.000Z");
+  assert.equal(inventoryDayStart("2026-01-23").toISOString(), "2026-01-22T22:00:00.000Z");
+  assert.equal((inventoryDayStart("2026-03-30") - inventoryDayStart("2026-03-29")) / 3600000, 23);
+  assert.equal((inventoryDayStart("2026-10-26") - inventoryDayStart("2026-10-25")) / 3600000, 25);
+  assert.equal(inventoryToday(new Date("2026-12-31T22:30:00Z")), "2027-01-01");
+});
+
+test("date and variant range errors stop before database reads", async (t) => {
+  t.mock.method(console, "error", () => {});
+  for (const value of [
+    { ...recipe, createdFrom: "2026-10-24", createdBefore: "2026-10-23" },
+    { ...stuff, updatedFrom: "2026-10-23", updatedBefore: "2026-10-23" },
+    { ...recipe, variantStockMin: 10, variantStockMax: 2 },
+  ]) assert.equal((await actions.searchInventoryRecords(value)).ok, false);
+  assert.equal(state.reads.length, 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test("new filters have Ukrainian labels that preserve false and zero", () => {
+  const { searchFilters } = require("../lib/ai/search-labels.ts");
+  const filters = searchFilters({ ...recipe, hasImage: false, notesText: "менше оцту", variantStockMax: 0, updatedFrom: "2026-10-23" });
+  for (const expected of ["Є фото: Ні", "У нотатках: менше оцту", "Залишок варіанта до: 0", "Оновлено від (Київ): 23.10.2026"]) assert.ok(filters.includes(expected));
+  assert.equal(filters.some((value) => value.includes("undefined") || value.includes("null")), false);
+});
+
+test("planner receives current Kyiv date and rules for scoped notes, images and same-variant filters", async () => {
+  state.plan = plan({ ...recipe, hasImage: false, notesText: "менше оцту" });
+  const reply = await actions.askInventoryAssistant(request({ prompt: "Покажи рецепти без фото, де в нотатках менше оцту" }));
+  assert.equal(reply.ok, true);
+  assert.equal(reply.data.results.search.hasImage, false);
+  assert.equal(reply.data.results.search.notesText, "менше оцту");
+  const context = JSON.parse(state.apiCalls[0].input).context;
+  assert.match(context.currentDate, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(context.timeZone, "Europe/Kyiv");
+  for (const phrase of ["notesText='менше оцту'", "hasImage=false", "THAT SAME variant", "weeks start Monday", "default UI poster"]) assert.ok(state.apiCalls[0].instructions.includes(phrase), phrase);
+});
+
+
+test("relative calendar ranges are computed by the server across month/year boundaries", () => {
+  const { inventoryDateContext } = require("../lib/ai/search-dates.ts");
+  const context = inventoryDateContext(new Date("2026-12-31T22:30:00Z"));
+  assert.equal(context.currentDate, "2027-01-01");
+  assert.deepEqual(context.dateRanges.today, { from: "2027-01-01", before: "2027-01-02" });
+  assert.deepEqual(context.dateRanges.thisWeek, { from: "2026-12-28", before: "2027-01-04" });
+  assert.deepEqual(context.dateRanges.lastMonth, { from: "2026-12-01", before: "2027-01-01" });
+  assert.deepEqual(context.dateRanges.thisMonth, { from: "2027-01-01", before: "2027-02-01" });
 });

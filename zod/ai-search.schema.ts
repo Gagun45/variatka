@@ -43,8 +43,8 @@ export const assistantPlanSchema = z.strictObject({
   ]),
 });
 
-export type InventorySearch = z.infer<typeof inventorySearchSchema>;
+export type InventorySearch = z.input<typeof inventorySearchSchema>;
 export type RecordSelection = z.infer<typeof recordSelectionSchema>;
-export type AssistantRequest = z.infer<typeof assistantRequestSchema>;
+export type AssistantRequest = z.input<typeof assistantRequestSchema>;
 export type AssistantPlan = z.infer<typeof assistantPlanSchema>;
-export type Clarification = z.infer<typeof clarificationSchema>;
+export type Clarification = z.input<typeof clarificationSchema>;

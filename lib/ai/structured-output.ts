@@ -40,7 +40,7 @@ export async function requestStructuredOutput<T>(options: {
           type: "json_schema",
           name: options.name,
           strict: true,
-          schema: z.toJSONSchema(options.schema),
+          schema: z.toJSONSchema(options.schema, { override: ({ jsonSchema }) => { delete jsonSchema.default; } }),
         } },
       }),
     });

@@ -78,15 +78,15 @@ Loading more uses a database action directly, without another AI call. Searches 
 
 ## Search semantics and limits
 
-- Title/description search ranks exact and substring matches ahead of tolerant word-order, normalization and spelling matches. Ingredient inclusion/exclusion also uses tolerant title matching. There is no synonym dictionary or vector search; see [name matching](ai-name-matching.md).
+- Generic text search (including recipe notes and confirmation notes) ranks exact and substring matches ahead of tolerant word-order, normalization and spelling matches. Ingredient inclusion/exclusion also uses tolerant title matching. There is no synonym dictionary or vector search; see [name matching](ai-name-matching.md).
 - Specified filters are combined with AND. All included ingredient terms must match; none of the excluded terms may match. This is based on recorded composition, not inferred dietary/allergen guarantees.
 - Ingredient availability is a boolean, not a quantity.
 - Recipe finished-product availability means at least one variant has positive stock. A recipe without variants is unavailable.
 - “Can be cooked” means a recipe has at least one ingredient and all listed ingredients are marked available. It does not check quantities, packaging or finished-product stock. Recipes without ingredients are not considered ready.
 - Stuff stock is a nonnegative integer; stock/spiciness range bounds are inclusive. Spiciness is 0–4. For example, “less than 10” becomes a maximum of 9.
 - Searches do not default to public-only recipes: admins can find hidden and unconfirmed recipes.
-- Prompts are limited to 2000 characters, text filters to 200, and included/excluded ingredient lists to 8 terms each. Pagination is bounded. Unsupported filters such as prices or dates should produce a clarification rather than silently changing the query.
-- Ingredients and stuff support create/update/delete through separate confirmation previews. Recipe writes and orders remain excluded; see the [CRUD guide](ai-crud.md).
+- Prompts are limited to 12000 characters, text filters to 200, and included/excluded ingredient lists to 8 terms each. Pagination is bounded. Unsupported filters such as prices or numeric ingredient quantities should produce a clarification rather than silently changing the query.
+- Ingredients, recipes and stuff support create/update/delete through separate confirmation previews. Orders remain excluded; see the [CRUD guide](ai-crud.md).
 
 ## Implementation map
 
@@ -111,3 +111,9 @@ npm run build
 The tests use Node's built-in runner and the installed TypeScript compiler, with mocked database/authentication/API boundaries. They cover query construction, filter validation, auth before reads/API calls, selection refresh, stale records, pagination, structured-output schema compatibility, malformed/refused responses unified creation and clarification regressions. They require no real key and never access your database. They do not verify live model interpretation or real database query execution.
 
 For a browser smoke test, run the prompts above against known records, verify displayed filters/results, select a recipe and ask for its composition, refine a search, load more, and refresh to check that context clears. Also verify a non-admin is redirected and an ingredient creation preview still saves only after confirmation.
+
+## More stored fields
+
+Search now supports scoped notes/descriptions, missing images/text/composition,
+ingredient usage, Kyiv calendar dates and variant-specific stock. See the
+[prompt examples and filter semantics](ai-stored-field-search.md).
