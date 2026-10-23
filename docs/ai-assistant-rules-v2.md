@@ -1,8 +1,8 @@
 # Proposed inventory planner instructions, version 2
 
-Status: review draft. This is a replacement for the instruction body in `lib/ai/inventory-assistant.ts`, with the existing generated `inventoryVocabularyInstructions` appended once. The command and response schemas remain authoritative. These rules use only context the current implementation actually sends; conversational draft editing requires the application changes described in [the review](ai-assistant-review.md).
+Status: historical review draft, not ready for adoption. This proposed instruction body predates step 2 and is not active in `lib/ai/inventory-assistant.ts`. The current command/response schemas and implemented behavior remain authoritative. See the [revised implementation plan](ai-assistant-plan.md) for the reconciliation and comparison required before replacement; append the generated `inventoryVocabularyInstructions` once when adopting.
 
-Implementation note after step 2: the runtime now supports `activeWrite`, `revise`, `clarifyRevision` and `keepTask`. This earlier draft must be updated to retain those additions when step 4 is approved; it is not the active runtime prompt. See [active task behavior](ai-active-task.md).
+The runtime now supports `activeWrite`, `revise`, `clarifyRevision` and `keepTask`. The command list and context limitation below omit/contradict those additions. Do not copy this body into runtime as written. Step 4 must preserve [active task behavior](ai-active-task.md), missing-field handling, resolved IDs, frozen cohorts, selection recovery and button-only choices/confirmation. This plan review leaves the instruction body unchanged.
 
 ## Replacement instruction body
 
@@ -119,4 +119,4 @@ Keep default values, entity/category maps and capability limits shared with serv
 
 Review the example cases in [the acceptance matrix](ai-assistant-review.md#acceptance-scenarios) before adopting the text. Existing tests that assert exact instruction substrings will need deliberate updates; passing those string assertions is not a substitute for checking interpreted intent.
 
-After active-task support is implemented, replace the context limitation with an explicit draft-revision contract: preserve the stored operation and target decisions, apply only the requested correction, invalidate the old confirmation, and prepare a new preview. Do not simply append full chat history and expect the model to reconstruct pending writes.
+Active-task support is implemented. Before adoption, replace the obsolete context limitation and command list with its actual typed revision contract: preserve stored operations and target decisions, apply only requested corrections, invalidate the old confirmation, and prepare a new preview. Capture a baseline and compare candidate instructions as described in step 4 of the current plan. Do not append full chat history and expect the model to reconstruct pending state.

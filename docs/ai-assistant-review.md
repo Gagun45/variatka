@@ -1,8 +1,18 @@
 # Inventory assistant review
 
-Reviewed 24 October 2026. Scope: planner instructions, vocabulary, schemas, request context, name resolution, previews, confirmation, recovery, and existing tests. Findings below record the reviewed behavior; implementation progress is tracked under the implementation order.
+Initial review: 24 October 2026. Scope: planner instructions, vocabulary, schemas, request context, name resolution, previews, confirmation, recovery, and existing tests. Findings and source line numbers below describe that initial baseline, before steps 1 and 2. The [current implementation plan](ai-assistant-plan.md) is the source for remaining work, approval checkpoints and acceptance checks.
 
-The confirmation boundary is sound in the paths checked: preparation does not write, approximate write matches require a choice, confirmations validate versions, and batches use a transaction. The largest usability problem is that the conversation looks continuous while the planner receives only a selection, the last search, and pending clarification. Pending previews and record choices have a different continuation mechanism that the text input does not use.
+The confirmation boundary was sound in the paths checked: preparation did not write, approximate write matches required a choice, confirmations validated versions, and batches used a transaction. The largest initial usability problem was that the conversation looked continuous while the planner lacked pending task context. Step 2 now sends a typed active task and supports text revisions; live language interpretation still needs evaluation.
+
+| Finding | Current status after steps 1 and 2 |
+| --- | --- |
+| 1 — Lost follow-up context | Application fix implemented in step 2; live interpretation checks pending. |
+| 2 — Lost edited drafts on failure | Implemented in step 1, preserved by step 2; browser checks pending. |
+| 3 — Expired selection blocks unrelated requests | Open; checkpoint 3A. |
+| 4 — Known deletion blockers appear confirmable | Open; checkpoint 3B. |
+| 5 — Recipe previews clear selection | Implemented in step 2; browser checks pending. |
+| 6 — Conflicting title/lookup rules | Open; step 4. |
+| 7 — Stale help/search copy | Partly updated in steps 1 and 2; remaining capability/copy audit in step 4. |
 
 ## Findings
 
@@ -68,9 +78,9 @@ Evidence: `docs/ai-assistant.md:61–63, 75` says duplicate errors keep the prev
 
 ## Proposed rules
 
-[Proposed replacement planner instructions](ai-assistant-rules-v2.md) reorganize the current contract around a fixed decision order. They preserve the existing command schema and supported operations, remove the title-language conflict, define search refinement as a filter edit, and make clarification questions more useful.
+[Proposed replacement planner instructions](ai-assistant-rules-v2.md) were drafted before step 2. They propose a fixed decision order, literal title preservation, search refinement as a filter edit, and more useful clarification questions. They do not yet include active-task commands/context and must be reconciled before adoption in step 4.
 
-These instructions alone cannot fix findings 1–5. Draft continuation, state retention, selection expiry, and batch dependency validation require application changes. Do not claim those behaviors in the planner prompt until they exist.
+Instructions alone cannot fix findings 1–5. Application changes in steps 1 and 2 addressed findings 1, 2 and 5. Selection expiry and batch dependency validation still require step 3. Do not claim proposed behavior in the active planner prompt until it exists.
 
 ## Recommended interaction contract
 
@@ -79,24 +89,26 @@ These instructions alone cannot fix findings 1–5. Draft continuation, state re
 | Complete supported request | Prepare the result immediately; do not ask whether a supplied name exists. |
 | Missing required information | Ask one concise question covering related missing fields; offer relevant labels or an example. Preserve partial answers. |
 | Several actual name matches | Show real clickable records and retain the entire task. |
-| Pending draft + correction | Revise that draft, retain other fields, and require confirmation of the new version. Requires the active-task implementation. |
+| Pending draft + correction | Revise that draft, retain other fields, and require confirmation of the new version. Implemented in step 2; live interpretation checks pending. |
 | Pending draft + independent request | Replace it only after a new result is ready. On failure, retain both the draft and typed request. |
 | Search refinement | Retain every previous filter except those explicitly changed or removed. Show the resulting filters. |
-| Selection expired | Clear or reselect explicitly; independent searches remain usable. |
+| Selection expired | Clear or reselect explicitly; independent requests remain usable without changing active-task targets. Pending checkpoint 3A. |
 | No matching records | State that no records matched. Offer removing a specific filter; do not silently broaden. |
 | No changes needed | Show a neutral result and no confirmation button. |
-| Known validation conflict | Keep recoverable input and explain what must change. |
+| Known validation conflict | Keep recoverable input and explain what must change. Batch deletion preflight remains pending checkpoint 3B. |
 | Save outcome unknown | Disable the attempted confirmation, show affected-record links, and inspect the outcome. |
 
-Show the active target and task status near the input: “Уточнюємо запит”, “Оберіть запис”, or “Пропозиція очікує підтвердження”. The current collapsed context panel is useful, but it should not be the only place explaining what a short answer will affect. Category, availability and intent clarifications can eventually use typed quick replies; that needs a schema/UI extension rather than instructions to invent buttons.
+Step 2 added a current-task summary near the input showing phase and targets. Category, availability and intent clarifications could eventually use typed quick replies; that is outside the current plan and would need a schema/UI extension rather than instructions to invent buttons.
 
 ## Implementation order
 
-1. Preserve draft state through failed planning and definite confirmation failures; keep unsafe confirmation attempts disabled.
-2. Add a typed active-task state and draft-revision path. Preserve explicit field edits, resolved targets and stock set/adjust intent. Keep selection stable across preview types.
-3. Make selected-record expiry recoverable and validate batch deletion blockers before preview.
-4. Adopt the replacement instructions and align capability/help text.
-5. Add interpretation evaluations alongside the existing deterministic tests. For longer-term save recovery, use a durable operation ID so an uncertain response can be inspected without applying a stock adjustment twice.
+See the [revised execution plan](ai-assistant-plan.md) for detailed scope and acceptance checks. Implement one checkpoint and wait for confirmation before the next:
+
+1. **Implemented:** retain drafts through failures and distinguish definite, stale and uncertain saves.
+2. **Implemented:** active tasks, typed revisions, stable resolved/filter targets and selection across preview types.
+3. **Pending, split into separate checkpoints:** 3A recovers incidental expired selection while preserving task identity; 3B validates final-state deletion blockers before confirmation.
+4. **Pending:** reconcile proposed rules with steps 1–3, capture/compare interpretation before adoption, then align capability/help text.
+5. **Pending:** make live interpretation evaluation repeatable and complete browser UX checks. Durable save idempotency is a separately specified follow-up, not part of this testing step.
 
 ### Step 1 implementation
 
@@ -110,17 +122,17 @@ Implemented a typed active write task and patch-based text revisions. Form edits
 
 Validation: 91 AI tests, 21 component recovery/task tests and 44 integration tests pass (156 total), along with TypeScript, lint for changed code/tests and whitespace checks. These include missing creation fields, dependency renames, refresh retries and independent-task replacement. Live model interpretation and browser smoke checks remain manual.
 
-Steps 3–5 remain pending review and approval. The current planner received the commands/context needed for revisions; the full proposed replacement instructions have not been applied.
+Checkpoints 3A, 3B and steps 4–5 remain pending approval. This plan revision does not implement them. The current planner received the commands/context needed for revisions; the full proposed replacement instructions have not been applied.
 
 ## Acceptance scenarios
 
-Use fixture records and compare validated commands, exact targets, retained fields, visible controls and resulting writes. For interpretation tests, cover paraphrases rather than a single sentence per case.
+Use fixture records and compare validated commands, exact targets, retained fields, visible controls and resulting writes. This table defines expected behavior, not completed live-model checks. For interpretation tests, cover paraphrases rather than a single sentence per case. The [current plan](ai-assistant-plan.md) adds acceptance checks for the step 2 contract and the two step 3 checkpoints.
 
 | Scenario | Expected result |
 | --- | --- |
 | `Додай банки` with no context | Ask create-versus-restock intent and missing quantity; create nothing. |
 | `Створи матеріал «Chili Mix», категорія декор` | Preserve the title exactly; propose zero stock and an empty description visibly. |
-| Selected jar has 10; `Додай 5 до залишку`; revise with `Краще 7` | Draft revision preserves adjustment mode: 10 → 17, with fresh confirmation. Requires active-task support. |
+| Selected jar has 10; `Додай 5 до залишку`; revise with `Краще 7` | Draft revision preserves adjustment mode: 10 → 17, with fresh confirmation. Application path implemented in step 2; live phrase check pending. |
 | Selected jar has 10; `Встанови залишок 5`; revise with `Краще 7` | Draft revision preserves set mode: 10 → 7. |
 | Choose between two jars; type the remembered title | Continue the pending task or explain that a button choice is required; never silently replace it. |
 | Prepare creation, edit all fields, trigger provider failure | Edited draft remains recoverable; no write. |
