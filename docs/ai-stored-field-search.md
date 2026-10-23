@@ -1,9 +1,8 @@
 # Search stored fields and relationships
 
 AI search can now use existing database columns and relationships without a
-migration. Main conditions combine with AND and remain visible in the search chips.
-[Category/ingredient alternatives and grouped exclusions](ai-filter-combinations.md)
-can express bounded OR/NOT conditions. Admin authentication and confirmation requirements are unchanged.
+migration. All requested conditions combine with AND and remain visible in the
+search chips. Admin authentication and confirmation requirements are unchanged.
 
 ## Prompts to try
 

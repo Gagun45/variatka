@@ -16,18 +16,16 @@ const common = {
 };
 
 // Required nullable fields keep the generated JSON Schema compatible with strict output.
-export const ingredientSearchLeafSchema = z.strictObject({
+export const ingredientSearchSchema = z.strictObject({
   entity: z.literal("ingredient"),
   ...common, hasImage: optionalFlag, usedInRecipes: optionalFlag,
   text,
   category: z.enum(["SPICES", "OTHER"]).nullable(),
-  categories: z.array(z.enum(["SPICES", "OTHER"])).max(2).default([]),
-  excludeCategories: z.array(z.enum(["SPICES", "OTHER"])).max(2).default([]),
   isInStock: flag,
   isSaved: flag,
 });
 
-export const recipeSearchLeafSchema = z.strictObject({
+export const recipeSearchSchema = z.strictObject({
   entity: z.literal("recipe"),
   ...common, hasImage: optionalFlag,
   notesText: optionalText, confirmationNotesText: optionalText,
@@ -36,8 +34,6 @@ export const recipeSearchLeafSchema = z.strictObject({
   variantStockMin: quantity.default(null), variantStockMax: quantity.default(null),
   text,
   category: z.enum(["SPICES", "SAUCES", "JAMS", "SEASONEDSALT"]).nullable(),
-  categories: z.array(z.enum(["SPICES", "SAUCES", "JAMS", "SEASONEDSALT"])).max(4).default([]),
-  excludeCategories: z.array(z.enum(["SPICES", "SAUCES", "JAMS", "SEASONEDSALT"])).max(4).default([]),
   series: z.enum(["DEFAULT", "NOMLYGOLD"]).nullable(),
   isHidden: flag,
   isConfirmed: flag,
@@ -47,37 +43,24 @@ export const recipeSearchLeafSchema = z.strictObject({
   spicyMin: spicy,
   spicyMax: spicy,
   includeIngredients: z.array(z.string().trim().min(1).max(100)).max(8),
-  anyIngredients: z.array(z.string().trim().min(1).max(100)).max(8).default([]),
   excludeIngredients: z.array(z.string().trim().min(1).max(100)).max(8),
 });
 
-export const stuffSearchLeafSchema = z.strictObject({
+export const stuffSearchSchema = z.strictObject({
   entity: z.literal("stuff"),
   ...common,
   text,
   category: z.enum(["DECOR", "JARS"]).nullable(),
-  categories: z.array(z.enum(["DECOR", "JARS"])).max(2).default([]),
-  excludeCategories: z.array(z.enum(["DECOR", "JARS"])).max(2).default([]),
   isInStock: flag,
   stockMin: quantity,
   stockMax: quantity,
 });
 
-const allSearchLeafSchema = z.strictObject({ entity: z.literal("all"), text, ...common });
-export const inventorySearchLeafSchema = z.union([
-  ingredientSearchLeafSchema, recipeSearchLeafSchema, stuffSearchLeafSchema, allSearchLeafSchema,
-]);
-// One explicit level of bounded groups. Branches are flat typed filters, never
-// arbitrary Prisma objects or recursive model-authored expressions.
-const combinations = {
-  anyOf: z.array(inventorySearchLeafSchema).max(4).default([]),
-  noneOf: z.array(inventorySearchLeafSchema).max(4).default([]),
-};
-export const ingredientSearchSchema = ingredientSearchLeafSchema.extend(combinations);
-export const recipeSearchSchema = recipeSearchLeafSchema.extend(combinations);
-export const stuffSearchSchema = stuffSearchLeafSchema.extend(combinations);
 export const inventorySearchSchema = z.union([
-  ingredientSearchSchema, recipeSearchSchema, stuffSearchSchema, allSearchLeafSchema.extend(combinations),
+  ingredientSearchSchema,
+  recipeSearchSchema,
+  stuffSearchSchema,
+  z.strictObject({ entity: z.literal("all"), text, ...common }),
 ]);
-export type InventorySearchLeaf = z.input<typeof inventorySearchLeafSchema>;
+
 export type InventorySearch = z.input<typeof inventorySearchSchema>;

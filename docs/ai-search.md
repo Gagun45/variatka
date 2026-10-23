@@ -79,7 +79,7 @@ Loading more uses a database action directly, without another AI call. Searches 
 ## Search semantics and limits
 
 - Generic text search (including recipe notes and confirmation notes) ranks exact and substring matches ahead of tolerant word-order, normalization and spelling matches. Ingredient inclusion/exclusion also uses tolerant title matching. There is no synonym dictionary or vector search; see [name matching](ai-name-matching.md).
-- Main filters combine with AND. Category lists and bounded groups support OR/NOT. All included ingredient terms must match; at least one alternative ingredient must match when specified; none of the excluded terms may match. This is based on recorded composition, not inferred dietary/allergen guarantees.
+- Specified filters are combined with AND. All included ingredient terms must match; none of the excluded terms may match. This is based on recorded composition, not inferred dietary/allergen guarantees.
 - Ingredient availability is a boolean, not a quantity.
 - Recipe finished-product availability means at least one variant has positive stock. A recipe without variants is unavailable.
 - “Can be cooked” means a recipe has at least one ingredient and all listed ingredients are marked available. It does not check quantities, packaging or finished-product stock. Recipes without ingredients are not considered ready.
@@ -117,9 +117,3 @@ For a browser smoke test, run the prompts above against known records, verify di
 Search now supports scoped notes/descriptions, missing images/text/composition,
 ingredient usage, Kyiv calendar dates and variant-specific stock. See the
 [prompt examples and filter semantics](ai-stored-field-search.md).
-
-## Natural combinations
-
-[Category lists, ingredient alternatives and grouped exclusions](ai-filter-combinations.md)
-now support prompts such as “соуси й варення”, “часник або цибуля”, and
-“крім збережених соусів” without flattening their meaning.
