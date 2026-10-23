@@ -5,23 +5,29 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import InventoryBatchView from "./InventoryBatchView";
+import { draftStatusMessages, type DraftStatus } from "@/lib/ai/request-state";
 
-export default function InventoryMutationView({ preview, assumptions, busy, onChange, onConfirm, onCancel }: {
+export default function InventoryMutationView({ preview, assumptions, busy, status = "ready", onChange, onConfirm, onPrepare, onCancel }: {
   preview: InventoryMutationPreview;
   assumptions: string[];
   busy: boolean;
+  status?: DraftStatus;
   onChange: (preview: InventoryMutationPreview) => void;
   onConfirm: () => void;
+  onPrepare?: () => void;
   onCancel: () => void;
 }) {
-  if (preview.kind !== "createIngredient" && preview.kind !== "createStuff") return <InventoryBatchView preview={{ items: [preview], unchanged: [] }} assumptions={assumptions} busy={busy} onConfirm={onConfirm} onCancel={onCancel} />;
+  if ((preview.kind !== "createIngredient" && preview.kind !== "createStuff") || status === "stale" || status === "uncertain") return <InventoryBatchView preview={{ items: [preview], unchanged: [] }} assumptions={assumptions} busy={busy} status={status} onConfirm={onConfirm} onPrepare={onPrepare} onCancel={onCancel} />;
   function editCreationField(field: "title" | "description", value: string) {
     if (preview.kind === "createIngredient") onChange({ ...preview, after: { ...preview.after, [field]: value } });
     else if (preview.kind === "createStuff") onChange({ ...preview, after: { ...preview.after, [field]: value } });
   }
-  return <form onSubmit={(event) => { event.preventDefault(); onConfirm(); }} className="space-y-4 rounded-xl border p-3 sm:p-5">
+  const submitLabel = busy
+    ? status === "ready" ? "Збереження…" : "Підготовка…"
+    : status === "ready" ? "Підтвердити створення" : "Перевірити пропозицію";
+  return <form onSubmit={(event) => { event.preventDefault(); if (busy) return; if (status === "ready") onConfirm(); else onPrepare?.(); }} className="space-y-4 rounded-xl border p-3 sm:p-5">
     <h2 className="text-xl font-semibold">{preview.kind === "createIngredient" ? "Створення інгредієнта" : "Створення матеріалу"}</h2>
-    <p className="text-sm text-muted-foreground">Ще нічого не збережено. Перевірте запропоновані значення.</p>
+    <p className="text-sm text-muted-foreground">{status === "invalid" ? draftStatusMessages.invalid : "Ще нічого не збережено. Перевірте запропоновані значення."}</p>
     {assumptions.length > 0 && <details open className="rounded-lg bg-muted p-3 text-sm"><summary className="cursor-pointer font-medium">Запропоновані значення</summary><ul className="mt-2 list-disc pl-5">{assumptions.map((item, index) => <li key={index}>{item}</li>)}</ul></details>}
     <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
         <label className="block space-y-1"><span>Назва</span><Input required maxLength={200} value={preview.after.title} onChange={(event) => editCreationField("title", event.target.value)} /></label>
@@ -36,7 +42,7 @@ export default function InventoryMutationView({ preview, assumptions, busy, onCh
         </>}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button className="min-h-11" type="button" variant="outline" onClick={onCancel}>Скасувати</Button>
-        <Button className="min-h-11" type="submit" disabled={!preview.after.title.trim()}>{busy ? "Збереження…" : "Підтвердити створення"}</Button>
+        <Button className="min-h-11" type="submit" disabled={!preview.after.title.trim() || (status === "invalid" && !onPrepare)}>{submitLabel}</Button>
       </div>
     </fieldset>
   </form>;

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { frontendUrls } from "@/lib/urls";
 import { recoveryFor, type AssistantErrorCode } from "@/lib/ai/request-state";
+import InventoryInspectionLinks from "./InventoryInspectionLinks";
 
-export default function AssistantErrorPanel({ error, code, busy, canEdit, onEdit, onPrepare, onRefresh }: {
+export default function AssistantErrorPanel({ error, code, busy, canEdit, showInspectionLinks = true, onEdit, onPrepare, onRefresh }: {
   error: string; code: AssistantErrorCode; busy: boolean; canEdit: boolean;
+  showInspectionLinks?: boolean;
   onEdit: () => void; onPrepare: () => void; onRefresh: () => void;
 }) {
   const errorRef = useRef<HTMLDivElement>(null);
@@ -20,7 +20,7 @@ export default function AssistantErrorPanel({ error, code, busy, canEdit, onEdit
           {recovery.action === "edit" && canEdit && <Button type="button" variant="outline" disabled={busy} onClick={onEdit}>Редагувати запит</Button>}
           {recovery.action === "prepare" && canEdit && <><Button type="button" disabled={busy} onClick={onPrepare}>Підготувати новий перегляд</Button><Button type="button" variant="outline" disabled={busy} onClick={onEdit}>Редагувати запит</Button></>}
           {recovery.action === "refresh" && <Button type="button" variant="outline" disabled={busy} onClick={onRefresh}>Оновити дані</Button>}
-          {recovery.action === "inspect" && <>{[["Інгредієнти", frontendUrls.ingredients.index], ["Рецепти", frontendUrls.recipes.index], ["Матеріали", frontendUrls.stuff.index]].map(([label, href]) => <Button key={href} asChild variant="outline"><Link href={href} target="_blank" rel="noopener noreferrer">{label}</Link></Button>)}</>}
+          {recovery.action === "inspect" && showInspectionLinks && <InventoryInspectionLinks />}
         </div>
       </div>;
 }

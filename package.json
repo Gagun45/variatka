@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:data": "node tests/data-loading.test.cjs",
-    "test:ai": "node tests/ai-inventory.test.cjs",
+    "test:ai": "node tests/ai-inventory.test.cjs && node tests/ai-assistant-recovery.test.cjs",
     "test:ai:integration": "node tests/ai-recipes.integration.cjs"
   },
   "dependencies": {

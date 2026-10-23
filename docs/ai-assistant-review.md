@@ -1,6 +1,6 @@
 # Inventory assistant review
 
-Reviewed 24 October 2026. Scope: planner instructions, vocabulary, schemas, request context, name resolution, previews, confirmation, recovery, and existing tests. This review proposes changes; it does not change the running assistant.
+Reviewed 24 October 2026. Scope: planner instructions, vocabulary, schemas, request context, name resolution, previews, confirmation, recovery, and existing tests. Findings below record the reviewed behavior; implementation progress is tracked under the implementation order.
 
 The confirmation boundary is sound in the paths checked: preparation does not write, approximate write matches require a choice, confirmations validate versions, and batches use a transaction. The largest usability problem is that the conversation looks continuous while the planner receives only a selection, the last search, and pending clarification. Pending previews and record choices have a different continuation mechanism that the text input does not use.
 
@@ -98,6 +98,14 @@ Show the active target and task status near the input: “Уточнюємо з�
 4. Adopt the replacement instructions and align capability/help text.
 5. Add interpretation evaluations alongside the existing deterministic tests. For longer-term save recovery, use a durable operation ID so an uncertain response can be inspected without applying a stock adjustment twice.
 
+### Step 1 implementation
+
+Implemented draft retention through failed planning and confirmation. Edited creation fields can be revalidated without regenerating their original defaults. Known failed confirmations require a fresh preview; stale drafts remain read-only references; uncertain outcomes expose no preparation or confirmation action. Failed replacement requests retain candidate choices and their source context. See [recovery behavior and manual checks](ai-recovery.md).
+
+Validation: 75 existing AI tests, 13 component recovery tests and 41 integration tests pass. TypeScript, lint for changed code/tests and whitespace checks pass. Recovery tests include rendered markup and mocked component event flows; browser smoke checks remain manual.
+
+Steps 2–5 remain pending review and approval. Text-based draft revisions and the proposed replacement planner instructions have not been applied.
+
 ## Acceptance scenarios
 
 Use fixture records and compare validated commands, exact targets, retained fields, visible controls and resulting writes. For interpretation tests, cover paraphrases rather than a single sentence per case.
@@ -122,11 +130,11 @@ Use fixture records and compare validated commands, exact targets, retained fiel
 | More than 20 operations, including new recipe ingredients | Request narrowing; never silently truncate. |
 | Stale preview / uncertain save / failed post-save refresh | Prepare anew / inspect outcome / retry reads only, respectively. |
 
-## Validation performed
+## Validation performed during the initial review
 
 - `npm run test:ai`: 75 passing tests.
 - `npm run test:ai:integration`: 41 passing tests, using a disposable embedded PostgreSQL database.
 - Four temporary review probes: reproduced missing-selection blocking, batch/single deletion inconsistency, absence of draft context in follow-up input, and loss of the editable preview after planning failure. All four passed assertions describing the current defects. The draft-loss probe used a mocked React hook harness, not browser automation.
-- Test logs and the temporary probe runner are under `/tmp/variatka-ai-review-*` in this workspace session. No application code, database records, provider settings or active rules were changed.
+- Test logs and the temporary probe runner are under `/tmp/variatka-ai-review-*` in this workspace session. At that stage, no application code, database records, provider settings or active rules were changed.
 
 The existing suites mock planner output. They test execution and boundaries, not whether natural-language requests produce the intended plans. Live model interpretation, browser layout and accessibility interactions were not validated during this review.

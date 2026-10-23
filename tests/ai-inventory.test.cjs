@@ -908,6 +908,27 @@ test("single and batch previews render shared cards while creation forms remain 
     assert.ok(creation.includes("<input"));
     assert.ok(creation.includes("<textarea"));
     assert.equal(creation.includes("disabled="), false);
+    const invalid = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: { kind: "createStuff", after: before }, status: "invalid", onPrepare() {} }));
+    assert.ok(invalid.includes("<input"));
+    assert.ok(invalid.includes("Перевірити пропозицію"));
+    assert.equal(invalid.includes("Підтвердити створення"), false);
+    assert.equal(invalid.includes("disabled="), false, "retained creation fields remain editable");
+    for (const status of ["stale", "uncertain"]) {
+      const retained = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: { kind: "createStuff", after: before }, status, onPrepare() {} }));
+      assert.ok(retained.includes("Банка"));
+      assert.equal(retained.includes("<input"), false, "expired or uncertain drafts are read-only");
+      assert.equal(retained.includes("Підтвердити створення"), false);
+      assert.equal(retained.includes("Ще нічого не збережено"), false);
+      assert.equal(retained.includes('type="submit"'), status === "stale", "uncertain saves expose no retry control");
+      assert.equal(retained.includes("Підготувати новий перегляд"), status === "stale");
+    }
+    const uncertainBatch = renderToStaticMarkup(React.createElement(Batch, { ...callbacks, preview: { items: [item, { kind: "createStuff", after: before }], unchanged: [] }, status: "uncertain", onPrepare() {} }));
+    assert.equal(uncertainBatch.includes('type="submit"'), false);
+    assert.equal(uncertainBatch.includes("Підтвердити всі"), false);
+    assert.ok(uncertainBatch.includes("Прибрати пропозицію"));
+    assert.ok(uncertainBatch.includes('href="/admin/ingredients"'));
+    assert.ok(uncertainBatch.includes('href="/admin/recipes"'));
+    assert.ok(uncertainBatch.includes('href="/admin/stuff"'));
     const deletion = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: { kind: "deleteStuff", target: item.target, before } }));
     assert.ok(deletion.includes("Підтвердити видалення"));
     assert.ok(deletion.includes("Запис буде видалено повністю"));

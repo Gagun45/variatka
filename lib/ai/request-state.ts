@@ -6,6 +6,13 @@ export const requestPhaseLabels = {
 };
 export type RequestPhase = keyof typeof requestPhaseLabels;
 export type AssistantErrorCode = ActionErrorCode | "SAVE_UNCERTAIN" | "REFRESH_FAILED";
+export type DraftStatus = "ready" | "invalid" | "stale" | "uncertain";
+
+export const draftStatusMessages: Record<Exclude<DraftStatus, "ready">, string> = {
+  invalid: "Зміни не збережено. Пропозицію та ваші правки збережено. Перед підтвердженням перевірте пропозицію ще раз.",
+  stale: "Дані змінилися. Попередню пропозицію залишено для перегляду; підтвердити її вже не можна. Підготуйте новий перегляд за актуальними даними.",
+  uncertain: "Результат збереження невідомий. Пропозицію залишено лише для перегляду. Перевірте записи перед новою зміною; повторне підтвердження вимкнено.",
+};
 
 export function confirmationFailure(code?: ActionErrorCode): AssistantErrorCode {
   // Unknown failures may have occurred after commit. Never offer a blind write retry.
