@@ -918,6 +918,14 @@ test("single and batch previews render shared cards while creation forms remain 
     assert.ok(choice.includes("Обрати Банка 250"));
     assert.ok(choice.includes("Зміни банку та часник"));
     assert.ok(choice.includes("Скасувати весь запит"));
+    const duplicateQuestion = { key: "0:createIngredient", name: "Куркумма", context: "Перевірка", purpose: "ingredientCreation", canCreate: true, candidates: [{ entity: "ingredient", id: 1, title: "Куркума", summary: "Спеції" }], page: 0, hasMore: false };
+    const duplicateProps = { question: duplicateQuestion, prompt: "Створи Куркумма", busy: false, onChoose() {}, onCreateNew() {}, onPage() {}, onCancel() {} };
+    const duplicate = renderToStaticMarkup(React.createElement(Choice, duplicateProps));
+    assert.ok(duplicate.includes("Використати наявний Куркума"));
+    assert.ok(duplicate.includes("Це інший інгредієнт — створити окремий"));
+    const exactDuplicate = renderToStaticMarkup(React.createElement(Choice, { ...duplicateProps, question: { ...duplicateQuestion, canCreate: false } }));
+    assert.equal(exactDuplicate.includes("Це інший інгредієнт — створити окремий"), false);
+    assert.ok(exactDuplicate.includes("Ця назва вже зайнята"));
     assert.ok(choice.includes("Далі"));
     assert.equal(choice.includes('type="submit"'), false);
   } finally {
@@ -1034,5 +1042,103 @@ test("approximate recipe ingredients need selection instead of duplicate creatio
   await assert.rejects(resolution.inventory("ingredient", "куркумма", "0:ingredient:0", "Склад", true), RecordChoiceRequired);
   const items = [{ id: target.id, title: target.title, amount: "5 г", category: "SPICES" }];
   assert.throws(() => resolution.composition("куркумма", items, "0:composition:0", "Склад"), RecordChoiceRequired);
+  assert.equal(state.writes.length, 0);
+});
+
+test("explicit ingredient creation checks typo and reordered names before preview, without another model call", async () => {
+  for (const [title, existingTitle] of [["Куркумма", "Куркума"], ["Перець чорний мелений", "Чорний перець мелений"]]) {
+    const existing = ingredientRecord({ title: existingTitle, description: "Збережений опис", isInStock: true, isSaved: true });
+    state.rows.ingredient = [existing];
+    state.records.ingredient = existing;
+    state.plan = mutationPlan({ kind: "createIngredient", data: { title, description: "Інший опис", category: "OTHER", isInStock: false, isSaved: false } });
+    const initial = await actions.askInventoryAssistant(request({ prompt: `Створи інгредієнт ${title}` }));
+    assert.equal(initial.ok, true);
+    assert.equal(initial.data.operation, "chooseRecord");
+    assert.equal(initial.data.question.purpose, "ingredientCreation");
+    assert.equal(initial.data.question.canCreate, true);
+    assert.deepEqual(initial.data.question.candidates.map((row) => row.title), [existingTitle]);
+    const calls = state.apiCalls.length;
+    const reused = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "ingredient", id: existing.id } }, page: null });
+    assert.equal(reused.ok, true);
+    assert.equal(reused.data.operation, "viewSelected");
+    assert.equal(reused.data.record.title, existingTitle);
+    assert.equal(state.apiCalls.length, calls);
+    assert.equal(state.records.ingredient.description, "Збережений опис");
+    assert.equal(state.records.ingredient.category, "SPICES");
+    assert.equal(state.records.ingredient.isInStock, true);
+    assert.equal(state.writes.length, 0);
+  }
+});
+
+test("creating a distinct ingredient requires an explicit choice and still waits for confirmation", async () => {
+  const existing = ingredientRecord({ title: "Куркума" });
+  state.rows.ingredient = [existing];
+  const data = { title: "Куркумма", description: "Окремий інгредієнт", category: "SPICES", isInStock: false, isSaved: false };
+  state.plan = mutationPlan({ kind: "createIngredient", data });
+  const initial = await actions.askInventoryAssistant(request());
+  const ready = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, createNew: true }, page: null });
+  assert.equal(ready.ok, true);
+  assert.equal(ready.data.operation, "mutation");
+  assert.deepEqual(ready.data.preview.after, data);
+  assert.equal(ready.data.preview.duplicateReview.title, data.title);
+  assert.deepEqual(ready.data.preview.duplicateReview.candidates, [{ id: existing.id, title: existing.title }]);
+  assert.equal(state.writes.length, 0);
+  state.allowWrites = true;
+  assert.equal((await actions.confirmInventoryMutation(ready.data.preview)).ok, true);
+  assert.equal(state.writes.length, 1);
+});
+
+test("exact existing ingredient cannot be created again through the distinct choice", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.rows.ingredient = [ingredientRecord({ title: "Куркума" })];
+  state.plan = mutationPlan({ kind: "createIngredient", data: { title: "Куркума", description: "", category: "SPICES", isInStock: false, isSaved: false } });
+  const initial = await actions.askInventoryAssistant(request());
+  assert.equal(initial.data.question.canCreate, false);
+  const refused = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, createNew: true }, page: null });
+  assert.equal(refused.ok, false);
+  assert.equal(refused.code, "CONFLICT");
+  assert.equal(state.writes.length, 0);
+});
+
+test("duplicate checks cannot be bypassed by an edited title or an unreviewed confirmation", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.rows.ingredient = [ingredientRecord({ title: "Куркума" })];
+  const after = { title: "Куркумма", description: "", category: "SPICES", isInStock: false, isSaved: false };
+  for (const duplicateReview of [undefined, { title: "Інша назва", candidates: [{ id: 1, title: "Куркума" }] }, { title: after.title, candidates: [] }]) {
+    const response = await actions.confirmInventoryMutation({ kind: "createIngredient", after, ...(duplicateReview ? { duplicateReview } : {}) });
+    assert.equal(response.ok, false);
+    assert.equal(response.code, "CONFLICT");
+  }
+  assert.equal(state.writes.length, 0);
+});
+
+test("duplicate review choices paginate beyond the first lookup page and reject stale or forged selections", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.rows.ingredient = Array.from({ length: 260 }, (_, index) => ingredientRecord({ id: index + 1, title: `Куркума ${String(index).padStart(3, "0")}` }));
+  state.plan = mutationPlan({ kind: "createIngredient", data: { title: "Куркумма", description: "", category: "SPICES", isInStock: false, isSaved: false } });
+  const initial = await actions.askInventoryAssistant(request());
+  assert.equal(initial.data.question.hasMore, true);
+  const next = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: null, page: { key: initial.data.question.key, number: 12 } });
+  assert.equal(next.data.question.candidates.length, 20);
+  assert.equal(next.data.question.hasMore, false);
+  assert.equal(next.data.question.candidates.at(-1).id, 260);
+  state.rows.ingredient = [];
+  const stale = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: initial.data.question.key, selection: { entity: "ingredient", id: 1 } }, page: null });
+  assert.equal(stale.ok, false);
+  assert.equal(stale.code, "STALE_PREVIEW");
+  const forged = await actions.resumeInventoryWrite({ pending: initial.data.pending, choice: { key: "99:createIngredient", createNew: true }, page: null });
+  assert.equal(forged.ok, false);
+  assert.equal(forged.code, "STALE_PREVIEW");
+  assert.equal(state.writes.length, 0);
+});
+
+test("a newly appeared near match requires another review instead of inheriting a prior distinct decision", async () => {
+  const { WriteResolution, RecordChoiceRequired } = require("../lib/domain/ai-resolution.service.ts");
+  state.rows.ingredient = [ingredientRecord({ title: "Куркума" })];
+  const state1 = new WriteResolution({ decisions: [] }, { choice: { key: "0:createIngredient", createNew: true } });
+  await state1.ingredientCreation("Куркумма", "0:createIngredient");
+  state.rows.ingredient.push(ingredientRecord({ id: 2, title: "Куркума мелена" }));
+  const state2 = new WriteResolution({ decisions: state1.decisions });
+  await assert.rejects(state2.ingredientCreation("Куркумма", "0:createIngredient"), RecordChoiceRequired);
   assert.equal(state.writes.length, 0);
 });

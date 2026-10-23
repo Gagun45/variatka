@@ -517,6 +517,91 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal(excluded.data.items.length, 0);
     });
 
+    await t.test("explicit duplicate ingredient creation can reuse a record without overwriting its fields", async () => {
+      const existing = await client.ingredient.findUnique({ where: { title: "Куркума" } });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "createIngredient", data: ingredientData("Куркумма", { category: "OTHER", description: "Do not copy", isInStock: false }) } } };
+      const first = await actions.askInventoryAssistant({ prompt: "Створи інгредієнт Куркумма", selected: null, previousSearch: null, clarification: null });
+      assert.equal(first.data.question.purpose, "ingredientCreation");
+      const calls = apiCalls;
+      const reused = await actions.resumeInventoryWrite({ pending: first.data.pending, choice: { key: first.data.question.key, selection: { entity: "ingredient", id: existing.id } }, page: null });
+      assert.equal(reused.ok, true);
+      assert.equal(reused.data.operation, "viewSelected");
+      assert.equal(reused.data.record.id, existing.id);
+      assert.deepEqual(await client.ingredient.findUnique({ where: { id: existing.id } }), existing);
+      assert.equal(await client.ingredient.count({ where: { title: "Куркумма" } }), 0);
+      assert.equal(apiCalls, calls);
+    });
+
+    await t.test("duplicate reuse preserves mixed batches and recipe dependencies regardless of operation order", async () => {
+      const existing = await client.ingredient.findUnique({ where: { title: "Куркума" } });
+      const jar = await client.stuff.create({ data: stuffData("Duplicate review jar") });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "batch", intent: { kind: "list", operations: [
+        recipeIntent("Duplicate review recipe", ["Куркумма"]),
+        { kind: "createIngredient", data: ingredientData("Куркумма", { category: "OTHER", description: "Do not copy" }) },
+        { kind: "updateStuff", targetName: jar.title, patch: stuffPatch({ stock: { mode: "adjust", value: 3 } }) },
+      ] } } };
+      const first = await actions.askInventoryAssistant({ prompt: "Створи рецепт, інгредієнт та поповни банку", selected: null, previousSearch: null, clarification: null });
+      assert.equal(first.data.question.key, "1:createIngredient");
+      const ready = await actions.resumeInventoryWrite({ pending: first.data.pending, choice: { key: first.data.question.key, selection: { entity: "ingredient", id: existing.id } }, page: null });
+      assert.equal(ready.ok, true);
+      assert.equal(ready.data.operation, "batch");
+      assert.deepEqual(ready.data.preview.items.map((item) => item.kind), ["createRecipe", "updateStuff"]);
+      assert.equal(ready.data.preview.items[0].after.ingredients[0].id, existing.id);
+      assert.equal(ready.data.preview.unchanged.length, 1);
+      assert.equal(await client.recipe.count({ where: { title: "Duplicate review recipe" } }), 0);
+      const saved = await actions.confirmInventoryBatch(ready.data.preview);
+      assert.equal(saved.ok, true);
+      assert.equal((await client.stuff.findUnique({ where: { id: jar.id } })).inStock, 13);
+      assert.deepEqual(await client.ingredient.findUnique({ where: { id: existing.id } }), existing);
+      assert.equal(await client.ingredient.count({ where: { title: "Куркумма" } }), 0);
+      const recipe = await client.recipe.findUnique({ where: { title: "Duplicate review recipe" }, include: { ingredients: true } });
+      assert.equal(recipe.ingredients[0].ingredientId, existing.id);
+    });
+
+    await t.test("distinct creation survives later choices, preserves explicit fields, and saves only after confirmation", async () => {
+      const pepper = await client.ingredient.findUnique({ where: { title: "Чорний перець мелений" } });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "batch", intent: { kind: "list", operations: [
+        { kind: "createIngredient", data: ingredientData("Куркумма", { description: "Intentional distinct record", category: "OTHER" }) },
+        { kind: "createIngredient", data: ingredientData("Перець чорний мелений") },
+      ] } } };
+      const first = await actions.askInventoryAssistant({ prompt: "Створи два інгредієнти", selected: null, previousSearch: null, clarification: null });
+      const second = await actions.resumeInventoryWrite({ pending: first.data.pending, choice: { key: first.data.question.key, createNew: true }, page: null });
+      assert.equal(second.ok, true);
+      assert.equal(second.data.question.key, "1:createIngredient");
+      const calls = apiCalls;
+      const ready = await actions.resumeInventoryWrite({ pending: second.data.pending, choice: { key: second.data.question.key, selection: { entity: "ingredient", id: pepper.id } }, page: null });
+      assert.equal(ready.ok, true);
+      assert.equal(apiCalls, calls);
+      assert.equal(ready.data.preview.items.length, 1);
+      assert.equal(ready.data.preview.items[0].after.title, "Куркумма");
+      assert.equal(ready.data.preview.items[0].after.category, "OTHER");
+      assert.equal(ready.data.preview.items[0].duplicateReview.title, "Куркумма");
+      assert.equal(await client.ingredient.count({ where: { title: "Куркумма" } }), 0);
+      assert.equal((await actions.confirmInventoryBatch(ready.data.preview)).ok, true);
+      assert.equal((await client.ingredient.findUnique({ where: { title: "Куркумма" } })).description, "Intentional distinct record");
+    });
+
+    await t.test("confirmation rechecks edited titles and new near matches atomically", async (subtest) => {
+      subtest.mock.method(console, "error", () => {});
+      const earlier = { kind: "createStuff", after: stuffData("Must not save on duplicate conflict") };
+      const unreviewed = { kind: "createIngredient", after: ingredientData("Перець чорний мелений") };
+      const refused = await actions.confirmInventoryBatch({ items: [earlier, unreviewed], unchanged: [] });
+      assert.equal(refused.ok, false);
+      assert.equal(refused.code, "CONFLICT");
+      assert.equal(await client.stuff.count({ where: { title: earlier.after.title } }), 0);
+      assert.equal(await client.ingredient.count({ where: { title: unreviewed.after.title } }), 0);
+      const existing = await client.ingredient.findUnique({ where: { title: "Чорний перець мелений" } });
+      const approved = { ...unreviewed, duplicateReview: { title: unreviewed.after.title, candidates: [{ id: existing.id, title: existing.title }] } };
+      await client.ingredient.create({ data: ingredientData("Чорний перець мелений дрібний") });
+      const changed = await actions.confirmInventoryBatch({ items: [earlier, approved], unchanged: [] });
+      assert.equal(changed.ok, false);
+      assert.equal(changed.code, "CONFLICT");
+      assert.equal(await client.stuff.count({ where: { title: earlier.after.title } }), 0);
+      const edited = await actions.confirmInventoryMutation({ ...approved, after: { ...approved.after, title: "Перець чорний" } });
+      assert.equal(edited.ok, false);
+      assert.equal(edited.code, "CONFLICT");
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;

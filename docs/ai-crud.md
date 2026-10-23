@@ -18,6 +18,8 @@ For stuff:
 Створи новий матеріал «Слоїчки 250 мл», категорія слоїчки, залишок 30, опис: скляні слоїчки.
 ```
 
+For ingredient creation, existing similar names first produce a choice: use an existing ingredient without changing its fields, or explicitly create a separate record. Exact existing titles cannot be created again. See [duplicate review](ai-ingredient-duplicates.md).
+
 Check the editable creation form, then click **Підтвердити створення**. Missing stuff description defaults to empty, stock to 0, and category is inferred as JARS or DECOR where clear. Proposed defaults are explained. Ingredient creation defaults saved status to false unless explicitly requested; the preview lets you edit it. Titles must be nonblank and unique within their entity type; the database's existing uniqueness remains case-sensitive.
 
 Why: AI proposes values; the application validates and saves them only after confirmation. Confirmation itself does not call OpenAI.

@@ -1,4 +1,4 @@
-import type { WriteResolution } from "./ai-resolution.service";
+import { WriteResolution } from "./ai-resolution.service";
 import { MAX_BATCH_OPERATIONS, type BatchIntent, type BatchPreview } from "@/zod/ai-batch.schema";
 import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import type { RecordSelection } from "@/zod/ai-search.schema";
@@ -10,19 +10,33 @@ import { prepareInventoryMutation, applyInventoryMutation } from "./ai-mutations
 import { searchInventory } from "./ai-inventory.service";
 import { cleanupInventoryImages, guarded } from "./inventory-write.service";
 import type { IngredientResolutionCache } from "./ai-recipe.service";
+import { validateIngredientDuplicateReview } from "./ai-ingredient-duplicates.service";
 import { completeBatchPreview } from "../ai/batch-preview";
 
 const key = (title: string) => title.toLocaleLowerCase("uk");
 export { completeBatchPreview } from "../ai/batch-preview";
 
 export async function prepareInventoryBatch(intent: BatchIntent, selected: RecordSelection | null, resolution?: WriteResolution): Promise<BatchPreview> {
+  const state = resolution ?? new WriteResolution({ decisions: [] });
+  const reused = new Map<number, string>();
+  const creations = new Map<number, InventoryMutationPreview>();
   const cache: IngredientResolutionCache = new Map();
   const items: InventoryMutationPreview[] = [];
   const unchanged: string[] = [];
   const operations: { intent: InventoryMutationIntent; selected: RecordSelection | null; chosen: boolean }[] = [];
   if (intent.kind === "list") {
-    for (const operation of intent.operations) {
-      if (operation.kind === "createIngredient") cache.set(operation.data.title, { id: null, updatedAt: null, title: operation.data.title, category: operation.data.category, amount: "" });
+    // Resolve explicit creations before recipes, even if a recipe appears first.
+    for (const [index, operation] of intent.operations.entries()) {
+      if (operation.kind === "createIngredient") {
+        const { existing, review } = await state.ingredientCreation(operation.data.title, `${index}:createIngredient`);
+        if (existing) {
+          reused.set(index, `«${operation.data.title}»: використано наявний «${existing.title}», його дані не змінено`);
+          cache.set(operation.data.title, { id: existing.id, updatedAt: existing.updatedAt.toISOString(), title: existing.title, category: existing.category, amount: "" });
+        } else {
+          cache.set(operation.data.title, { id: null, updatedAt: null, title: operation.data.title, category: operation.data.category, amount: "" });
+          creations.set(index, { kind: "createIngredient", after: operation.data, ...(review ? { duplicateReview: review } : {}) });
+        }
+      }
       operations.push({ intent: operation, selected, chosen: false });
     }
   } else {
@@ -47,8 +61,10 @@ export async function prepareInventoryBatch(intent: BatchIntent, selected: Recor
     }
   }
   for (const [index, operation] of operations.entries()) {
+    if (reused.has(index)) { unchanged.push(reused.get(index)!); continue; }
+    if (creations.has(index)) { items.push(creations.get(index)!); continue; }
     try {
-      const prepared = await prepareInventoryMutation(operation.intent, operation.selected, operation.chosen, true, cache, resolution ? { state: resolution, index } : undefined);
+      const prepared = await prepareInventoryMutation(operation.intent, operation.selected, operation.chosen, true, cache, { state, index });
       items.push(prepared.preview);
     } catch (error) {
       if (!(error instanceof NoChangesError)) throw error;
@@ -64,6 +80,8 @@ export async function applyInventoryBatch(preview: BatchPreview) {
   if (normalized.items.length !== preview.items.length) throw new AppError("У перегляді відсутні операції створення інгредієнтів. Повторіть запит.");
   const cleanup: string[] = [];
   const results = await guarded(() => prisma.$transaction(async (tx) => {
+    // Recheck edited titles and newly appeared candidates before any writes.
+    for (const item of normalized.items) if (item.kind === "createIngredient") await validateIngredientDuplicateReview(item, tx);
     const newIds = new Map<string, number>();
     // Validate references before applying our own ingredient edits in this transaction.
     const references = new Map<number, string>();

@@ -4,13 +4,17 @@ import type { InventoryResult } from "../ai/inventory.types";
 import { inventoryCategoryLabels } from "../ai/inventory-labels";
 import { candidateNames, matchNames, literalNames } from "../ai/name-resolution";
 import { AppError } from "../error";
+import { similarIngredients } from "./ai-ingredient-duplicates.service";
 import { prisma } from "../prisma";
 
 const PAGE_SIZE = 20;
 export type RecordChoice = {
-  key: string; name: string; context: string;
+  key: string; name: string; context: string; purpose?: "ingredientCreation"; canCreate?: boolean;
   candidates: InventoryResult[]; page: number; hasMore: boolean;
 };
+export class ExistingIngredientSelected extends AppError {
+  constructor(public readonly selection: RecordSelection, public readonly title: string) { super(`Використано наявний інгредієнт «${title}». Новий не створено, дані не змінено.`); }
+}
 export class RecordChoiceRequired extends AppError {
   constructor(public readonly question: RecordChoice) {
     super(`Назва «${question.name}» неоднозначна. Варіанти: ${candidateNames(question.candidates)}.`);
@@ -53,19 +57,48 @@ export class WriteResolution {
     const saved = this.decisions.find((item) => item.key === key);
     const clicked = this.input?.choice?.key === key ? this.input.choice : null;
     if (clicked) this.consumedChoice = true;
+    if ((clicked && !("selection" in clicked)) || (saved && !("selection" in saved))) throw new AppError("Рішення про створення не відповідає цій операції.", "STALE_PREVIEW");
     const selection = clicked?.selection ?? saved?.selection;
     if (selection && selection.entity !== entity) throw new AppError("Тип обраного запису не відповідає операції.");
     return { saved, selection };
   }
-  private remember(key: string, entity: Entity, row: { id: number; title: string }) {
-    const decision = { key, selection: { entity, id: row.id }, title: row.title };
-    const index = this.decisions.findIndex((item) => item.key === key);
+  private saveDecision(decision: PendingWrite["decisions"][number]) {
+    const index = this.decisions.findIndex((item) => item.key === decision.key);
     if (index < 0) this.decisions.push(decision);
     else this.decisions[index] = decision;
     if (this.decisions.length > 1020) throw new AppError("Забагато виборів у запиті.");
   }
+  private remember(key: string, entity: Entity, row: { id: number; title: string }) {
+    this.saveDecision({ key, selection: { entity, id: row.id }, title: row.title });
+  }
   private question(key: string, name: string, context: string, entity: Entity, rows: { id: number; title: string; category?: keyof typeof inventoryCategoryLabels; amount?: string }[], page: number) {
     throw new RecordChoiceRequired({ key, name, context, page, hasMore: rows.length > PAGE_SIZE, candidates: rows.slice(0, PAGE_SIZE).map((row) => ({ entity, id: row.id, title: row.title, summary: [row.category ? inventoryCategoryLabels[row.category] : "", row.amount ?? ""].filter(Boolean).join(" · ") })) });
+  }
+  async ingredientCreation(name: string, key: string) {
+    const saved = this.decisions.find((item) => item.key === key);
+    const clicked = this.input?.choice?.key === key ? this.input.choice : null;
+    if (clicked) this.consumedChoice = true;
+    if (saved && "createNew" in saved && saved.title !== name) throw new AppError("Назва нового інгредієнта змінилася. Повторіть вибір.", "STALE_PREVIEW");
+    const candidates = await similarIngredients(name);
+    const decision = clicked ?? saved;
+    if (decision && "selection" in decision) {
+      if (decision.selection.entity !== "ingredient") throw new AppError("Оберіть інгредієнт.");
+      const current = candidates.find((row) => row.id === decision.selection.id);
+      if (!current || (saved && saved.title !== current.title)) throw new AppError("Обраний інгредієнт змінився або видалений. Повторіть запит.", "STALE_PREVIEW");
+      this.remember(key, "ingredient", current);
+      return { existing: current, review: undefined };
+    }
+    const canCreate = !candidates.some((row) => row.title.trim().toLocaleLowerCase("uk") === name.trim().toLocaleLowerCase("uk"));
+    const reviewedCandidates = clicked ? candidates.map(({ id, title }) => ({ id, title })) : saved && "createNew" in saved ? saved.candidates : [];
+    const reviewedAll = candidates.every((row) => reviewedCandidates.some((item) => item.id === row.id && item.title === row.title));
+    if (decision && "createNew" in decision && reviewedAll) {
+      if (!canCreate) throw new AppError("Інгредієнт із цією назвою вже існує. Оберіть наявний або вкажіть іншу назву.", "CONFLICT");
+      this.saveDecision({ key, createNew: true, title: name, candidates: reviewedCandidates });
+      return { existing: null, review: { title: name, candidates: reviewedCandidates } };
+    }
+    if (!candidates.length) return { existing: null, review: undefined };
+    const page = this.input?.page?.key === key ? this.input.page.number : 0;
+    throw new RecordChoiceRequired({ key, name, context: "Схожий інгредієнт уже може існувати. Використання наявного не змінює його опис, категорію чи статуси", purpose: "ingredientCreation", canCreate, page, hasMore: candidates.length > (page + 1) * PAGE_SIZE, candidates: candidates.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((row) => ({ entity: "ingredient", id: row.id, title: row.title, summary: inventoryCategoryLabels[row.category] })) });
   }
   async inventory(entity: Entity, name: string, key: string, context: string, allowMissing = false): Promise<RecordData | null> {
     const { saved, selection } = this.chosen(key, entity);

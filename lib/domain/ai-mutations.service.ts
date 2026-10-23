@@ -1,4 +1,4 @@
-import type { OperationResolution } from "./ai-resolution.service";
+import { ExistingIngredientSelected, WriteResolution, type OperationResolution } from "./ai-resolution.service";
 import type { InventoryMutationIntent, InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import { ingredientWriteSchema, stuffWriteSchema } from "@/zod/ai-mutation.schema";
 import type { RecordSelection } from "@/zod/ai-search.schema";
@@ -23,7 +23,12 @@ function ensureChanged(before: object, after: object) {
 export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false, allowReferencedDelete = false, cache?: IngredientResolutionCache, resolution?: OperationResolution): Promise<PreparedMutation> {
   switch (intent.kind) {
     case "createRecipe": case "updateRecipe": case "deleteRecipe": return prepareRecipeMutation(intent, selected, explicitlyChosen, cache, resolution);
-    case "createIngredient": return { kind: "ready", preview: { kind: intent.kind, after: intent.data } };
+    case "createIngredient": {
+      const state = resolution?.state ?? new WriteResolution({ decisions: [] });
+      const result = await state.ingredientCreation(intent.data.title, `${resolution?.index ?? 0}:createIngredient`);
+      if (result.existing) throw new ExistingIngredientSelected({ entity: "ingredient", id: result.existing.id }, result.existing.title);
+      return { kind: "ready", preview: { kind: intent.kind, after: intent.data, ...(result.review ? { duplicateReview: result.review } : {}) } };
+    }
     case "createStuff": return { kind: "ready", preview: { kind: intent.kind, after: intent.data } };
     case "updateIngredient": case "deleteIngredient": case "updateStuff": case "deleteStuff": break;
     default: return assertNever(intent);

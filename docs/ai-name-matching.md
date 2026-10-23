@@ -46,3 +46,6 @@ Approximation requires all query tokens to match separate title words. Short
 words and numbers are not typo-corrected; longer words allow one edit, or two
 when both words have at least eight characters. Common suffixes and word
 prefixes provide conservative grammatical matching, not full morphology.
+
+Explicit ingredient creation also checks similar titles before preview; see
+[duplicate ingredient review](ai-ingredient-duplicates.md).

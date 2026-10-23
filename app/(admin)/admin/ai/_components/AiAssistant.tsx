@@ -301,7 +301,7 @@ export default function AiAssistant() {
       </div>
 
       {results && !pendingWrite && <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} />}
-      {pendingWrite && <RecordChoiceView question={pendingWrite.question} prompt={lastRequest.current?.clarification?.originalPrompt ?? lastRequest.current?.prompt ?? ""} busy={busy} onChoose={(selection) => { void resumeWrite({ key: pendingWrite.question.key, selection }); }} onPage={(number) => { void resumeWrite(null, { key: pendingWrite.question.key, number }); }} onCancel={cancelWrite} />}
+      {pendingWrite && <RecordChoiceView question={pendingWrite.question} prompt={lastRequest.current?.clarification?.originalPrompt ?? lastRequest.current?.prompt ?? ""} busy={busy} onChoose={(selection) => { void resumeWrite({ key: pendingWrite.question.key, selection }); }} onCreateNew={() => { void resumeWrite({ key: pendingWrite.question.key, createNew: true }); }} onPage={(number) => { void resumeWrite(null, { key: pendingWrite.question.key, number }); }} onCancel={cancelWrite} />}
       {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); setClarification(null); cancelWrite(); }} />}
       {mutation && <InventoryMutationView preview={mutation} assumptions={assumptions} busy={busy} onChange={setMutation} onConfirm={confirmMutation} onCancel={cancelWrite} />}
       {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} onConfirm={confirmMutation} onCancel={cancelWrite} />}
