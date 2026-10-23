@@ -1,6 +1,7 @@
 import type { InventorySearch, RecordSelection } from "@/zod/ai-search.schema";
 import type { InventoryRecord, InventoryResult, InventorySearchResult } from "../ai/inventory.types";
-import { ingredientWhere, recipeWhere, stuffWhere } from "../ai/inventory-search";
+import type { InventorySearchLeaf } from "@/zod/inventory-filters.schema";
+import { ingredientWhere, recipeWhere, stuffWhere, type SearchLookups } from "../ai/inventory-search";
 import { inventoryCategoryLabels as categories, inventorySeriesLabels as series } from "../ai/inventory-labels";
 import { AppError } from "../error";
 import { inventoryTimestamp } from "../ai/search-dates";
@@ -16,6 +17,10 @@ const timestampFields = (record: { createdAt: Date; updatedAt: Date }) => [
 ];
 
 export function validateSearchRanges(search: InventorySearch) {
+  for (const branch of [...(search.anyOf ?? []), ...(search.noneOf ?? [])]) {
+    if (search.entity !== "all" && branch.entity !== "all" && branch.entity !== search.entity) throw new AppError("Група фільтрів має стосуватися того самого типу запису.");
+    validateSearchRanges(branch);
+  }
   for (const field of ["created", "updated"] as const) {
     const from = search[`${field}From`], before = search[`${field}Before`];
     if (from != null && before != null && from >= before) throw new AppError("Початок періоду має бути раніше його кінця.");
@@ -29,77 +34,97 @@ export function validateSearchRanges(search: InventorySearch) {
   }
 }
 
-// Match searchable text fields in bounded database pages, never send the catalogue
-// to the model. Structured category/status filters are still applied by PostgreSQL.
-async function textMatches(search: Exclude<InventorySearch, { entity: "all" }>) {
-  const text = search.text!;
-  const recipeFilters = search.entity === "recipe" ? await recipeSearchWhere({ ...search, text: null }) : {};
-  const found: { id: number; title: string; score: number }[] = [];
+type Entity = RecordSelection["entity"];
+const lookupPaging = (page: number) => ({ orderBy: [{ title: "asc" as const }, { id: "asc" as const }], skip: page * 250, take: 250 });
+
+function relevantLeaves(search: InventorySearch, entity: Entity): InventorySearchLeaf[] {
+  return [search, ...(search.anyOf ?? []), ...(search.noneOf ?? [])].filter((leaf) => leaf.entity === "all" || leaf.entity === entity);
+}
+
+// Resolve tolerant text/ingredient names once per entity, including names inside
+// groups. SQL then evaluates the complete expression before paging its results.
+async function prepareSearchLookups(search: InventorySearch, entity: Entity) {
+  const leaves = relevantLeaves(search, entity);
+  const texts = [...new Set(leaves.flatMap((leaf) => leaf.text ? [leaf.text] : []))];
+  const ingredientNames = [...new Set(leaves.flatMap((leaf) => leaf.entity === "recipe" ? [...leaf.includeIngredients, ...(leaf.anyIngredients ?? []), ...leaf.excludeIngredients] : []))];
+  const lookups: SearchLookups = {};
+  if (ingredientNames.length) {
+    const matches = new Map(ingredientNames.map((name) => [name, [] as number[]]));
+    for (let page = 0; ; page++) {
+      const rows = await prisma.ingredient.findMany({ where: {}, select: { id: true, title: true }, ...lookupPaging(page) });
+      for (const row of rows) for (const name of ingredientNames) if (nameMatchScore(name, row.title) !== null) matches.get(name)!.push(row.id);
+      if (rows.length < 250) break;
+    }
+    lookups.ingredients = matches;
+  }
+  const ranks = new Map<number, number>();
+  if (!texts.length) return { lookups, ranks };
+  const matches = new Map(texts.map((text) => [text, [] as number[]]));
+  // Main scalar conditions always apply outside the OR/NOT groups, so they can
+  // narrow the text lookup without dropping candidates from an alternative.
+  const base = { ...search, text: null, anyOf: [], noneOf: [] };
   for (let page = 0; ; page++) {
-    const args = { where: {}, select: { id: true, title: true, description: true }, orderBy: [{ title: "asc" as const }, { id: "asc" as const }], skip: page * 250, take: 250 };
-    const rows = search.entity === "ingredient" ? await prisma.ingredient.findMany({ ...args, where: ingredientWhere({ ...search, text: null }) }) : search.entity === "stuff" ? await prisma.stuff.findMany({ ...args, where: stuffWhere({ ...search, text: null }) }) : await prisma.recipe.findMany({ ...args, select: { ...args.select, notes: true, confirmationNotes: true }, where: recipeFilters });
-    for (const row of rows) {
+    const args = { select: { id: true, title: true, description: true }, ...lookupPaging(page) };
+    const rows = entity === "ingredient" ? await prisma.ingredient.findMany({ ...args, where: ingredientWhere(base, lookups) })
+      : entity === "stuff" ? await prisma.stuff.findMany({ ...args, where: stuffWhere(base, lookups) })
+      : await prisma.recipe.findMany({ ...args, select: { ...args.select, notes: true, confirmationNotes: true }, where: recipeWhere(base, lookups) });
+    for (const row of rows) for (const text of texts) {
       const fields = [row.title, row.description, ...("notes" in row ? [row.notes] : []), ...("confirmationNotes" in row ? [row.confirmationNotes] : [])];
-      const scores = fields.map((value, index) => {
+      const score = fields.map((value, index) => {
         const match = typeof value === "string" ? nameMatchScore(text, value) : null;
         return match === null ? null : match + index * 10;
-      });
-      const score = scores.find((value) => value !== null) ?? null;
-      if (score !== null) found.push({ id: row.id, title: row.title, score });
+      }).find((value) => value !== null);
+      if (score !== undefined) {
+        matches.get(text)!.push(row.id);
+        if (text === search.text) ranks.set(row.id, score);
+      }
     }
     if (rows.length < 250) break;
   }
-  return found.sort((a, b) => a.score - b.score || a.title.localeCompare(b.title, "uk") || a.id - b.id);
+  lookups.texts = matches;
+  return { lookups, ranks };
 }
 
-async function recipeSearchWhere(search: Extract<InventorySearch, { entity: "recipe" }>) {
-  if (!search.includeIngredients.length && !search.excludeIngredients.length) return recipeWhere(search);
-  const ingredients: { id: number; title: string }[] = [];
-  for (let page = 0; ; page++) {
-    const chunk = await prisma.ingredient.findMany({ where: {}, select: { id: true, title: true }, orderBy: [{ title: "asc" }, { id: "asc" }], skip: page * 250, take: 250 });
-    ingredients.push(...chunk);
-    if (chunk.length < 250) break;
+async function readResultPage(search: InventorySearch, entity: Entity, lookups: SearchLookups, skip: number, take: number): Promise<InventoryResult[]> {
+  const paging = { skip, take, orderBy: [{ title: "asc" as const }, { id: "asc" as const }] };
+  if (entity === "ingredient") {
+    const records = await prisma.ingredient.findMany({ ...paging, where: ingredientWhere(search, lookups), select: { id: true, title: true, category: true, isInStock: true } });
+    return records.map((record) => ({ entity, id: record.id, title: record.title, summary: `${categories[record.category]} · ${stockLabel(record.isInStock)}` }));
   }
-  const where = recipeWhere({ ...search, includeIngredients: [], excludeIngredients: [] });
-  const AND = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
-  const ids = (name: string) => ingredients.filter((row) => nameMatchScore(name, row.title) !== null).map((row) => row.id);
-  for (const name of search.includeIngredients) AND.push({ ingredients: { some: { ingredientId: { in: ids(name) } } } });
-  for (const name of search.excludeIngredients) AND.push({ ingredients: { none: { ingredientId: { in: ids(name) } } } });
-  return { ...where, AND };
+  if (entity === "stuff") {
+    const records = await prisma.stuff.findMany({ ...paging, where: stuffWhere(search, lookups), select: { id: true, title: true, category: true, inStock: true } });
+    return records.map((record) => ({ entity, id: record.id, title: record.title, summary: `${categories[record.category]} · Залишок: ${record.inStock}` }));
+  }
+  const records = await prisma.recipe.findMany({ ...paging, where: recipeWhere(search, lookups), select: { id: true, title: true, category: true, isHidden: true, isConfirmed: true, spicy: true } });
+  return records.map((record) => ({ entity, id: record.id, title: record.title, summary: `${categories[record.category]} · Гострота: ${record.spicy}/4 · ${record.isHidden ? "Прихований" : "Видимий"} · ${record.isConfirmed ? "Підтверджений" : "Не підтверджений"}` }));
+}
+
+async function searchEntity(search: InventorySearch, entity: Entity, page: number): Promise<InventorySearchResult> {
+  const { lookups, ranks } = await prepareSearchLookups(search, entity);
+  let items: InventoryResult[];
+  if (!search.text) items = await readResultPage(search, entity, lookups, page * SEARCH_PAGE_SIZE, SEARCH_PAGE_SIZE + 1);
+  else {
+    // Apply all groups in SQL before relevance ordering and pagination. Scanning
+    // compact result rows avoids losing later matches to an early top-20 slice.
+    items = [];
+    for (let offset = 0; ; offset += 250) {
+      const chunk = await readResultPage(search, entity, lookups, offset, 250);
+      items.push(...chunk);
+      if (chunk.length < 250) break;
+    }
+    items.sort((a, b) => ranks.get(a.id)! - ranks.get(b.id)! || a.title.localeCompare(b.title, "uk") || a.id - b.id);
+    items = items.slice(page * SEARCH_PAGE_SIZE, (page + 1) * SEARCH_PAGE_SIZE + 1);
+  }
+  return { search, page, hasMore: items.length > SEARCH_PAGE_SIZE, items: items.slice(0, SEARCH_PAGE_SIZE) };
 }
 
 export async function searchInventory(search: InventorySearch, page = 0): Promise<InventorySearchResult> {
   validateSearchRanges(search);
-  const paging = { skip: page * SEARCH_PAGE_SIZE, take: SEARCH_PAGE_SIZE + 1, orderBy: [{ title: "asc" as const }, { id: "asc" as const }] };
-  if (search.entity === "all") {
-    // Page each type separately, so one large category cannot hide all other types.
-    const groups = await Promise.all([
-      searchInventory({ ...search, entity: "ingredient", text: search.text, category: null, isInStock: null, isSaved: null }, page),
-      searchInventory({ ...search, entity: "recipe", text: search.text, category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] }, page),
-      searchInventory({ ...search, entity: "stuff", text: search.text, category: null, isInStock: null, stockMin: null, stockMax: null }, page),
-    ]);
-    return { search, page, items: groups.flatMap((group) => group.items), hasMore: groups.some((group) => group.hasMore) };
-  }
-
-  const matching = search.text ? await textMatches(search) : null;
-  const textFilter = matching ? { id: { in: matching.slice(page * SEARCH_PAGE_SIZE, (page + 1) * SEARCH_PAGE_SIZE + 1).map((row) => row.id) } } : {};
-  const readPaging = matching ? { orderBy: paging.orderBy } : paging;
-  let items: InventoryResult[];
-  if (search.entity === "ingredient") {
-    const records = await prisma.ingredient.findMany({ ...readPaging, where: { ...ingredientWhere({ ...search, text: null }), ...textFilter }, select: { id: true, title: true, category: true, isInStock: true } });
-    items = records.map((record) => ({ entity: "ingredient", id: record.id, title: record.title, summary: `${categories[record.category]} · ${stockLabel(record.isInStock)}` }));
-  } else if (search.entity === "stuff") {
-    const records = await prisma.stuff.findMany({ ...readPaging, where: { ...stuffWhere({ ...search, text: null }), ...textFilter }, select: { id: true, title: true, category: true, inStock: true } });
-    items = records.map((record) => ({ entity: "stuff", id: record.id, title: record.title, summary: `${categories[record.category]} · Залишок: ${record.inStock}` }));
-  } else {
-    const records = await prisma.recipe.findMany({ ...readPaging, where: { ...await recipeSearchWhere({ ...search, text: null }), ...textFilter }, select: { id: true, title: true, category: true, isHidden: true, isConfirmed: true, spicy: true } });
-    items = records.map((record) => ({ entity: "recipe", id: record.id, title: record.title, summary: `${categories[record.category]} · Гострота: ${record.spicy}/4 · ${record.isHidden ? "Прихований" : "Видимий"} · ${record.isConfirmed ? "Підтверджений" : "Не підтверджений"}` }));
-  }
-  if (matching) {
-    const ranks = new Map(matching.map((row, index) => [row.id, index]));
-    items = items.filter((item) => ranks.has(item.id)).sort((a, b) => ranks.get(a.id)! - ranks.get(b.id)!);
-  }
-  return { search, page, hasMore: items.length > SEARCH_PAGE_SIZE, items: items.slice(0, SEARCH_PAGE_SIZE) };
+  if (search.entity !== "all") return searchEntity(search, search.entity, page);
+  // Each type evaluates the same logical expression. A branch for another type
+  // is false, so excluding saved recipes never excludes ingredients/materials.
+  const groups = await Promise.all([searchEntity(search, "ingredient", page), searchEntity(search, "recipe", page), searchEntity(search, "stuff", page)]);
+  return { search, page, items: groups.flatMap((group) => group.items), hasMore: groups.some((group) => group.hasMore) };
 }
 
 export async function readInventoryRecord(selection: RecordSelection): Promise<InventoryRecord> {

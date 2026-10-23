@@ -689,6 +689,108 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal((await actions.searchInventoryRecords(packaging)).data.items.length, 4);
     });
 
+    await t.test("natural filter combinations preserve OR, AND and grouped exclusion semantics", async (sub) => {
+      const ingredientNames = ["часник гранульований", "цибуля сушена", "сіль", "томати", "гірчиця", "паприка"];
+      const ingredients = [];
+      for (const name of ingredientNames) ingredients.push(await client.ingredient.create({ data: ingredientData(`Logic combinations ingredient ${name}`, { description: name === "сіль" ? "Виключити" : null, category: name === "сіль" ? "OTHER" : "SPICES" }) }));
+      const recipeBase = { entity: "recipe", text: null, titleText: "Logic combinations recipe", category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] };
+      const r = (extra = {}) => ({ ...recipeBase, ...extra });
+      const recipes = [];
+      const definitions = [
+        ["A", "SAUCES", true, false, true, [0, 3]],
+        ["B", "JAMS", false, false, false, [1, 4]],
+        ["C", "SAUCES", false, true, true, [0, 1, 2]],
+        ["D", "SPICES", true, false, false, [5]],
+        ["E", "JAMS", true, false, true, []],
+        ["F", "SAUCES", false, false, false, []],
+      ];
+      for (const [name, category, isSaved, isHidden, isConfirmed, composition] of definitions) recipes.push(await client.recipe.create({ data: {
+        ...recipeData(`Logic combinations recipe ${name}`, { category, isSaved, isHidden, isConfirmed, confirmationNotes: name === "A" ? "Контроль" : null }),
+        ingredients: { create: composition.map((index) => ({ ingredientId: ingredients[index].id, amount: "5 г" })) },
+      } }));
+      const [a, b, c, d, e, f] = recipes;
+      const jar = await client.stuff.create({ data: stuffData("Logic combinations jar", { inStock: 1 }) });
+      const decor = await client.stuff.create({ data: stuffData("Logic combinations decor", { inStock: 10, category: "DECOR" }) });
+      const ingredientBase = { entity: "ingredient", text: null, titleText: "Logic combinations ingredient", category: null, isInStock: null, isSaved: null };
+      const stuffBase = { entity: "stuff", text: null, titleText: "Logic combinations", category: null, isInStock: null, stockMin: null, stockMax: null };
+      async function find(search, page = 0) {
+        const result = await actions.searchInventoryRecords(search, page);
+        assert.equal(result.ok, true, result.message);
+        return result.data;
+      }
+      const recipeIds = (items) => items.map((item) => item.id).sort((x, y) => x - y);
+      await sub.test("multi-category and inclusive ingredient OR combine with all/none conditions", async () => {
+        assert.deepEqual(recipeIds((await find(r({ categories: ["SAUCES", "JAMS"], anyIngredients: ["часник", "цибуля"], excludeIngredients: ["сіль"] }))).items), [a.id, b.id]);
+        assert.deepEqual(recipeIds((await find(r({ anyIngredients: ["часнк", "цибуля"] }))).items), [a.id, b.id, c.id]);
+        assert.deepEqual(recipeIds((await find(r({ includeIngredients: ["часник", "цибуля"] }))).items), [c.id]);
+        assert.deepEqual(recipeIds((await find(r({ excludeIngredients: ["часник", "цибуля"] }))).items), [d.id, e.id, f.id]);
+        assert.deepEqual(recipeIds((await find(r({ anyIngredients: ["unknown ingredient"] }))).items), []);
+        assert.deepEqual(recipeIds((await find(r({ anyIngredients: ["unknown ingredient", "часник"] }))).items), [a.id, c.id]);
+        assert.deepEqual(recipeIds((await find(r({ categories: ["SAUCES", "JAMS"], excludeCategories: ["JAMS"] }))).items), [a.id, c.id, f.id]);
+        assert.equal((await find({ ...ingredientBase, categories: ["SPICES", "OTHER"], excludeCategories: ["OTHER"] })).items.length, 5);
+        assert.deepEqual((await find({ ...stuffBase, categories: ["JARS", "DECOR"], excludeCategories: ["DECOR"] })).items.map((item) => item.id), [jar.id]);
+      });
+      await sub.test("whole-group exclusion does not flatten category and saved status", async () => {
+        const noneOf = [r({ category: "SAUCES", isSaved: true })];
+        assert.deepEqual(recipeIds((await find(r({ noneOf }))).items), [b.id, c.id, d.id, e.id, f.id]);
+        assert.deepEqual(recipeIds((await find(r({ category: "SAUCES", anyOf: [r({ isHidden: true }), r({ isConfirmed: false })] }))).items), [c.id, f.id]);
+        assert.deepEqual(recipeIds((await find(r({ anyOf: [r({ includeIngredients: ["часник", "томати"] }), r({ includeIngredients: ["цибуля", "гірчиця"] })] }))).items), [a.id, b.id]);
+      });
+      await sub.test("cross-entity branches are false for other types rather than removing their constraints", async () => {
+        const root = { entity: "all", text: null, titleText: "Logic combinations" };
+        const excluded = await find({ ...root, noneOf: [r({ category: "SAUCES", isSaved: true })] });
+        assert.deepEqual(recipeIds(excluded.items.filter((item) => item.entity === "recipe")), [b.id, c.id, d.id, e.id, f.id]);
+        assert.equal(excluded.items.filter((item) => item.entity === "ingredient").length, 6);
+        assert.equal(excluded.items.filter((item) => item.entity === "stuff").length, 2);
+        const alternatives = await find({ ...root, anyOf: [r({ category: "SAUCES", isSaved: true }), { ...stuffBase, stockMax: 2 }] });
+        assert.deepEqual(alternatives.items.map((item) => `${item.entity}:${item.id}`).sort(), [`recipe:${a.id}`, `stuff:${jar.id}`].sort());
+        const recipesOnly = await find({ ...root, anyOf: [r()] });
+        assert.equal(recipesOnly.items.length, 6);
+        assert.equal(recipesOnly.items.every((item) => item.entity === "recipe"), true);
+      });
+      await sub.test("nullable text exclusions retain rows without that text, including nulls", async () => {
+        assert.deepEqual(recipeIds((await find(r({ noneOf: [r({ confirmationNotesText: "Контроль" })] }))).items), [b.id, c.id, d.id, e.id, f.id]);
+        const remaining = await find({ ...ingredientBase, noneOf: [{ ...ingredientBase, descriptionText: "Виключити" }] });
+        assert.equal(remaining.items.length, 5);
+        assert.equal(remaining.items.some((item) => item.id === ingredients[2].id), false);
+      });
+      await sub.test("generic text and tolerant ingredient lookup work inside positive and negative groups", async () => {
+        assert.deepEqual(recipeIds((await find(r({ anyOf: [{ entity: "all", text: "combinations Logic" }] }))).items), [a.id, b.id, c.id, d.id, e.id, f.id]);
+        const ingredientExclusion = await find({ ...ingredientBase, noneOf: [{ ...ingredientBase, text: "часнк" }] });
+        assert.equal(ingredientExclusion.items.length, 5);
+        assert.equal(ingredientExclusion.items.some((item) => item.id === ingredients[0].id), false);
+        assert.deepEqual(recipeIds((await find(r({ noneOf: [r({ anyIngredients: ["часнк", "цибуля"] })] }))).items), [d.id, e.id, f.id]);
+      });
+      await sub.test("grouped filter batches freeze targets and preserve untouched alternatives", async () => {
+        const search = r({ categories: ["SAUCES", "JAMS"], anyIngredients: ["часнк", "цибуля"], excludeIngredients: ["сіль"], noneOf: [r({ category: "SAUCES", isSaved: true })] });
+        const preview = await prepareInventoryBatch({ kind: "filter", search, change: { kind: "updateRecipes", patch: recipePatch({ isSaved: true }) } }, null);
+        assert.deepEqual(preview.items.map((item) => item.target.id), [b.id]);
+        const late = await client.recipe.create({ data: { ...recipeData("Logic combinations recipe late", { category: "JAMS" }), ingredients: { create: [{ ingredientId: ingredients[1].id, amount: "2 г" }] } } });
+        await applyInventoryBatch(preview);
+        assert.equal((await client.recipe.findUnique({ where: { id: b.id } })).isSaved, true);
+        assert.equal((await client.recipe.findUnique({ where: { id: c.id } })).isSaved, false);
+        assert.equal((await client.recipe.findUnique({ where: { id: late.id } })).isSaved, false);
+        assert.equal((await client.stuff.findUnique({ where: { id: decor.id } })).inStock, 10);
+      });
+    });
+
+    await t.test("combined filters are evaluated before ranked pagination and batch limits", async () => {
+      for (let index = 0; index < 51; index++) await client.recipe.create({ data: recipeData(`Logic paging ${String(index).padStart(3, "0")}`, { isSaved: index >= 26 }) });
+      const base = { entity: "recipe", text: null, category: null, series: null, isHidden: null, isConfirmed: null, isSaved: null, isInStock: null, readyToCook: null, spicyMin: null, spicyMax: null, includeIngredients: [], excludeIngredients: [] };
+      const search = { ...base, text: "Logic paging", anyOf: [{ ...base, isSaved: true }] };
+      const first = await actions.searchInventoryRecords(search);
+      const second = await actions.searchInventoryRecords(search, 1);
+      assert.equal(first.ok, true);
+      assert.equal(second.ok, true);
+      assert.equal(first.data.items.length, 20);
+      assert.equal(first.data.items[0].title, "Logic paging 026");
+      assert.equal(first.data.hasMore, true);
+      assert.equal(second.data.items.length, 5);
+      assert.equal(second.data.hasMore, false);
+      assert.equal(first.data.items.some((item) => second.data.items.some((other) => item.id === other.id)), false);
+      await assert.rejects(prepareInventoryBatch({ kind: "filter", search, change: { kind: "updateRecipes", patch: recipePatch({ isHidden: false }) } }, null), /більше 20/);
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;

@@ -146,7 +146,7 @@ test("search schemas reject invented fields, invalid entity categories, IDs and 
 
 test("ingredient search preserves false flags and escapes literal LIKE characters", () => {
   assert.deepEqual(ingredientWhere({ ...ingredient, text: "50%_\\", category: "SPICES", isInStock: false, isSaved: false }), {
-    OR: [{ title: { contains: "50\\%\\_\\\\", mode: "insensitive" } }, { description: { contains: "50\\%\\_\\\\", mode: "insensitive" } }],
+    OR: [{ title: { contains: "50\\%\\_\\\\", mode: "insensitive" } }, { description: { contains: "50\\%\\_\\\\", mode: "insensitive", not: null } }],
     category: "SPICES", isInStock: false, isSaved: false,
   });
 });
@@ -1205,4 +1205,58 @@ test("relative calendar ranges are computed by the server across month/year boun
   assert.deepEqual(context.dateRanges.thisWeek, { from: "2026-12-28", before: "2027-01-04" });
   assert.deepEqual(context.dateRanges.lastMonth, { from: "2026-12-01", before: "2027-01-01" });
   assert.deepEqual(context.dateRanges.thisMonth, { from: "2027-01-01", before: "2027-02-01" });
+});
+
+const flatFilters = (search) => { const flat = { ...search }; delete flat.anyOf; delete flat.noneOf; return flat; };
+
+test("logical filter schemas bound groups, reject nesting and keep categories typed", () => {
+  const branch = flatFilters(recipe);
+  const parsed = schemas.inventorySearchSchema.parse({ ...recipe, categories: ["SAUCES", "JAMS"], anyIngredients: ["часник", "цибуля"], noneOf: [{ ...branch, category: "SAUCES", isSaved: true }] });
+  assert.deepEqual(parsed.categories, ["SAUCES", "JAMS"]);
+  assert.deepEqual(parsed.anyIngredients, ["часник", "цибуля"]);
+  for (const search of [
+    { ...recipe, categories: ["JARS"] }, { ...stuff, excludeCategories: ["SAUCES"] },
+    { ...recipe, anyOf: Array(5).fill(branch) }, { ...recipe, noneOf: Array(5).fill(branch) },
+    { ...recipe, anyOf: [{ ...branch, anyOf: [branch] }] },
+    { ...recipe, anyIngredients: Array(9).fill("сіль") },
+    { ...recipe, anyOf: [{ ...branch, sql: "unsafe" }] },
+  ]) assert.equal(schemas.inventorySearchSchema.safeParse(search).success, false);
+});
+
+test("cross-type groups and invalid grouped ranges are rejected before reads", async (t) => {
+  t.mock.method(console, "error", () => {});
+  for (const search of [
+    { ...recipe, anyOf: [flatFilters(ingredient)] },
+    { ...stuff, noneOf: [flatFilters(recipe)] },
+    { ...recipe, anyOf: [{ ...flatFilters(recipe), spicyMin: 4, spicyMax: 1 }] },
+    { entity: "all", text: null, noneOf: [{ ...flatFilters(stuff), createdFrom: "2026-12-02", createdBefore: "2026-12-01" }] },
+  ]) assert.equal((await actions.searchInventoryRecords(search)).ok, false);
+  assert.equal(state.reads.length, 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test("filter labels show category alternatives and grouped exclusion scope without raw objects", () => {
+  const { searchFilters } = require("../lib/ai/search-labels.ts");
+  const labels = searchFilters({ ...recipe, categories: ["SAUCES", "JAMS"], anyIngredients: ["часник", "цибуля"], noneOf: [{ ...flatFilters(recipe), category: "SAUCES", isSaved: true }], anyOf: [{ ...flatFilters(recipe), isHidden: true }, { ...flatFilters(recipe), isConfirmed: false }] });
+  assert.ok(labels.includes("Будь-яка категорія: Соуси АБО Повидло"));
+  assert.ok(labels.includes("Містить хоча б один: часник АБО цибуля"));
+  assert.ok(labels.some((label) => label.includes("Виключити збіги груп") && label.includes("Категорія: Соуси І Збережений: Так")));
+  assert.ok(labels.some((label) => label.includes("Хоча б одна група") && label.includes("Прихований: Так") && label.includes("Підтверджений: Ні") && label.includes(" АБО ")));
+  assert.equal(labels.some((label) => label.includes("[object Object]") || label.includes("undefined") || label.includes("SAUCES")), false);
+});
+
+test("planner and clarification retain natural combinations rather than flattening them", async () => {
+  const search = { ...recipe, categories: ["SAUCES", "JAMS"], anyIngredients: ["часник", "цибуля"], excludeIngredients: ["сіль"], noneOf: [{ ...flatFilters(recipe), category: "SAUCES", isSaved: true }] };
+  state.plan = plan(search);
+  const response = await actions.askInventoryAssistant(request({ prompt: "Соуси й варення з часником або цибулею, без солі, крім збережених соусів" }));
+  assert.equal(response.ok, true);
+  assert.deepEqual(response.data.results.search.anyIngredients, search.anyIngredients);
+  assert.equal(response.data.results.search.noneOf[0].isSaved, true);
+  const instructions = state.apiCalls[0].instructions;
+  for (const phrase of ["inclusive OR", "at most four FLAT", "Never nest", "never silently extend", "noneOf=["]) assert.ok(instructions.includes(phrase), phrase);
+  state.plan = clarificationPlan("Який період?");
+  const clarified = await actions.askInventoryAssistant(request({ prompt: "А лише за період", previousSearch: search }));
+  assert.deepEqual(clarified.data.clarification.previousSearch.anyIngredients, search.anyIngredients);
+  assert.equal(clarified.data.clarification.previousSearch.noneOf[0].isSaved, true);
+  assert.equal(state.writes.length, 0);
 });

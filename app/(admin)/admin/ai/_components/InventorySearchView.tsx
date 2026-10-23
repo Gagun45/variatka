@@ -25,7 +25,7 @@ export function InventorySearchView({ results, selected, busy, onSelect, onMore 
     <section aria-label="Результати пошуку" className="space-y-3 rounded-xl border p-5">
       <h2 className="text-lg font-semibold">{results.search.entity === "all" ? "Усі типи записів" : inventoryEntityLabels[results.search.entity]} — результати</h2>
       <p className="text-sm text-muted-foreground">{filters.length ? filters.join(" · ") : "Без додаткових фільтрів"}</p>
-      <p className="text-xs text-muted-foreground">До 20 записів кожного типу за сторінку. Пошук за словами в назві та описі.</p>
+      <p className="text-xs text-muted-foreground">До 20 записів кожного типу за сторінку. Усі умови пошуку наведені вище.</p>
       {!results.items.length && <p role="status">Нічого не знайдено. Спробуйте коротшу назву або інші фільтри.</p>}
       <ul className="space-y-2">
         {results.items.map((record) => {
