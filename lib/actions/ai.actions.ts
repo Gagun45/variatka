@@ -12,10 +12,10 @@ import {
   type InventorySearch,
   type RecordSelection,
 } from "@/zod/ai-search.schema";
-import { readInventoryRecord, searchInventory } from "../domain/ai-inventory.service";
+import { findInventoryRecord, readInventoryRecord, searchInventory } from "../domain/ai-inventory.service";
 import { planInventoryRequest } from "../ai/inventory-assistant";
 import type { AssistantReply } from "../ai/inventory.types";
-import { prepareClarification, validateClarificationSelection } from "../ai/clarification";
+import { prepareClarification, sameSelection, validateClarificationSelection } from "../ai/clarification";
 import { assertNever } from "../ai/mutation-definitions";
 import { inventoryMutationIntentSchema, inventoryMutationPreviewSchema, type InventoryMutationIntent, type InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import { prepareInventoryMutation } from "../domain/ai-mutations.service";
@@ -50,50 +50,73 @@ export async function askInventoryAssistant(request: AssistantRequest) {
     await requireAdmin();
     const parsed = assistantRequestSchema.safeParse(request);
     if (!parsed.success) throw new AppError("Некоректний запит. Максимум — 12000 символів.");
-    validateClarificationSelection(parsed.data);
-    const selected = parsed.data.selected ? await readInventoryRecord(parsed.data.selected) : null;
-    const plan = await planInventoryRequest(parsed.data, selected);
-    const command = plan.command;
-    switch (command.kind) {
-      case "search":
-        return { operation: "search", message: "Результати пошуку за вашим запитом:", results: await searchInventory(command.search) };
-      case "viewSelected":
-        if (!selected) throw new AppError("Спочатку знайдіть та оберіть запис.");
-        return { operation: "viewSelected", message: `Актуальні дані: ${selected.title}`, record: selected };
-      case "mutation": case "batch":
-        return prepareAssistantWrite({ command, selected: parsed.data.selected, assumptions: plan.assumptions, decisions: [] });
-      case "revise": {
-        if (!parsed.data.activeWrite) throw new AppError("Немає активної пропозиції. Надішліть повний запит.");
-        let pending = parsed.data.activeWrite.pending;
-        let revisionApplied = false;
-        try {
-          for (const field of parsed.data.activeWrite.incompleteFields) {
-            const completed = command.revision.changes.some(({ operationIndex, change }) => operationIndex === 0 && (
-              field === "title" ? change.kind !== "target" && change.patch.title !== null
-                : change.kind === "stuff" && change.patch.stock !== null && change.patch.stock.mode !== "adjust"
-            ));
-            if (!completed) throw new AppError(field === "title" ? "Вкажіть назву пропозиції, наприклад «Банка 250 мл»." : "Вкажіть початковий залишок пропозиції цілим числом, наприклад 7.");
+    const current = parsed.data;
+    const selected = current.selected ? await findInventoryRecord(current.selected) : null;
+    const unavailableSelection = current.selected && !selected ? current.selected : null;
+    const boundSelection = current.clarification?.selected ?? null;
+    const boundRecord = sameSelection(boundSelection, current.selected) ? selected : boundSelection ? await findInventoryRecord(boundSelection) : null;
+    const missingBoundSelection = boundSelection && !boundRecord ? boundSelection : null;
+    const expired = unavailableSelection ?? missingBoundSelection;
+    const selectionExpired = expired ? { selection: expired, message: "Попередньо обраний запис більше не існує. Вкажіть назву або оберіть інший запис для дій, що потребують вибору." } : undefined;
+    const prepareReply = async (): Promise<AssistantReply> => {
+      const plan = await planInventoryRequest(current, selected, unavailableSelection, missingBoundSelection);
+      const command = plan.command;
+      const continuesClarification = Boolean(current.clarification) && (
+        command.kind === "clarify" || command.kind === "clarifyRevision" ? command.continuesPrevious : plan.clarificationMode === "continue"
+      );
+      if (continuesClarification) validateClarificationSelection(current, missingBoundSelection);
+      const record = continuesClarification ? boundRecord : selected;
+      const selection = record ? { entity: record.entity, id: record.id } : null;
+      const scopedRequest = continuesClarification ? current : { ...current, clarification: null, selected: selection };
+      switch (command.kind) {
+        case "search":
+          return { operation: "search", message: "Результати пошуку за вашим запитом:", results: await searchInventory(command.search) };
+        case "viewSelected":
+          if (!record) throw new AppError("Спочатку знайдіть та оберіть запис або вкажіть його назву.", expired ? "NOT_FOUND" : "VALIDATION_ERROR");
+          return { operation: "viewSelected", message: `Актуальні дані: ${record.title}`, record };
+        case "mutation": case "batch":
+          return prepareAssistantWrite({ command, selected: selection, assumptions: plan.assumptions, decisions: [] });
+        case "revise": {
+          if (!current.activeWrite) throw new AppError("Немає активної пропозиції. Надішліть повний запит.");
+          let pending = current.activeWrite.pending;
+          let revisionApplied = false;
+          try {
+            for (const field of current.activeWrite.incompleteFields) {
+              const completed = command.revision.changes.some(({ operationIndex, change }) => operationIndex === 0 && (
+                field === "title" ? change.kind !== "target" && change.patch.title !== null
+                  : change.kind === "stuff" && change.patch.stock !== null && change.patch.stock.mode !== "adjust"
+              ));
+              if (!completed) throw new AppError(field === "title" ? "Вкажіть назву пропозиції, наприклад «Банка 250 мл»." : "Вкажіть початковий залишок пропозиції цілим числом, наприклад 7.");
+            }
+            pending = revisePendingWrite(pending, command.revision);
+            revisionApplied = true;
+            return { ...await prepareAssistantWrite(pending), continuesTask: true };
+          } catch (error) {
+            if (!(error instanceof AppError) && !(error instanceof z.ZodError)) throw error;
+            return { operation: "revisionFailed", message: error instanceof AppError ? error.message : "Некоректні значення уточнення. Перевірте кількість, назву та категорію.", code: error instanceof AppError ? error.code : "VALIDATION_ERROR", pending, revisionApplied };
           }
-          pending = revisePendingWrite(pending, command.revision);
-          revisionApplied = true;
-          return { ...await prepareAssistantWrite(pending), continuesTask: true };
-        } catch (error) {
-          if (!(error instanceof AppError) && !(error instanceof z.ZodError)) throw error;
-          return { operation: "revisionFailed", message: error instanceof AppError ? error.message : "Некоректні значення уточнення. Перевірте кількість, назву та категорію.", code: error instanceof AppError ? error.code : "VALIDATION_ERROR", pending, revisionApplied };
         }
+        case "clarifyRevision":
+          if (!current.activeWrite) throw new AppError("Немає активної пропозиції для уточнення.");
+          return { operation: "clarifyRevision", message: plan.message, clarification: prepareClarification(scopedRequest, plan.message, command.continuesPrevious) };
+        case "keepTask":
+          if (!current.activeWrite) throw new AppError("Немає активного завдання. Надішліть повний запит.");
+          return { operation: "keepTask", message: plan.message };
+        case "clarify":
+          return { operation: "clarify", message: plan.message, clarification: prepareClarification(scopedRequest, plan.message, command.continuesPrevious) };
+        case "unsupported":
+          return { operation: "unsupported", message: plan.message };
+        default:
+          return assertNever(command);
       }
-      case "clarifyRevision":
-        if (!parsed.data.activeWrite) throw new AppError("Немає активної пропозиції для уточнення.");
-        return { operation: "clarifyRevision", message: plan.message, clarification: prepareClarification(parsed.data, plan.message, command.continuesPrevious) };
-      case "keepTask":
-        if (!parsed.data.activeWrite) throw new AppError("Немає активного завдання. Надішліть повний запит.");
-        return { operation: "keepTask", message: plan.message };
-      case "clarify":
-        return { operation: "clarify", message: plan.message, clarification: prepareClarification(parsed.data, plan.message, command.continuesPrevious) };
-      case "unsupported":
-        return { operation: "unsupported", message: plan.message };
-      default:
-        return assertNever(command);
+    };
+    try {
+      return { ...await prepareReply(), ...(selectionExpired ? { selectionExpired } : {}) };
+    } catch (error) {
+      // Carry confirmed expiry alongside a recoverable failure without discarding
+      // the prior task/clarification. Unexpected failures still use safeAction.
+      if (!selectionExpired || !(error instanceof AppError)) throw error;
+      return { operation: "requestBlocked", message: error.message, code: error.code, selectionExpired };
     }
   });
 }

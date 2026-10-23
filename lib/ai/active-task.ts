@@ -1,9 +1,11 @@
-import type { AssistantRequest, Clarification } from "@/zod/ai-search.schema";
+import type { AssistantRequest, Clarification, RecordSelection } from "@/zod/ai-search.schema";
 import type { PendingWrite } from "@/zod/ai-resolution.schema";
 import { inventoryTitleInputSchema, stuffWriteSchema, type InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 import type { BatchPreview } from "@/zod/ai-batch.schema";
 import type { AssistantReply, InventoryRecord } from "./inventory.types";
 import type { DraftStatus } from "./request-state";
+import { sameSelection } from "./clarification";
+import { mutationDefinitions } from "./mutation-definitions";
 
 export type TaskSource = { request: AssistantRequest; selected: InventoryRecord | null };
 export type ActiveTask = {
@@ -16,6 +18,19 @@ export type ActiveTask = {
     | { kind: "batch"; preview: BatchPreview }
     | { kind: "choice"; reply: Extract<AssistantReply, { operation: "chooseRecord" }> };
 };
+
+export function taskUsesSelection(task: ActiveTask, selection: RecordSelection): boolean {
+  if (task.pending.targets?.some((target) => sameSelection(target, selection))) return true;
+  if (task.pending.decisions.some((decision) => "selection" in decision && sameSelection(decision.selection, selection))) return true;
+  const command = task.pending.command;
+  const operations = command.kind === "mutation" ? [command.intent] : command.intent.kind === "list" ? command.intent.operations : [];
+  if (sameSelection(task.pending.selected, selection) && operations.some((intent) => "targetName" in intent && intent.targetName === null && mutationDefinitions[intent.kind].entity === selection.entity)) return true;
+  const previews = task.view.kind === "mutation" ? [task.view.preview] : task.view.kind === "batch" ? task.view.preview.items : [];
+  return previews.some((preview) => {
+    if ("target" in preview && preview.target.id === selection.id && mutationDefinitions[preview.kind].entity === selection.entity) return true;
+    return selection.entity === "ingredient" && (preview.kind === "createRecipe" || preview.kind === "updateRecipe") && preview.after.ingredients.some((ingredient) => ingredient.id === selection.id);
+  });
+}
 
 export function editTaskCreation(task: ActiveTask, preview: InventoryMutationPreview): ActiveTask {
   if (preview.kind !== "createIngredient" && preview.kind !== "createStuff") return task;

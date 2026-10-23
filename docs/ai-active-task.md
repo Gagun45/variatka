@@ -32,6 +32,8 @@ Resolved record IDs are retained until the user explicitly changes a target. Ren
 
 A filtered proposal freezes its original cohort, including rows initially reported as unchanged. Revising its fields does not run the filter against new matching records. Every revised preview and confirmation still checks actual current records and versions.
 
+Checkpoint 3A adds [expired-selection recovery](ai-selection-recovery.md): deleting an incidental UI selection does not cancel this task or change its target IDs. A missing actual target blocks preparation; a missing frozen cohort member, including an unchanged row, also blocks confirmation. Edit-request recovery cannot restore a known-deleted UI selection.
+
 The explicitly selected record is independent of whether the proposal uses a single or batch preview. Preparing recipe previews, mixed batches and candidate choices retains selection. After saving, the selected record is reloaded if it still exists, including during refresh retries. Deleting it clears selection; a different batch record is not silently selected in its place. A new search, explicit selection/cancellation, reload or new chat can still change selection.
 
 ## Validation

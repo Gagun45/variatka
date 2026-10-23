@@ -102,11 +102,18 @@ export async function searchInventory(search: InventorySearch, page = 0): Promis
   return { search, page, hasMore: items.length > SEARCH_PAGE_SIZE, items: items.slice(0, SEARCH_PAGE_SIZE) };
 }
 
+// A missing row is recoverable selection expiry; database errors still propagate.
 export async function readInventoryRecord(selection: RecordSelection): Promise<InventoryRecord> {
+  const record = await findInventoryRecord(selection);
+  if (!record) throw new AppError("Запис більше не існує. Повторіть пошук.", "NOT_FOUND");
+  return record;
+}
+
+export async function findInventoryRecord(selection: RecordSelection): Promise<InventoryRecord | null> {
   const where = { id: selection.id };
   if (selection.entity === "ingredient") {
     const record = await prisma.ingredient.findUnique({ where, select: { id: true, title: true, createdAt: true, updatedAt: true, imageKey: true, description: true, category: true, isInStock: true, isSaved: true, _count: { select: { recipeIngredients: true } } } });
-    if (!record) throw new AppError("Інгредієнт більше не існує. Повторіть пошук.");
+    if (!record) return null;
     return { ...selection, title: record.title, summary: categories[record.category], ingredients: [], fields: [
       { label: "Опис", value: record.description || "Не вказано" },
       ...timestampFields(record),
@@ -119,7 +126,7 @@ export async function readInventoryRecord(selection: RecordSelection): Promise<I
   }
   if (selection.entity === "stuff") {
     const record = await prisma.stuff.findUnique({ where, select: { id: true, title: true, createdAt: true, updatedAt: true, description: true, category: true, inStock: true } });
-    if (!record) throw new AppError("Матеріал більше не існує. Повторіть пошук.");
+    if (!record) return null;
     return { ...selection, title: record.title, summary: categories[record.category], ingredients: [], fields: [
       { label: "Опис", value: record.description || "Не вказано" },
       ...timestampFields(record),
@@ -132,7 +139,7 @@ export async function readInventoryRecord(selection: RecordSelection): Promise<I
     ingredients: { orderBy: { ingredientId: "asc" }, select: { amount: true, ingredient: { select: { id: true, title: true, isInStock: true } } } },
     variants: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }], select: { label: true, inStock: true } },
   } });
-  if (!record) throw new AppError("Рецепт більше не існує. Повторіть пошук.");
+  if (!record) return null;
   const ingredients = record.ingredients.map(({ amount, ingredient }) => ({ ...ingredient, amount }));
   return { ...selection, title: record.title, summary: categories[record.category], ingredients, fields: [
     { label: "Опис", value: record.description || "Не вказано" },

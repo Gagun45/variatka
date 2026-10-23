@@ -13,14 +13,15 @@ import { recipeKeys } from "@/features/recipe/recipe.keys";
 import { frontendUrls } from "@/lib/urls";
 import type { PendingWrite, ResumeWrite } from "@/zod/ai-resolution.schema";
 import RecordChoiceView from "./RecordChoiceView";
-import type { AssistantReply, InventoryRecord, InventoryResult, InventorySearchResult, MutationResult } from "@/lib/ai/inventory.types";
+import type { AssistantReply, InventoryRecord, InventoryResult, InventorySearchResult, MutationResult, SelectionExpiry } from "@/lib/ai/inventory.types";
+import { sameSelection } from "@/lib/ai/clarification";
 import AssistantContext from "./AssistantContext";
 import AssistantErrorPanel from "./AssistantErrorPanel";
 import InventoryBatchView from "./InventoryBatchView";
 import { refreshAfterSave } from "@/lib/ai/refresh-after-save";
 import { confirmationFailure, requestPhaseLabels, type AssistantErrorCode, type DraftStatus, type RequestPhase } from "@/lib/ai/request-state";
 import type { AssistantRequest } from "@/zod/ai-search.schema";
-import { activeTaskLabel, activeTaskTargets, editTaskCreation, incompleteTaskFields, type ActiveTask, type TaskSource } from "@/lib/ai/active-task";
+import { activeTaskLabel, activeTaskTargets, editTaskCreation, incompleteTaskFields, taskUsesSelection, type ActiveTask, type TaskSource } from "@/lib/ai/active-task";
 import type { Clarification, InventorySearch } from "@/zod/ai-search.schema";
 import { InventoryRecordView, InventorySearchView } from "./InventorySearchView";
 import InventoryMutationView from "./InventoryMutationView";
@@ -48,6 +49,8 @@ export default function AiAssistant() {
   }
   const [results, setResults] = useState<InventorySearchResult | null>(null);
   const [selected, setSelected] = useState<InventoryRecord | null>(null);
+  const [selectionExpiry, setSelectionExpiry] = useState<SelectionExpiry | null>(null);
+  const expiredSelections = useRef(new Set<string>());
   const [initialClarification, setInitialClarification] = useState<Clarification | null>(null);
   const [previousSearch, setPreviousSearch] = useState<InventorySearch | null>(null);
   const [activeTask, setActiveTask] = useState<ActiveTask | null>(null);
@@ -75,6 +78,18 @@ export default function AiAssistant() {
     setActiveTask((task) => task ? { ...task, clarification: null } : null);
   }
 
+  function knownExpired(record: InventoryResult | null) {
+    return Boolean(record && expiredSelections.current.has(`${record.entity}:${record.id}`));
+  }
+
+  function expireSelection(notice: SelectionExpiry) {
+    expiredSelections.current.add(`${notice.selection.entity}:${notice.selection.id}`);
+    setSelectionExpiry(notice);
+    setSelected((current) => sameSelection(current, notice.selection) ? null : current);
+    setActiveTask((task) => task && task.status !== "uncertain" && taskUsesSelection(task, notice.selection) ? { ...task, status: "stale" } : task);
+    if (sameSelection(requestSelection.current, notice.selection)) requestSelection.current = null;
+  }
+
   function newRequest() {
     if (pending.current) return;
     setPrompt("");
@@ -86,6 +101,8 @@ export default function AiAssistant() {
     setError("");
     setResults(null);
     setSelected(null);
+    setSelectionExpiry(null);
+    expiredSelections.current.clear();
     setInitialClarification(null);
     setPreviousSearch(null);
     setActiveTask(null);
@@ -112,7 +129,7 @@ export default function AiAssistant() {
     if (pending.current || !lastRequest.current) return;
     const request = lastRequest.current;
     setPrompt(request.prompt);
-    setSelected(requestSelection.current);
+    setSelected(knownExpired(requestSelection.current) ? null : requestSelection.current);
     setPreviousSearch(request.previousSearch);
     if (!activeTask?.clarification) setInitialClarification(request.clarification);
     setError("");
@@ -146,6 +163,12 @@ export default function AiAssistant() {
   }
 
   function applyReply(reply: AssistantReply, source: TaskSource | null) {
+    if (reply.selectionExpired) expireSelection(reply.selectionExpired);
+    if (reply.operation === "requestBlocked") {
+      setPrompt(lastRequest.current?.prompt ?? "");
+      setError(reply.message, reply.code);
+      return;
+    }
     if (reply.operation !== "noChanges" && reply.operation !== "revisionFailed") setMessages((old) => [...old, { role: "assistant", text: reply.message }]);
     if (reply.operation === "keepTask") return;
     if (reply.operation === "clarifyRevision") {
@@ -199,7 +222,11 @@ export default function AiAssistant() {
     }
     try {
       const response = await resumeInventoryWrite({ pending: saved, choice, page });
-      if (!response.ok) { setError(response.message, response.code); return; }
+      if (!response.ok) {
+        if (response.code === "STALE_PREVIEW") setDraftStatus("stale");
+        setError(response.message, response.code);
+        return;
+      }
       applyReply(response.data, source);
     } catch {
       setError("Не вдалося підготувати перегляд. Вибір і решту запиту збережено для повторної спроби.");
@@ -223,10 +250,16 @@ export default function AiAssistant() {
     setError("");
     try {
       const result = await getInventoryRecord({ entity: record.entity, id: record.id });
-      if (!result.ok) { setError(result.message, result.code); setSelected(null); return; }
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") expireSelection({ selection: record, message: "Цей запис більше не існує. Оновіть пошук та оберіть інший запис." });
+        else setError(result.message, result.code);
+        return;
+      }
       setActiveTask(null);
       setInitialClarification(null);
       setSelected(result.data);
+      setSelectionExpiry(null);
+      expiredSelections.current.delete(`${result.data.entity}:${result.data.id}`);
       setMessages((old) => [...old, { role: "assistant", text: `Обрано: ${result.data.title}. Дані завантажено з бази.` }]);
     } catch {
       setError("Не вдалося завантажити запис. Спробуйте ще раз.");
@@ -324,6 +357,12 @@ export default function AiAssistant() {
         ))}
       </div>
 
+      {selectionExpiry && <section role="status" aria-label="Вибір запису недоступний" className="space-y-2 rounded-lg border p-4">
+        <p>{selectionExpiry.message}</p>
+        <p className="text-sm text-muted-foreground">Для нового вибору виконайте пошук і натисніть потрібний запис із результатів.</p>
+        <Button type="button" variant="outline" disabled={busy} onClick={() => inputRef.current?.focus()}>Ввести назву або пошук</Button>
+        <Button type="button" variant="ghost" disabled={busy} onClick={() => setSelectionExpiry(null)}>Приховати повідомлення</Button>
+      </section>}
       {results && !pendingWrite && <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} />}
       {pendingWrite && <RecordChoiceView question={pendingWrite.question} prompt={activeTask?.source.request.clarification?.originalPrompt ?? activeTask?.source.request.prompt ?? ""} busy={busy || Boolean(activeTask?.clarification)} onChoose={(selection) => { void resumeWrite({ key: pendingWrite.question.key, selection }); }} onCreateNew={() => { void resumeWrite({ key: pendingWrite.question.key, createNew: true }); }} onPage={(number) => { void resumeWrite(null, { key: pendingWrite.question.key, number }); }} onCancel={cancelWrite} />}
       {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); clearClarification(); cancelWrite(); }} />}

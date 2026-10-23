@@ -35,6 +35,8 @@ export const assistantRequestSchema = z.strictObject({
 export const assistantPlanSchema = z.strictObject({
   message: questionSchema,
   assumptions: z.array(z.string().max(300)).max(10),
+  // Legacy plans conservatively continue context; new independent plans opt out.
+  clarificationMode: z.enum(["continue", "independent"]).default("continue"),
   command: z.union([
     z.strictObject({ kind: z.literal("search"), search: inventorySearchSchema }),
     z.strictObject({ kind: z.literal("viewSelected") }),

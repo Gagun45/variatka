@@ -763,6 +763,97 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal((await client.stuff.findUnique({ where: { id: later.id } })).inStock, 0);
     });
 
+    await t.test("deleted selections across all entities do not block independent search or creation", async () => {
+      const search = { entity: "stuff", text: null, category: null, isInStock: null, stockMin: null, stockMax: null };
+      for (const entity of ["ingredient", "stuff", "recipe"]) {
+        const data = entity === "ingredient" ? ingredientData(`Expired ${entity}`) : entity === "stuff" ? stuffData(`Expired ${entity}`) : recipeData(`Expired ${entity}`);
+        const old = await client[entity].create({ data });
+        await client[entity].delete({ where: { id: old.id } });
+        const selected = { entity, id: old.id };
+        modelPlan = { message: "Пошук", assumptions: [], clarificationMode: "independent", command: { kind: "search", search } };
+        const found = await actions.askInventoryAssistant({ prompt: "Покажи всі матеріали", selected, previousSearch: null, clarification: null });
+        assert.equal(found.ok, true);
+        assert.equal(found.data.operation, "search");
+        assert.deepEqual(found.data.selectionExpired.selection, selected);
+        const title = `Unwritten replacement ${entity}`;
+        modelPlan = { message: "Перегляд", assumptions: [], clarificationMode: "independent", command: { kind: "mutation", intent: { kind: "createStuff", data: stuffData(title) } } };
+        const created = await actions.askInventoryAssistant({ prompt: `Створи ${title}`, selected, previousSearch: null, clarification: null });
+        assert.equal(created.data.operation, "mutation");
+        assert.equal(created.data.resolved.selected, null);
+        assert.equal(await client.stuff.count({ where: { title } }), 0);
+      }
+    });
+
+    await t.test("deleted clarification binding cannot retarget an answer but permits an independent request", async () => {
+      const old = await client.stuff.create({ data: stuffData("Expired clarification jar") });
+      const other = await client.stuff.create({ data: stuffData("Independent clarification jar") });
+      const selected = { entity: "stuff", id: old.id };
+      modelPlan = { message: "Який залишок?", assumptions: [], command: { kind: "clarify", continuesPrevious: false } };
+      const first = await actions.askInventoryAssistant({ prompt: "Встанови залишок обраного матеріалу", selected, previousSearch: null, clarification: null });
+      await client.stuff.delete({ where: { id: old.id } });
+      modelPlan = { message: "Перегляд", assumptions: [], clarificationMode: "continue", command: { kind: "mutation", intent: { kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "set", value: 30 } }) } } };
+      for (const currentSelection of [selected, null, { entity: "stuff", id: other.id }]) {
+        const blocked = await actions.askInventoryAssistant({ prompt: "30", selected: currentSelection, previousSearch: null, clarification: first.data.clarification });
+        assert.equal(blocked.data.operation, "requestBlocked");
+        assert.equal((await client.stuff.findUnique({ where: { id: other.id } })).inStock, 10);
+      }
+      modelPlan = { ...modelPlan, clarificationMode: "independent" };
+      const independent = await actions.askInventoryAssistant({ prompt: "Інший запит: встанови залишок обраної банки 30", selected: { entity: "stuff", id: other.id }, previousSearch: null, clarification: first.data.clarification });
+      assert.equal(independent.data.preview.target.id, other.id);
+      assert.equal(independent.data.preview.after.inStock, 30);
+      assert.equal((await client.stuff.findUnique({ where: { id: other.id } })).inStock, 10);
+    });
+
+    await t.test("expiry of incidental selection preserves draft identity; a deleted task target cannot be replaced by its reused title", async () => {
+      const incidental = await client.ingredient.create({ data: ingredientData("Incidental selection for revision") });
+      const target = await client.stuff.create({ data: stuffData("Stable expiry task jar") });
+      const selected = { entity: "ingredient", id: incidental.id };
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "updateStuff", targetName: target.title, patch: stuffPatch({ description: "Мій опис", stock: { mode: "adjust", value: -3 } }) } } };
+      const first = await actions.askInventoryAssistant({ prompt: "Спиши 3 з банки", selected, previousSearch: null, clarification: null });
+      await client.ingredient.delete({ where: { id: incidental.id } });
+      modelPlan = { message: "Уточнюю", assumptions: [], command: { kind: "revise", revision: { changes: [{ operationIndex: 0, change: { kind: "stuff", patch: stuffPatch({ stock: { mode: null, value: 5 } }) } }] } } };
+      const request = { prompt: "Краще 5", selected, previousSearch: null, clarification: null, activeWrite: { phase: "draft", pending: first.data.resolved } };
+      const revised = await actions.askInventoryAssistant(request);
+      assert.deepEqual(revised.data.selectionExpired.selection, selected);
+      assert.equal(revised.data.preview.target.id, target.id);
+      assert.equal(revised.data.preview.after.inStock, 5);
+      assert.equal(revised.data.preview.after.description, "Мій опис");
+      assert.equal((await client.stuff.findUnique({ where: { id: target.id } })).inStock, 10);
+      await client.stuff.delete({ where: { id: target.id } });
+      const replacement = await client.stuff.create({ data: stuffData(target.title, { inStock: 40 }) });
+      const blocked = await actions.askInventoryAssistant({ ...request, selected: null });
+      assert.equal(blocked.data.operation, "revisionFailed");
+      assert.equal(blocked.data.code, "STALE_PREVIEW");
+      assert.deepEqual(blocked.data.pending.decisions, first.data.resolved.decisions);
+      assert.equal((await client.stuff.findUnique({ where: { id: replacement.id } })).inStock, 40);
+    });
+
+    await t.test("a deleted unchanged cohort member blocks revision, re-preparation and old confirmation without acquiring new matches", async (subtest) => {
+      subtest.mock.method(console, "error", () => {});
+      const a = await client.stuff.create({ data: stuffData("Expired cohort A", { inStock: 0 }) });
+      const b = await client.stuff.create({ data: stuffData("Expired cohort B", { inStock: 5 }) });
+      const search = { entity: "stuff", text: null, titleText: "Expired cohort", category: null, isInStock: null, stockMin: null, stockMax: null };
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "batch", intent: { kind: "filter", search, change: { kind: "updateStuff", patch: stuffPatch({ stock: { mode: "set", value: 5 } }) } } } };
+      const first = await actions.askInventoryAssistant({ prompt: "Встанови 5 для Expired cohort", selected: null, previousSearch: null, clarification: null });
+      assert.equal(first.data.preview.items.length, 1);
+      assert.deepEqual(first.data.preview.targets, [{ entity: "stuff", id: a.id }, { entity: "stuff", id: b.id }]);
+      await client.stuff.delete({ where: { id: b.id } });
+      const c = await client.stuff.create({ data: stuffData("Expired cohort C", { inStock: 0 }) });
+      modelPlan = { message: "Уточнюю", assumptions: [], command: { kind: "revise", revision: { changes: [{ operationIndex: 0, change: { kind: "stuff", patch: stuffPatch({ stock: { mode: null, value: 7 } }) } }] } } };
+      const revised = await actions.askInventoryAssistant({ prompt: "Краще 7", selected: null, previousSearch: null, clarification: null, activeWrite: { phase: "draft", pending: first.data.resolved } });
+      assert.equal(revised.data.operation, "revisionFailed");
+      assert.equal(revised.data.code, "STALE_PREVIEW");
+      assert.deepEqual(revised.data.pending.targets, first.data.resolved.targets);
+      const rePrepared = await actions.resumeInventoryWrite({ pending: first.data.resolved, choice: null, page: null });
+      assert.equal(rePrepared.ok, false);
+      assert.equal(rePrepared.code, "STALE_PREVIEW");
+      const oldConfirmation = await actions.confirmInventoryBatch(first.data.preview);
+      assert.equal(oldConfirmation.ok, false);
+      assert.equal(oldConfirmation.code, "STALE_PREVIEW");
+      assert.equal((await client.stuff.findUnique({ where: { id: a.id } })).inStock, 0);
+      assert.equal((await client.stuff.findUnique({ where: { id: c.id } })).inStock, 0);
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;

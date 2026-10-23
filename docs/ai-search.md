@@ -114,6 +114,8 @@ For a browser smoke test, run the prompts above against known records, verify di
 
 ## More stored fields
 
+If the selected record was deleted elsewhere, [selection recovery](ai-selection-recovery.md) clears that UI selection and explains the expiry alongside independent results. Named operations remain usable; details/unnamed writes need another name or selection. Active tasks retain their own targets and clarification bindings.
+
 Search now supports scoped notes/descriptions, missing images/text/composition,
 ingredient usage, Kyiv calendar dates and variant-specific stock. See the
 [prompt examples and filter semantics](ai-stored-field-search.md).

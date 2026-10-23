@@ -52,6 +52,7 @@ const prisma = Object.fromEntries(["ingredient", "recipe", "stuff"].map((entity)
   },
   findUnique: async (args) => {
     state.reads.push({ entity, args });
+    if (state.readError) throw state.readError;
     const record = state.records[entity];
     return matches(record, args.where) ? project(record, args.select) : null;
   },
@@ -259,8 +260,10 @@ test("invalid ranges, missing selection and deleted records fail without fabrica
   state.plan = { ...plan(null), command: { kind: "viewSelected" } };
   assert.equal((await actions.askInventoryAssistant(request())).ok, false);
   const apiCount = state.apiCalls.length;
-  assert.equal((await actions.askInventoryAssistant(request({ selected: { entity: "recipe", id: 999 } }))).ok, false);
-  assert.equal(state.apiCalls.length, apiCount);
+  const missing = await actions.askInventoryAssistant(request({ selected: { entity: "recipe", id: 999 } }));
+  assert.equal(missing.data.operation, "requestBlocked");
+  assert.equal(missing.data.code, "NOT_FOUND");
+  assert.equal(state.apiCalls.length, apiCount + 1);
 });
 
 test("unsupported and contradictory model plans cannot cause a search or mutation", async (t) => {
@@ -624,13 +627,15 @@ test("clarifications remain bound to the selected record and its previous search
   state.plan = clarificationPlan("Який залишок?");
   const first = await actions.askInventoryAssistant(request({ prompt: "Встанови залишок", selected, previousSearch: stuff }));
   const calls = state.apiCalls.length;
+  state.plan = mutationPlan({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "set", value: 30 } }) });
   const mismatch = await actions.askInventoryAssistant(request({ prompt: "30", selected: { entity: "stuff", id: 3 }, clarification: first.data.clarification }));
-  assert.equal(mismatch.ok, false);
-  assert.equal(state.apiCalls.length, calls);
+  assert.equal(mismatch.data.operation, "requestBlocked");
+  assert.match(mismatch.data.message, /Вибір запису змінився/);
+  assert.equal(state.apiCalls.length, calls + 1, "scope is planned before validating continuation binding");
   state.plan = clarificationPlan("Потрібна точна кількість?", true);
   const next = await actions.askInventoryAssistant(request({ prompt: "так", selected, previousSearch: ingredient, clarification: first.data.clarification }));
   assert.equal(next.ok, true);
-  assert.deepEqual(JSON.parse(state.apiCalls.at(-1).input).previousSearch, stuff);
+  assert.deepEqual(JSON.parse(state.apiCalls.at(-1).input).clarification.previousSearch, stuff);
   assert.deepEqual(next.data.clarification.previousSearch, stuff);
   assert.equal(state.writes.length, 0);
 });
@@ -1426,5 +1431,135 @@ test("missing creation fields must be explicitly completed and never use hidden 
   assert.deepEqual(completed.data.preview.after, { ...pending.command.intent.data, title: "Нова банка", inStock: 7 });
   state.plan = plan(stuff);
   assert.equal((await actions.askInventoryAssistant(request({ activeWrite, prompt: "Інший запит: покажи всі матеріали" }))).data.operation, "search");
+  assert.equal(state.writes.length, 0);
+});
+
+test("expired selections of every entity permit independent searches and creations with structured notices", async (t) => {
+  for (const entity of ["ingredient", "stuff", "recipe"]) await t.test(entity, async () => {
+    const selected = { entity, id: 999 };
+    state.plan = { ...plan(stuff), clarificationMode: "independent" };
+    const found = await actions.askInventoryAssistant(request({ selected }));
+    assert.equal(found.ok, true);
+    assert.equal(found.data.operation, "search");
+    assert.deepEqual(found.data.selectionExpired.selection, selected);
+    const input = JSON.parse(state.apiCalls.at(-1).input);
+    assert.equal(input.selected, null);
+    assert.deepEqual(input.unavailableSelection, selected);
+    state.plan = mutationPlan({ kind: "createStuff", data: { title: "Нова банка", description: "", category: "JARS", inStock: 0 } });
+    const created = await actions.askInventoryAssistant(request({ selected }));
+    assert.equal(created.data.operation, "mutation");
+    assert.equal(created.data.resolved.selected, null);
+    assert.deepEqual(created.data.selectionExpired.selection, selected);
+    assert.equal(state.writes.length, 0);
+  });
+});
+
+test("explicit named targets work with expired UI selection while unnamed writes and details stay blocked", async () => {
+  const selected = { entity: "ingredient", id: 999 };
+  state.records.stuff = stuffRecord();
+  state.rows.stuff = [state.records.stuff];
+  state.plan = mutationPlan({ kind: "updateStuff", targetName: "Слоїчки", patch: stuffPatch({ stock: { mode: "adjust", value: 5 } }) });
+  const named = await actions.askInventoryAssistant(request({ selected }));
+  assert.equal(named.data.preview.target.id, 2);
+  assert.equal(named.data.preview.after.inStock, 15);
+  for (const command of [
+    { kind: "viewSelected" },
+    { kind: "mutation", intent: { kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "set", value: 30 } }) } },
+    { kind: "mutation", intent: { kind: "deleteIngredient", targetName: null } },
+  ]) {
+    state.plan = { message: "Перегляд", assumptions: [], command };
+    const blocked = await actions.askInventoryAssistant(request({ selected }));
+    assert.equal(blocked.data.operation, "requestBlocked");
+    assert.deepEqual(blocked.data.selectionExpired.selection, selected);
+    assert.equal("preview" in blocked.data, false);
+  }
+  assert.equal(state.writes.length, 0);
+});
+
+test("expired clarification binding survives automatic clearing and cannot migrate to another selection", async () => {
+  const selected = { entity: "stuff", id: 999 };
+  const clarification = { originalPrompt: "Встанови залишок обраного матеріалу", question: "Який залишок?", turns: [], selected, previousSearch: stuff };
+  state.plan = clarificationPlan("Вкажіть назву або оберіть запис", true);
+  const question = await actions.askInventoryAssistant(request({ prompt: "30", clarification }));
+  assert.equal(question.data.operation, "clarify");
+  assert.deepEqual(question.data.clarification.selected, selected, "expiry must not rebind the clarification to null");
+  assert.deepEqual(question.data.clarification.previousSearch, stuff);
+  assert.deepEqual(JSON.parse(state.apiCalls.at(-1).input).clarificationSelectionUnavailable, selected);
+  state.plan = mutationPlan({ kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "set", value: 30 } }) });
+  const dependent = await actions.askInventoryAssistant(request({ prompt: "30", clarification }));
+  assert.equal(dependent.data.operation, "requestBlocked");
+  state.records.stuff = stuffRecord();
+  const rebound = await actions.askInventoryAssistant(request({ prompt: "30", selected: { entity: "stuff", id: 2 }, clarification }));
+  assert.equal(rebound.data.operation, "requestBlocked");
+  assert.match(rebound.data.message, /Вибір запису змінився/);
+  assert.equal(state.writes.length, 0);
+});
+
+test("independent plans leave obsolete clarification without inheriting its target or filters", async () => {
+  const clarification = { originalPrompt: "Встанови залишок обраного матеріалу", question: "Який залишок?", turns: [], selected: { entity: "stuff", id: 999 }, previousSearch: stuff };
+  state.plan = { ...plan(ingredient), clarificationMode: "independent" };
+  const independent = await actions.askInventoryAssistant(request({ prompt: "Інший запит: покажи всі інгредієнти", clarification, previousSearch: ingredient }));
+  assert.equal(independent.data.operation, "search");
+  assert.deepEqual(independent.data.results.search, ingredient);
+  assert.equal("clarification" in independent.data, false);
+  const sent = JSON.parse(state.apiCalls.at(-1).input);
+  assert.deepEqual(sent.previousSearch, ingredient);
+  assert.deepEqual(sent.clarification.previousSearch, stuff);
+  state.plan = { ...clarificationPlan("Яку назву нової банки вказати?"), clarificationMode: "independent" };
+  const newQuestion = await actions.askInventoryAssistant(request({ prompt: "Інший запит: створи нову банку", clarification }));
+  assert.equal(newQuestion.data.clarification.selected, null);
+  assert.equal(newQuestion.data.clarification.previousSearch, null);
+  assert.equal(newQuestion.data.clarification.originalPrompt, "Інший запит: створи нову банку");
+  assert.equal(state.writes.length, 0);
+});
+
+test("UI selection expiry does not change a different active task's resolved identity or fields", async () => {
+  state.records.stuff = stuffRecord();
+  state.rows.stuff = [state.records.stuff];
+  state.plan = mutationPlan({ kind: "updateStuff", targetName: "Слоїчки", patch: stuffPatch({ description: "Мій опис", stock: { mode: "adjust", value: -3 } }) });
+  const first = await actions.askInventoryAssistant(request());
+  const pending = first.data.resolved;
+  state.plan = revisionPlan([reviseStuff({ mode: null, value: 5 })]);
+  const revised = await actions.askInventoryAssistant(request({ selected: { entity: "recipe", id: 999 }, activeWrite: { pending, phase: "draft" } }));
+  assert.equal(revised.data.operation, "mutation");
+  assert.equal(revised.data.preview.target.id, 2);
+  assert.equal(revised.data.preview.after.inStock, 5);
+  assert.equal(revised.data.preview.after.description, "Мій опис");
+  assert.deepEqual(revised.data.resolved.decisions, pending.decisions);
+  assert.deepEqual(revised.data.selectionExpired.selection, { entity: "recipe", id: 999 });
+  state.records.stuff = null;
+  const missingTarget = await actions.askInventoryAssistant(request({ activeWrite: { pending, phase: "draft" } }));
+  assert.equal(missingTarget.data.operation, "revisionFailed");
+  assert.equal(missingTarget.data.code, "STALE_PREVIEW");
+  assert.deepEqual(missingTarget.data.pending.decisions, pending.decisions);
+  assert.equal(state.writes.length, 0);
+});
+
+test("record absence is distinct from read failures and authorization still precedes lookup", async (t) => {
+  t.mock.method(console, "error", () => {});
+  const selected = { entity: "stuff", id: 999 };
+  assert.equal((await actions.getInventoryRecord(selected)).code, "NOT_FOUND");
+  state.readError = new Error("database unavailable");
+  const failed = await actions.askInventoryAssistant(request({ selected }));
+  assert.equal(failed.ok, false);
+  assert.equal(failed.code, "INTERNAL_ERROR");
+  assert.equal("selectionExpired" in failed, false);
+  assert.equal(state.apiCalls.length, 0);
+  state.readError = null;
+  state.admin = false;
+  state.reads = [];
+  assert.equal((await actions.askInventoryAssistant(request({ selected }))).ok, false);
+  assert.equal(state.reads.length, 0);
+  assert.equal(state.apiCalls.length, 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test("provider failures after verified expiry retain their code alongside the selection notice", async () => {
+  global.fetch = async () => { throw new Error("provider unavailable"); };
+  const selected = { entity: "recipe", id: 999 };
+  const failed = await actions.askInventoryAssistant(request({ selected }));
+  assert.equal(failed.data.operation, "requestBlocked");
+  assert.equal(failed.data.code, "PROVIDER_UNAVAILABLE");
+  assert.deepEqual(failed.data.selectionExpired.selection, selected);
   assert.equal(state.writes.length, 0);
 });

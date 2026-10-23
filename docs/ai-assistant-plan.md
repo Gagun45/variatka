@@ -1,17 +1,17 @@
 # Inventory assistant implementation plan
 
-Revised after steps 1 and 2. This is the current execution plan; the [review](ai-assistant-review.md) records the original findings. The [version 2 rules](ai-assistant-rules-v2.md) are an earlier proposal, not the active prompt or an adoption-ready replacement.
+Revised after steps 1 and 2; implementation status updated through checkpoint 3A. This is the current execution plan; the [review](ai-assistant-review.md) records the original findings. The [version 2 rules](ai-assistant-rules-v2.md) are an earlier proposal, not the active prompt or an adoption-ready replacement.
 
 ## Approval boundaries and order
 
-Implement one checkpoint, report changes and validation, then wait for the user's confirmation before starting the next. This revision changes documentation only and does not start step 3.
+Implement one checkpoint, report changes and validation, then wait for the user's confirmation before starting the next. Checkpoint 3A is implemented; 3B remains a separate approval boundary.
 
 | Checkpoint | Status | Result |
 | --- | --- | --- |
 | 1 — Draft recovery | Implemented | Failed planning retains edited drafts; failed/uncertain confirmations have distinct recovery controls. |
 | 2 — Active tasks and revisions | Implemented | Typed patches preserve fields, resolved IDs, stock intent and filtered cohorts; selection survives recipe/batch previews. |
-| 3A — Expired selection | Next, awaiting approval | An incidental deleted selection cannot block an independent request or change a task's actual targets. |
-| 3B — Deletion preflight | Awaiting separate approval after 3A | Known references block confirmation unless explicitly requested batch operations remove all of them. |
+| 3A — Expired selection | Implemented | Independent requests survive incidental expiry; task/clarification identities stay bound; missing frozen targets block saving. |
+| 3B — Deletion preflight | Next, awaiting separate approval | Known references block confirmation unless explicitly requested batch operations remove all of them. |
 | 4 — Rules and help | Pending 3A and 3B | Reconcile rules with the implemented contract, compare interpretation, then adopt and align help. |
 | 5 — Repeatable interpretation evaluation | Pending step 4 | Turn the comparison cases into a reusable evaluation workflow and finish browser UX checks. |
 
@@ -23,7 +23,7 @@ Step 1 retains drafts, form edits, candidate choices and source context through 
 
 Step 2 adds `activeWrite` and the `revise`, `clarifyRevision` and `keepTask` planner commands. Server-side patches preserve unaffected fields/operations, resolved identities, recipe ingredient choices, stock set/adjust/debit meaning and the original filtered cohort, including initially unchanged records. Candidate buttons remain the resolution mechanism; typed names/save requests retain the task and explain which button to use. Every revised preview requires new confirmation. See [active task behavior](ai-active-task.md).
 
-The last recorded step 2 validation is 91 AI tests, 21 component tests and 44 integration tests: **156 passing tests**, plus TypeScript, lint for changed code/tests and whitespace checks. Those suites mock planner output; the component harness is not a browser. They establish application behavior for supplied plans, not reliable interpretation of Ukrainian phrases. Live interpretation, browser focus/layout and accessibility interactions remain unverified. No suites were rerun for this documentation-only revision.
+The recorded step 2 baseline was 91 AI tests, 21 component tests and 44 integration tests: **156 passing tests**. After 3A, there are **179 passing tests** (101 AI, 30 component, 48 integration), plus passing TypeScript, lint for changed code/tests and whitespace checks. Those suites mock planner output; the component harness is not a browser. They establish application behavior for supplied plans, not reliable interpretation of Ukrainian phrases. Live interpretation, browser focus/layout and accessibility interactions remain unverified.
 
 Preserve these constraints in every remaining checkpoint:
 
@@ -35,6 +35,8 @@ Preserve these constraints in every remaining checkpoint:
 - Retain authorization, schema/limit checks, version checks, transactional rollback and image cleanup after commit.
 
 ## 3A — Recover expired selection without changing task identity
+
+**Implemented.** See [selection recovery behavior and manual checks](ai-selection-recovery.md). The scope and acceptance checks below remain the regression contract. The runtime received only the context/scope additions required for 3A; full instruction replacement remains step 4.
 
 **Problem:** `askInventoryAssistant` reads UI selection before planning. A deleted record aborts even an independent search. Step 2 now preserves selection across more previews, so clearing all selection/task state would undo its guarantees.
 

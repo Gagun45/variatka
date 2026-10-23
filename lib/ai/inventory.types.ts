@@ -24,6 +24,8 @@ export type InventoryRecord = InventoryResult & {
   ingredients: { id: number; title: string; amount: string; isInStock: boolean }[];
 };
 
+export type SelectionExpiry = { selection: RecordSelection; message: string };
+
 export type AssistantReply = (
   | { operation: "noChanges"; message: string }
   | { operation: "search"; message: string; results: InventorySearchResult }
@@ -31,9 +33,10 @@ export type AssistantReply = (
   | { operation: "clarify"; message: string; clarification: Clarification }
   | { operation: "clarifyRevision"; message: string; clarification: Clarification }
   | { operation: "keepTask"; message: string }
+  | { operation: "requestBlocked"; message: string; code: ActionErrorCode }
   | { operation: "revisionFailed"; message: string; code: ActionErrorCode; pending: PendingWrite; revisionApplied: boolean }
   | { operation: "mutation"; message: string; assumptions: string[]; preview: InventoryMutationPreview; resolved: PendingWrite }
   | { operation: "batch"; message: string; assumptions: string[]; preview: BatchPreview; resolved: PendingWrite }
   | { operation: "chooseRecord"; message: string; question: RecordChoice; pending: PendingWrite }
   | { operation: "unsupported"; message: string }
-) & { continuesTask?: boolean };
+) & { continuesTask?: boolean; selectionExpired?: SelectionExpiry };

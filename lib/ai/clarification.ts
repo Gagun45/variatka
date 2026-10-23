@@ -1,10 +1,16 @@
-import { MAX_CLARIFICATION_TURNS, type AssistantRequest, type Clarification } from "@/zod/ai-search.schema";
+import { MAX_CLARIFICATION_TURNS, type AssistantRequest, type Clarification, type RecordSelection } from "@/zod/ai-search.schema";
 import { AppError } from "../error";
 
-export function validateClarificationSelection(request: AssistantRequest) {
+export function sameSelection(a: RecordSelection | null | undefined, b: RecordSelection | null | undefined) {
+  return a?.entity === b?.entity && a?.id === b?.id;
+}
+
+export function validateClarificationSelection(request: AssistantRequest, missingBoundSelection: RecordSelection | null = null) {
   const context = request.clarification;
   if (!context) return;
-  if (context.selected?.entity !== request.selected?.entity || context.selected?.id !== request.selected?.id) {
+  // Automatic expiry clearing is allowed only after the server verified absence.
+  if (!request.selected && missingBoundSelection && sameSelection(context.selected, missingBoundSelection)) return;
+  if (!sameSelection(context.selected, request.selected)) {
     throw new AppError("Вибір запису змінився. Скасуйте уточнення та надішліть новий запит.");
   }
 }
@@ -19,7 +25,7 @@ export function prepareClarification(request: AssistantRequest, question: string
     originalPrompt: previous?.originalPrompt ?? request.prompt,
     turns: previous ? [...previous.turns, { question: previous.question, answer: request.prompt }] : [],
     question,
-    selected: previous?.selected ?? request.selected,
+    selected: previous ? previous.selected : request.selected,
     previousSearch: previous ? previous.previousSearch : request.previousSearch,
   };
 }

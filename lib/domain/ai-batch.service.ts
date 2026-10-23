@@ -73,7 +73,7 @@ export async function prepareInventoryBatch(intent: BatchIntent, selected: Recor
       unchanged.push("targetName" in operation.intent ? operation.intent.targetName ?? `${operation.selected?.entity} #${operation.selected?.id}` : "Без змін");
     }
   }
-  return completeBatchPreview(items, unchanged);
+  return { ...completeBatchPreview(items, unchanged), ...(state.targets ? { targets: state.targets } : {}) };
 }
 
 export async function applyInventoryBatch(preview: BatchPreview) {
@@ -82,6 +82,15 @@ export async function applyInventoryBatch(preview: BatchPreview) {
   if (normalized.items.length !== preview.items.length) throw new AppError("У перегляді відсутні операції створення інгредієнтів. Повторіть запит.");
   const cleanup: string[] = [];
   const results = await guarded(() => prisma.$transaction(async (tx) => {
+    if (preview.targets) {
+      const identities = preview.targets.map(({ entity, id }) => `${entity}:${id}`);
+      if (new Set(identities).size !== identities.length) throw new AppError("Повторні записи у пропозиції. Підготуйте новий перегляд.");
+      for (const target of preview.targets) {
+        const args = { where: { id: target.id }, select: { id: true } } as const;
+        const current = target.entity === "ingredient" ? await tx.ingredient.findUnique(args) : target.entity === "stuff" ? await tx.stuff.findUnique(args) : await tx.recipe.findUnique(args);
+        if (!current) throw new AppError("Запис із початкового переліку змін було видалено. Підготуйте новий перегляд; перелік не буде скорочено автоматично.", "STALE_PREVIEW");
+      }
+    }
     // Recheck edited titles and newly appeared candidates before any writes.
     for (const item of normalized.items) if (item.kind === "createIngredient") await validateIngredientDuplicateReview(item, tx);
     const newIds = new Map<string, number>();

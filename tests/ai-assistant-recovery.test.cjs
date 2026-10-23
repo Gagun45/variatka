@@ -476,3 +476,164 @@ test("invalid form inputs do not block independent requests or get overwritten b
   assert.equal(view("InventoryMutationView"), undefined);
   assert.ok(view("Results"));
 });
+
+async function selectFixture(selected = record) {
+  harness.actions.askInventoryAssistant = async () => ok({ ...searchReply, results: { ...searchReply.results, items: [selected] } });
+  harness.actions.getInventoryRecord = async () => ok(selected);
+  await submit("Покажи записи");
+  await view("Results").onSelect(selected);
+}
+const expiry = (selection = record) => ({ selection: { entity: selection.entity, id: selection.id }, message: "Попередній запис видалено." });
+const expiryNotice = () => tree().find((node) => node.props?.["aria-label"] === "Вибір запису недоступний");
+
+test("expiry clears only UI selection and preserves edits, typed request and edit-request recovery", async () => {
+  await selectFixture();
+  harness.actions.askInventoryAssistant = async () => ok(creation());
+  await submit("Створи нову банку");
+  editDraft();
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "requestBlocked", code: "VALIDATION_ERROR", message: "Оберіть запис", selectionExpired: expiry() });
+  await submit("Покажи обраний запис");
+  assert.equal(view("Record"), undefined);
+  assert.deepEqual(view("InventoryMutationView").preview.after, edited);
+  assert.equal(view("InventoryMutationView").status, "ready", "an incidental selection is not the creation's target");
+  assert.equal(input().value, "Покажи обраний запис");
+  assert.ok(expiryNotice());
+  view("AssistantErrorPanel").onEdit();
+  assert.equal(view("Record"), undefined, "edit request cannot resurrect a known-deleted selection");
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.selected, null);
+    assert.deepEqual(request.activeWrite.pending.command.intent.data, edited);
+    return ok({ operation: "keepTask", message: "Натисніть підтвердження" });
+  };
+  await submit("так");
+  assert.deepEqual(view("InventoryMutationView").preview.after, edited);
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("an expiry notice accompanies successful search without swallowing its results", async () => {
+  await selectFixture();
+  harness.actions.askInventoryAssistant = async () => ok({ ...searchReply, selectionExpired: expiry() });
+  await submit("Покажи всі матеріали");
+  assert.deepEqual(view("Results").results, searchReply.results);
+  assert.equal(view("Record"), undefined);
+  assert.ok(expiryNotice());
+  assert.equal(view("AssistantErrorPanel"), undefined);
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("expiry preserves a different task's candidates and resolution source", async () => {
+  const selected = { ...record, entity: "recipe", id: 99, title: "Старий рецепт" };
+  await selectFixture(selected);
+  const question = { key: "0:target", name: "Банка", context: "Операція 1", candidates: [record], page: 0, hasMore: false };
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "chooseRecord", message: "Оберіть", question, pending: stockPending });
+  await submit("Додай 5 до залишку банки");
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "keepTask", message: "Оберіть кнопкою", selectionExpired: expiry(selected) });
+  await submit("Банка 250 мл");
+  assert.equal(view("Record"), undefined);
+  assert.deepEqual(view("RecordChoiceView").question, question);
+  assert.equal(view("RecordChoiceView").prompt, "Додай 5 до залишку банки");
+  harness.actions.resumeInventoryWrite = async ({ pending }) => {
+    assert.deepEqual(pending, stockPending);
+    return ok({ operation: "mutation", message: "Перевірте", preview: stockPreview(), assumptions: [], resolved: pending });
+  };
+  view("RecordChoiceView").onChoose({ entity: "stuff", id: 2 });
+  await finishPreparation();
+  assert.equal(view("InventoryMutationView").preview.target.id, 2);
+  assert.equal(view("InventoryMutationView").preview.after.inStock, 15);
+  harness.actions.confirmInventoryBatch = async () => fail("CONFLICT");
+  await view("InventoryMutationView").onConfirm();
+  view("AssistantErrorPanel").onEdit();
+  assert.equal(view("Record"), undefined, "original task source is retained without restoring the deleted UI record");
+  assert.equal(input().value, "Додай 5 до залишку банки");
+});
+
+test("expiry retains clarification binding after UI selection is cleared", async () => {
+  await selectFixture();
+  const clarification = { originalPrompt: "Встанови залишок обраного матеріалу", question: "Який залишок?", turns: [], selected: { entity: "stuff", id: 2 }, previousSearch: search };
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "clarify", message: clarification.question, clarification });
+  await submit(clarification.originalPrompt);
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "requestBlocked", code: "NOT_FOUND", message: "Запис видалено", selectionExpired: expiry() });
+  await submit("30");
+  assert.equal(view("Record"), undefined);
+  assert.equal(input().value, "30");
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.selected, null);
+    assert.deepEqual(request.clarification, clarification);
+    return ok(searchReply);
+  };
+  await submit("Інший запит: покажи всі матеріали");
+  assert.ok(view("Results"));
+});
+
+test("expiry during an uncertain save never enables preparation or confirmation retry", async () => {
+  await selectFixture();
+  harness.actions.askInventoryAssistant = async () => ok(creation());
+  await submit("Створи нову банку");
+  editDraft();
+  harness.actions.confirmInventoryBatch = async () => { throw new Error("connection lost"); };
+  await view("InventoryMutationView").onConfirm();
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.activeWrite, null);
+    return ok({ operation: "requestBlocked", code: "NOT_FOUND", message: "Запис видалено", selectionExpired: expiry() });
+  };
+  await submit("Покажи обраний запис");
+  assert.equal(view("Record"), undefined);
+  assert.equal(view("InventoryMutationView").status, "uncertain");
+  assert.equal(view("InventoryMutationView").onPrepare, undefined);
+  assert.deepEqual(view("InventoryMutationView").preview.after, edited);
+  await view("InventoryMutationView").onConfirm();
+  assert.equal(harness.calls.confirmInventoryBatch.length, 1);
+  assert.equal(harness.calls.resumeInventoryWrite.length, 0);
+});
+
+test("unexpected selection read failures retain the valid selection and draft", async () => {
+  await selectFixture();
+  harness.actions.askInventoryAssistant = async () => ok(creation());
+  await submit("Створи нову банку");
+  editDraft();
+  harness.actions.getInventoryRecord = async () => fail("INTERNAL_ERROR");
+  await view("Results").onSelect({ ...record, id: 99 });
+  assert.deepEqual(view("Record").record, record);
+  assert.deepEqual(view("InventoryMutationView").preview.after, edited);
+  assert.equal(expiryNotice(), undefined);
+});
+
+test("missing actual task targets invalidate re-preparation instead of leaving an old confirmable draft", async () => {
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "mutation", message: "Перевірте", preview: stockPreview(), assumptions: [], resolved: stockPending });
+  await submit("Додай 5 до залишку банки");
+  harness.actions.resumeInventoryWrite = async () => fail("STALE_PREVIEW");
+  view("InventoryMutationView").onPrepare();
+  await finishPreparation();
+  assert.equal(view("InventoryMutationView").status, "stale");
+  await view("InventoryMutationView").onConfirm();
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  assert.deepEqual(view("InventoryMutationView").preview, stockPreview());
+});
+
+test("verified expiry of an actual preview target disables confirmation immediately", async () => {
+  await selectFixture();
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "mutation", message: "Перевірте", preview: stockPreview(), assumptions: [], resolved: stockPending });
+  await submit("Додай 5 до залишку банки");
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "keepTask", message: "Перевірте пропозицію", selectionExpired: expiry() });
+  await submit("так");
+  assert.equal(view("Record"), undefined);
+  assert.equal(view("InventoryMutationView").status, "stale");
+  await view("InventoryMutationView").onConfirm();
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  assert.deepEqual(view("InventoryMutationView").preview, stockPreview());
+});
+
+test("verified expiry of an unchanged filtered member disables the whole batch confirmation", async () => {
+  await selectFixture();
+  const targets = [{ entity: "stuff", id: 2 }, { entity: "stuff", id: 3 }];
+  const pending = { command: { kind: "batch", intent: { kind: "filter", search, change: { kind: "updateStuff", patch: { title: null, description: null, category: null, stock: { mode: "set", value: 15 } } } } }, selected: null, assumptions: [], decisions: [], targets };
+  const preview = { items: [{ ...stockPreview(), target: { ...stockPreview().target, id: 3 } }], unchanged: ["Банка 250 мл"], targets };
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "batch", message: "Перевірте", preview, assumptions: [], resolved: pending });
+  await submit("Встанови 15 для всіх банок");
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "requestBlocked", code: "NOT_FOUND", message: "Оберіть запис", selectionExpired: expiry() });
+  await submit("Покажи обраний запис");
+  assert.equal(view("InventoryBatchView").status, "stale");
+  assert.deepEqual(view("InventoryBatchView").preview.targets, targets);
+  await view("InventoryBatchView").onConfirm();
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});

@@ -2,7 +2,7 @@
 
 Status: historical review draft, not ready for adoption. This proposed instruction body predates step 2 and is not active in `lib/ai/inventory-assistant.ts`. The current command/response schemas and implemented behavior remain authoritative. See the [revised implementation plan](ai-assistant-plan.md) for the reconciliation and comparison required before replacement; append the generated `inventoryVocabularyInstructions` once when adopting.
 
-The runtime now supports `activeWrite`, `revise`, `clarifyRevision` and `keepTask`. The command list and context limitation below omit/contradict those additions. Do not copy this body into runtime as written. Step 4 must preserve [active task behavior](ai-active-task.md), missing-field handling, resolved IDs, frozen cohorts, selection recovery and button-only choices/confirmation. This plan review leaves the instruction body unchanged.
+The runtime now supports `activeWrite`, `revise`, `clarifyRevision` and `keepTask`, plus 3A's `clarificationMode` and verified unavailable-selection context. The command list and context limitation below omit/contradict those additions. Do not copy this body into runtime as written. Step 4 must preserve [active task behavior](ai-active-task.md), missing-field handling, resolved IDs, frozen cohorts, [selection recovery](ai-selection-recovery.md) and button-only choices/confirmation. The historical instruction body remains unchanged.
 
 ## Replacement instruction body
 

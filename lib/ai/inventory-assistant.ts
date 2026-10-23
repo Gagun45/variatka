@@ -29,6 +29,8 @@ Search rules:
 - For stuff, stockMin/stockMax are inclusive integers: 'менше 10' means stockMax=9, 'більше 10' means stockMin=11. 'немає' means isInStock=false. Spiciness ranges are integers 0..4, inclusive; 'не гострі' means spicyMax=0.
 - Unspecified fields must be null (arrays empty), never invent filters. Categories and series must match schema enums.
 Context rules:
+- Return clarificationMode='continue' when answering or continuing clarification, and 'independent' for a complete new unrelated request. An independent request ignores clarification.originalPrompt, turns, bound selection and previousSearch; interpret only the new prompt and current context. For clarify/clarifyRevision this must agree with continuesPrevious. Without clarification use 'independent'.
+- unavailableSelection identifies a UI selection whose record was verified missing; selected is then null. clarificationSelectionUnavailable identifies a missing record bound to clarification. Never use either as an existing target, substitute another record, invent a creation or broaden a write to recover a lost reference. For dependent details/unnamed writes request a name or new selection. Independent searches/creations and explicit named targets still work. A revision uses activeWrite's saved targets, not UI selection; the server validates those targets independently.
 - activeWrite is the current unsaved task, containing its latest structured operation, direct form edits, resolved record choices and (for filtered drafts) frozen targets. A short correction such as 'краще 7', 'і зроби прихованим', or 'опис: скляна банка' revises this task; use revise and output ONLY changed fields. Null patch fields preserve everything already proposed. Do not regenerate the task as a new mutation, lose other operations or use creation defaults again. Existing resolved IDs stay on the server; never output them.
 - activeWrite.incompleteFields identifies creation fields currently empty/invalid in the form. Their pending values are the last valid base values, NOT the user's current answers: ask for any still missing field with clarifyRevision, preserving supplied corrections in the clarification turns. A revision must explicitly fill every missing field before a new preview. Missing stock requires a final initial quantity, not an adjustment of an unknown quantity. Incomplete fields must not prevent a clearly independent new request.
 - Revision operationIndex refers to the zero-based original structured operations, NOT sorted preview card numbers. A single mutation or filtered task has index 0. For several operations, identify the user's named record; if an ordinal cannot be mapped confidently, ask which record by name with clarifyRevision. Preserve a filtered task's search and frozen target list.
@@ -38,7 +40,7 @@ Context rules:
 - Use clarifyRevision for missing information about a correction, preserving the active task and partial clarification answers. Set continuesPrevious=true only when continuing its existing clarification. For a clearly independent complete request, use normal commands and ignore activeWrite. A first clarification for an independent new request uses clarify, not clarifyRevision.
 - When activeWrite.phase='choice', a typed remembered name or 'так' is not a clickable record choice: use keepTask to ask the user to choose the actual record button. Keep all candidates and the operation. A concrete field/amount correction may still use revise before the choice. When a preview awaits confirmation, 'так', 'збережи' or 'підтверджую' uses keepTask to point to the confirmation button, never regenerates or saves the draft. If there is no activeWrite, do not infer a draft from prior chat messages.
 - selected is an explicitly selected record loaded by the server. For 'покажи її склад/опис/залишок', use viewSelected if selected exists. With no selected record, use clarify to ask the user to search and select one. Never invent or select an ID yourself.
-- previousSearch may be reused ONLY for explicit refinements such as 'а лише наявні'. Otherwise build a new independent search. If a refinement has no previousSearch, ask what to search.
+- previousSearch may be reused ONLY for explicit refinements such as 'а лише наявні'. When continuing clarification, use its bound previousSearch; an independent request uses current previousSearch only for an explicit refinement. Otherwise build a fresh search without old filters. If a refinement has no previousSearch, ask what to search.
 - clarification contains a pending request: originalPrompt, previous question/answer turns, and the latest question. Treat the current prompt as the answer when it plausibly answers that question. Combine the original request and answers without dropping known details. Do NOT turn a short reply such as '30', 'спеції' or 'так' into a new independent request.
 - If more information is needed for that SAME request, use clarify with continuesPrevious=true. For the first question or a clearly independent new request, use continuesPrevious=false. Never set it true without an existing clarification. Do not invent answers or execute incomplete commands.
 - A clearly independent full request supersedes clarification: process the new request without carrying over old fields. Cancellation clears clarification through the UI. Confirmation always requires the button; an answer 'так' only resolves a question and never authorizes a database write.
@@ -74,7 +76,7 @@ Recipe rules:
 - The server resolves ingredient names. Missing ingredients will be proposed as separate creations in the same confirmation batch, default description='', isInStock=false, isSaved=false. Do not create a duplicate createIngredient operation yourself unless the user explicitly requested details for it.
 - Recipe hidden/confirmed/saved flags are explicit values, never toggles. No recipe variant or finished-product stock mutations are supported in this step.`;
 
-export async function planInventoryRequest(request: AssistantRequest, selected: InventoryRecord | null) {
+export async function planInventoryRequest(request: AssistantRequest, selected: InventoryRecord | null, unavailableSelection: AssistantRequest["selected"] = null, clarificationSelectionUnavailable: AssistantRequest["selected"] = null) {
   return requestStructuredOutput({
     name: "inventory_assistant",
     schema: assistantPlanSchema,
@@ -84,9 +86,11 @@ export async function planInventoryRequest(request: AssistantRequest, selected: 
       prompt: request.prompt,
       context: inventoryDateContext(),
       selected: selected ? { entity: selected.entity, id: selected.id, title: selected.title.slice(0, 200) } : null,
-      previousSearch: request.clarification ? request.clarification.previousSearch : request.previousSearch,
+      previousSearch: request.previousSearch,
       clarification: request.clarification,
       activeWrite: request.activeWrite ?? null,
+      unavailableSelection,
+      clarificationSelectionUnavailable,
     }),
   });
 }
