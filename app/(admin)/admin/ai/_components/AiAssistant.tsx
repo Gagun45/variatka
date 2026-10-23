@@ -17,18 +17,16 @@ import type { AssistantReply, InventoryRecord, InventoryResult, InventorySearchR
 import AssistantContext from "./AssistantContext";
 import AssistantErrorPanel from "./AssistantErrorPanel";
 import InventoryBatchView from "./InventoryBatchView";
-import type { BatchPreview } from "@/zod/ai-batch.schema";
 import { refreshAfterSave } from "@/lib/ai/refresh-after-save";
 import { confirmationFailure, requestPhaseLabels, type AssistantErrorCode, type DraftStatus, type RequestPhase } from "@/lib/ai/request-state";
 import type { AssistantRequest } from "@/zod/ai-search.schema";
-import { mutationDefinitions } from "@/lib/ai/mutation-definitions";
+import { activeTaskLabel, activeTaskTargets, editTaskCreation, incompleteTaskFields, type ActiveTask, type TaskSource } from "@/lib/ai/active-task";
 import type { Clarification, InventorySearch } from "@/zod/ai-search.schema";
 import { InventoryRecordView, InventorySearchView } from "./InventorySearchView";
 import InventoryMutationView from "./InventoryMutationView";
 import type { InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 
 type Message = { role: "user" | "assistant"; text: string };
-type DraftSource = { request: AssistantRequest; selected: InventoryRecord | null };
 
 export default function AiAssistant() {
   const [prompt, setPrompt] = useState("");
@@ -41,6 +39,7 @@ export default function AiAssistant() {
   const lastRequest = useRef<AssistantRequest | null>(null);
   const requestSelection = useRef<InventoryRecord | null>(null);
   const refreshTargets = useRef<MutationResult[]>([]);
+  const refreshSelection = useRef<InventoryRecord | null>(null);
   function setError(message: string, code: AssistantErrorCode = "VALIDATION_ERROR") {
     setNeutral("");
     if (code === "NO_CHANGES") { setNeutral(message); setErrorMessage(""); return; }
@@ -49,58 +48,64 @@ export default function AiAssistant() {
   }
   const [results, setResults] = useState<InventorySearchResult | null>(null);
   const [selected, setSelected] = useState<InventoryRecord | null>(null);
-  const [clarification, setClarification] = useState<Clarification | null>(null);
+  const [initialClarification, setInitialClarification] = useState<Clarification | null>(null);
   const [previousSearch, setPreviousSearch] = useState<InventorySearch | null>(null);
-  const [mutation, setMutation] = useState<InventoryMutationPreview | null>(null);
-  const [pendingWrite, setPendingWrite] = useState<Extract<AssistantReply, { operation: "chooseRecord" }> | null>(null);
-  const lastWrite = useRef<PendingWrite | null>(null);
-  const draftSource = useRef<DraftSource | null>(null);
-  const [draftStatus, setDraftStatus] = useState<DraftStatus>("ready");
-  const [assumptions, setAssumptions] = useState<string[]>([]);
+  const [activeTask, setActiveTask] = useState<ActiveTask | null>(null);
+  const mutation = activeTask?.view.kind === "mutation" ? activeTask.view.preview : null;
+  const batch = activeTask?.view.kind === "batch" ? activeTask.view.preview : null;
+  const pendingWrite = activeTask?.view.kind === "choice" ? activeTask.view.reply : null;
+  const clarification = activeTask?.clarification ?? initialClarification;
+  const draftStatus = activeTask?.clarification && activeTask.status === "ready" ? "invalid" : activeTask?.status ?? "ready";
+  const assumptions = activeTask?.pending.assumptions ?? [];
   const [notices, setNotices] = useState<MutationResult[]>([]);
-  const [batch, setBatch] = useState<BatchPreview | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pending = useRef(false);
   const queryClient = useQueryClient();
+
+  function setDraftStatus(status: DraftStatus) {
+    setActiveTask((task) => task ? { ...task, status } : null);
+  }
+
+  function setMutation(preview: InventoryMutationPreview) {
+    setActiveTask((task) => task ? editTaskCreation(task, preview) : null);
+  }
+
+  function clearClarification() {
+    setInitialClarification(null);
+    setActiveTask((task) => task ? { ...task, clarification: null } : null);
+  }
 
   function newRequest() {
     if (pending.current) return;
     setPrompt("");
     lastRequest.current = null;
-    lastWrite.current = null;
-    draftSource.current = null;
-    setDraftStatus("ready");
     requestSelection.current = null;
     refreshTargets.current = [];
+    refreshSelection.current = null;
     setMessages([]);
     setError("");
     setResults(null);
     setSelected(null);
-    setClarification(null);
+    setInitialClarification(null);
     setPreviousSearch(null);
-    setMutation(null);
-    setPendingWrite(null);
-    setAssumptions([]);
+    setActiveTask(null);
     setNotices([]);
-    setBatch(null);
     inputRef.current?.focus();
   }
 
   function cancelWrite() {
-    setPendingWrite(null);
-    setMutation(null);
-    setBatch(null);
-    setAssumptions([]);
-    lastWrite.current = null;
-    draftSource.current = null;
-    setDraftStatus("ready");
+    setActiveTask(null);
+    setInitialClarification(null);
     setError("");
   }
 
   async function propose(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending.current || !prompt.trim()) return;
-    await requestProposal({ prompt: prompt.trim(), selected: selected ? { entity: selected.entity, id: selected.id } : null, previousSearch, clarification });
+    await requestProposal({
+      prompt: prompt.trim(), selected: selected ? { entity: selected.entity, id: selected.id } : null, previousSearch, clarification,
+      activeWrite: activeTask && activeTask.status !== "uncertain" ? { pending: activeTask.pending, incompleteFields: incompleteTaskFields(activeTask), phase: activeTask.clarification ? "clarification" : activeTask.view.kind === "choice" ? "choice" : "draft" } : null,
+    });
   }
 
   function editRequest() {
@@ -109,7 +114,7 @@ export default function AiAssistant() {
     setPrompt(request.prompt);
     setSelected(requestSelection.current);
     setPreviousSearch(request.previousSearch);
-    setClarification(request.clarification);
+    if (!activeTask?.clarification) setInitialClarification(request.clarification);
     setError("");
     inputRef.current?.focus();
   }
@@ -122,7 +127,7 @@ export default function AiAssistant() {
     // Keep the current draft and its source until a replacement is ready.
     if (!request.selected) requestSelection.current = null;
     else if (selected?.entity === request.selected.entity && selected.id === request.selected.id) requestSelection.current = selected;
-    const source: DraftSource = { request, selected: requestSelection.current };
+    const source: TaskSource = { request: { ...request, activeWrite: null }, selected: requestSelection.current };
     lastRequest.current = request;
     setMessages((old) => [...old, { role: "user", text: request.prompt }]);
     setPrompt("");
@@ -130,7 +135,7 @@ export default function AiAssistant() {
       const result = await askInventoryAssistant(request);
       if (!result.ok) { setPrompt(request.prompt); setError(result.message, result.code); return; }
       setNotices([]);
-      applyReply(result.data, source);
+      applyReply(result.data, result.data.continuesTask && activeTask ? activeTask.source : source);
     } catch {
       setPrompt(request.prompt);
       setError("Не вдалося отримати відповідь. Ваш запит не втрачено.", "PROVIDER_UNAVAILABLE");
@@ -140,17 +145,37 @@ export default function AiAssistant() {
     }
   }
 
-  function applyReply(reply: AssistantReply, source: DraftSource | null) {
-    setMutation(null);
-    setBatch(null);
-    setAssumptions([]);
-    setPendingWrite(null);
-    setDraftStatus("ready");
-    lastWrite.current = null;
-    draftSource.current = reply.operation === "mutation" || reply.operation === "batch" || reply.operation === "chooseRecord" ? source : null;
-    if (reply.operation !== "noChanges") setMessages((old) => [...old, { role: "assistant", text: reply.message }]);
-    if ((reply.operation === "batch" || reply.operation === "mutation") && reply.resolved) lastWrite.current = reply.resolved;
-    setClarification(reply.operation === "clarify" ? reply.clarification : null);
+  function applyReply(reply: AssistantReply, source: TaskSource | null) {
+    if (reply.operation !== "noChanges" && reply.operation !== "revisionFailed") setMessages((old) => [...old, { role: "assistant", text: reply.message }]);
+    if (reply.operation === "keepTask") return;
+    if (reply.operation === "clarifyRevision") {
+      setActiveTask((task) => task ? { ...task, clarification: reply.clarification } : null);
+      return;
+    }
+    if (reply.operation === "revisionFailed") {
+      setActiveTask((task) => {
+        if (!task) return null;
+        const revised: ActiveTask = { ...task, pending: reply.pending, clarification: null, status: reply.code === "STALE_PREVIEW" ? "stale" : "invalid" };
+        const command = reply.pending.command;
+        if (reply.revisionApplied && task.view.kind === "mutation" && command.kind === "mutation") {
+          const intent = command.intent;
+          if (intent.kind === "createIngredient") return editTaskCreation(revised, { kind: intent.kind, after: intent.data });
+          if (intent.kind === "createStuff") return editTaskCreation(revised, { kind: intent.kind, after: intent.data });
+        }
+        return revised;
+      });
+      setPrompt(lastRequest.current?.prompt ?? "");
+      setError(reply.message, reply.code);
+      return;
+    }
+    setInitialClarification(reply.operation === "clarify" ? reply.clarification : null);
+    if ((reply.operation === "mutation" || reply.operation === "batch" || reply.operation === "chooseRecord") && source) {
+      setActiveTask({
+        source, status: "ready", clarification: null,
+        pending: reply.operation === "chooseRecord" ? reply.pending : reply.resolved,
+        view: reply.operation === "chooseRecord" ? { kind: "choice", reply } : reply.operation === "mutation" ? { kind: "mutation", preview: reply.preview } : { kind: "batch", preview: reply.preview },
+      });
+    } else setActiveTask(null);
     if (reply.operation === "noChanges") {
       setNeutral(reply.message);
     } else if (reply.operation === "search") {
@@ -159,28 +184,15 @@ export default function AiAssistant() {
       setSelected(null);
     } else if (reply.operation === "viewSelected") {
       setSelected(reply.record);
-    } else if (reply.operation === "batch") {
-      setBatch(reply.preview);
-      setAssumptions(reply.assumptions);
-      setSelected(null);
-    } else if (reply.operation === "mutation") {
-      setMutation(reply.preview);
-      setAssumptions(reply.assumptions);
-      const entity = mutationDefinitions[reply.preview.kind].entity;
-      if ("target" in reply.preview && (selected?.entity !== entity || selected.id !== reply.preview.target.id)) setSelected(null);
-    } else if (reply.operation === "chooseRecord") {
-      setPendingWrite(reply);
-      lastWrite.current = reply.pending;
-      setSelected(null);
     }
   }
 
-  async function resumeWrite(choice: ResumeWrite["choice"] = null, page: ResumeWrite["page"] = null, saved = pendingWrite?.pending) {
-    if (pending.current || !saved) return;
+  async function resumeWrite(choice: ResumeWrite["choice"] = null, page: ResumeWrite["page"] = null, saved: PendingWrite | undefined = activeTask?.pending) {
+    if (pending.current || !saved || activeTask?.clarification) return;
     pending.current = true;
     setPhase("preparing");
     setError("");
-    const source = draftSource.current;
+    const source = activeTask?.source ?? null;
     if (source) {
       lastRequest.current = source.request;
       requestSelection.current = source.selected;
@@ -195,18 +207,12 @@ export default function AiAssistant() {
   }
 
   function prepareAgain() {
-    if (pending.current || draftStatus === "uncertain") return;
-    if (mutation?.kind === "createIngredient" || mutation?.kind === "createStuff") {
-      const original = lastWrite.current?.command;
-      const sameTitle = original?.kind === "mutation" && (original.intent.kind === "createIngredient" || original.intent.kind === "createStuff") && original.intent.data.title === mutation.after.title;
-      const intent = mutation.kind === "createIngredient" ? { kind: mutation.kind, data: mutation.after } : { kind: mutation.kind, data: mutation.after };
-      // Revalidate the edited values, not the original prompt/defaults. A renamed
-      // ingredient must go through duplicate review for its new name again.
-      void resumeWrite(null, null, {
-        command: { kind: "mutation", intent }, selected: lastWrite.current?.selected ?? null,
-        assumptions, decisions: sameTitle && lastWrite.current ? lastWrite.current.decisions : [],
-      });
-    } else if (lastWrite.current) void resumeWrite(null, null, lastWrite.current);
+    if (pending.current || draftStatus === "uncertain" || activeTask?.clarification) return;
+    if (activeTask && incompleteTaskFields(activeTask).length) {
+      setError("Заповніть назву та коректний залишок у пропозиції або надішліть уточнення з цими значеннями.");
+      return;
+    }
+    if (activeTask) void resumeWrite(null, null, activeTask.pending);
     else if (lastRequest.current) void requestProposal(lastRequest.current);
   }
 
@@ -218,14 +224,8 @@ export default function AiAssistant() {
     try {
       const result = await getInventoryRecord({ entity: record.entity, id: record.id });
       if (!result.ok) { setError(result.message, result.code); setSelected(null); return; }
-      lastWrite.current = null;
-      draftSource.current = null;
-      setDraftStatus("ready");
-      setPendingWrite(null);
-      setMutation(null);
-      setClarification(null);
-      setBatch(null);
-      setAssumptions([]);
+      setActiveTask(null);
+      setInitialClarification(null);
       setSelected(result.data);
       setMessages((old) => [...old, { role: "assistant", text: `Обрано: ${result.data.title}. Дані завантажено з бази.` }]);
     } catch {
@@ -265,7 +265,7 @@ export default function AiAssistant() {
       ]),
       record: getInventoryRecord,
       search: searchInventoryRecords,
-    });
+    }, refreshSelection.current);
     setSelected(refreshed.selected);
     if (previousSearch) setResults(refreshed.results);
     if (refreshed.failed) setError("Зміни збережено, але актуальні дані не вдалося завантажити.", "REFRESH_FAILED");
@@ -280,13 +280,13 @@ export default function AiAssistant() {
   }
 
   async function confirmMutation() {
-    if (pending.current || draftStatus !== "ready" || (!mutation && !batch)) return;
+    if (pending.current || draftStatus !== "ready" || (!mutation && !batch) || (activeTask && incompleteTaskFields(activeTask).length)) return;
     pending.current = true;
     setPhase("saving");
     setError("");
-    if (draftSource.current) {
-      lastRequest.current = draftSource.current.request;
-      requestSelection.current = draftSource.current.selected;
+    if (activeTask) {
+      lastRequest.current = activeTask.source.request;
+      requestSelection.current = activeTask.source.selected;
     }
     try {
       const result = await confirmInventoryBatch(batch ?? { items: [mutation!], unchanged: [] });
@@ -296,15 +296,10 @@ export default function AiAssistant() {
         setError(code === "SAVE_UNCERTAIN" ? "Не вдалося отримати результат збереження." : result.message, code);
         return;
       }
-      setBatch(null);
-      setMutation(null);
-      setPendingWrite(null);
-      setAssumptions([]);
-      setDraftStatus("ready");
-      lastWrite.current = null;
-      draftSource.current = null;
+      setActiveTask(null);
       const written = result.data.results;
       refreshTargets.current = written;
+      refreshSelection.current = selected;
       setNotices(written);
       await refreshSavedData(written);
     } catch {
@@ -330,10 +325,10 @@ export default function AiAssistant() {
       </div>
 
       {results && !pendingWrite && <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} />}
-      {pendingWrite && <RecordChoiceView question={pendingWrite.question} prompt={draftSource.current?.request.clarification?.originalPrompt ?? draftSource.current?.request.prompt ?? ""} busy={busy} onChoose={(selection) => { void resumeWrite({ key: pendingWrite.question.key, selection }); }} onCreateNew={() => { void resumeWrite({ key: pendingWrite.question.key, createNew: true }); }} onPage={(number) => { void resumeWrite(null, { key: pendingWrite.question.key, number }); }} onCancel={cancelWrite} />}
-      {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); setClarification(null); cancelWrite(); }} />}
-      {mutation && <InventoryMutationView preview={mutation} assumptions={assumptions} busy={busy} status={draftStatus} onChange={setMutation} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" ? undefined : prepareAgain} onCancel={cancelWrite} />}
-      {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} status={draftStatus} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" ? undefined : prepareAgain} onCancel={cancelWrite} />}
+      {pendingWrite && <RecordChoiceView question={pendingWrite.question} prompt={activeTask?.source.request.clarification?.originalPrompt ?? activeTask?.source.request.prompt ?? ""} busy={busy || Boolean(activeTask?.clarification)} onChoose={(selection) => { void resumeWrite({ key: pendingWrite.question.key, selection }); }} onCreateNew={() => { void resumeWrite({ key: pendingWrite.question.key, createNew: true }); }} onPage={(number) => { void resumeWrite(null, { key: pendingWrite.question.key, number }); }} onCancel={cancelWrite} />}
+      {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); clearClarification(); cancelWrite(); }} />}
+      {mutation && <InventoryMutationView preview={mutation} assumptions={assumptions} busy={busy} status={draftStatus} onChange={setMutation} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" || activeTask?.clarification ? undefined : prepareAgain} onCancel={cancelWrite} />}
+      {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} status={draftStatus} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" || activeTask?.clarification ? undefined : prepareAgain} onCancel={cancelWrite} />}
 
       {notices.length > 0 && <div role="status" className="space-y-2 rounded-xl border p-4"><p className="font-medium">Виконано операцій: {notices.length}</p><ul className="space-y-1">{notices.map((notice, index) => <li key={index}>{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : notice.entity === "recipe" ? frontendUrls.recipes.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</li>)}</ul></div>}
       {neutral && <div role="status" className="rounded-xl border bg-muted/40 p-4 text-sm">{neutral}</div>}
@@ -344,14 +339,19 @@ export default function AiAssistant() {
         <p className="font-medium">{clarification.question}</p>
         <p className="text-sm text-muted-foreground">Відповідь нижче продовжить попередній запит. Ще нічого не збережено.</p>
         <details className="text-sm"><summary className="cursor-pointer">Запит, який уточнюємо</summary><p className="mt-2 whitespace-pre-wrap break-words">{clarification.originalPrompt}</p></details>
-        <Button type="button" variant="outline" disabled={busy} onClick={() => { setClarification(null); setError(""); }}>Скасувати уточнення</Button>
+        <Button type="button" variant="outline" disabled={busy} onClick={() => { clearClarification(); setError(""); }}>Скасувати уточнення</Button>
       </section>}
 
       <AssistantContext selected={selected} previousSearch={previousSearch} />
 
+      {activeTask && <section aria-label="Поточне завдання" className="space-y-1 rounded-lg border bg-muted/40 p-3 text-sm">
+        <p className="font-medium">{activeTaskLabel(activeTask)}</p>
+        <p className="break-words">{activeTaskTargets(activeTask)}</p>
+        {activeTask.status !== "uncertain" && <p className="text-muted-foreground">Короткі уточнення змінюють цю пропозицію. Для нового завдання напишіть повний запит. Збереження потребує кнопки підтвердження.</p>}
+      </section>}
 
       <form onSubmit={propose} className="space-y-3">
-        <label htmlFor="ai-prompt" className="font-medium">{clarification ? "Ваша відповідь" : "Ваш запит"}</label>
+        <label htmlFor="ai-prompt" className="font-medium">{clarification ? "Ваша відповідь" : activeTask && activeTask.status !== "uncertain" ? "Уточнення або новий запит" : "Ваш запит"}</label>
         <Textarea ref={inputRef} id="ai-prompt" required maxLength={12000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={clarification ? "Напишіть відповідь на уточнення" : "Покажи приховані непідтверджені соуси"} />
 
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -28,7 +28,7 @@ export default function InventoryMutationView({ preview, assumptions, busy, stat
   return <form onSubmit={(event) => { event.preventDefault(); if (busy) return; if (status === "ready") onConfirm(); else onPrepare?.(); }} className="space-y-4 rounded-xl border p-3 sm:p-5">
     <h2 className="text-xl font-semibold">{preview.kind === "createIngredient" ? "Створення інгредієнта" : "Створення матеріалу"}</h2>
     <p className="text-sm text-muted-foreground">{status === "invalid" ? draftStatusMessages.invalid : "Ще нічого не збережено. Перевірте запропоновані значення."}</p>
-    {assumptions.length > 0 && <details open className="rounded-lg bg-muted p-3 text-sm"><summary className="cursor-pointer font-medium">Запропоновані значення</summary><ul className="mt-2 list-disc pl-5">{assumptions.map((item, index) => <li key={index}>{item}</li>)}</ul></details>}
+    {assumptions.length > 0 && <details open className="rounded-lg bg-muted p-3 text-sm"><summary className="cursor-pointer font-medium">Початково запропоновані значення</summary><p className="mt-2 text-muted-foreground">Після уточнень актуальні значення показано в полях нижче.</p><ul className="mt-2 list-disc pl-5">{assumptions.map((item, index) => <li key={index}>{item}</li>)}</ul></details>}
     <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
         <label className="block space-y-1"><span>Назва</span><Input required maxLength={200} value={preview.after.title} onChange={(event) => editCreationField("title", event.target.value)} /></label>
         <label className="block space-y-1"><span>Опис</span><Textarea maxLength={10000} value={preview.after.description ?? ""} onChange={(event) => editCreationField("description", event.target.value)} /></label>

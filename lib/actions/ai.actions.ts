@@ -23,6 +23,8 @@ import { applyInventoryBatch } from "../domain/ai-batch.service";
 import { batchPreviewSchema, type BatchPreview } from "@/zod/ai-batch.schema";
 import { prepareAssistantWrite } from "../domain/ai-write-workflow.service";
 import { resumeWriteSchema, type ResumeWrite } from "@/zod/ai-resolution.schema";
+import { revisePendingWrite } from "../ai/write-revision";
+import z from "zod";
 
 export async function searchInventoryRecords(search: InventorySearch, page = 0) {
   return safeAction("searchInventoryRecords", async () => {
@@ -60,6 +62,32 @@ export async function askInventoryAssistant(request: AssistantRequest) {
         return { operation: "viewSelected", message: `Актуальні дані: ${selected.title}`, record: selected };
       case "mutation": case "batch":
         return prepareAssistantWrite({ command, selected: parsed.data.selected, assumptions: plan.assumptions, decisions: [] });
+      case "revise": {
+        if (!parsed.data.activeWrite) throw new AppError("Немає активної пропозиції. Надішліть повний запит.");
+        let pending = parsed.data.activeWrite.pending;
+        let revisionApplied = false;
+        try {
+          for (const field of parsed.data.activeWrite.incompleteFields) {
+            const completed = command.revision.changes.some(({ operationIndex, change }) => operationIndex === 0 && (
+              field === "title" ? change.kind !== "target" && change.patch.title !== null
+                : change.kind === "stuff" && change.patch.stock !== null && change.patch.stock.mode !== "adjust"
+            ));
+            if (!completed) throw new AppError(field === "title" ? "Вкажіть назву пропозиції, наприклад «Банка 250 мл»." : "Вкажіть початковий залишок пропозиції цілим числом, наприклад 7.");
+          }
+          pending = revisePendingWrite(pending, command.revision);
+          revisionApplied = true;
+          return { ...await prepareAssistantWrite(pending), continuesTask: true };
+        } catch (error) {
+          if (!(error instanceof AppError) && !(error instanceof z.ZodError)) throw error;
+          return { operation: "revisionFailed", message: error instanceof AppError ? error.message : "Некоректні значення уточнення. Перевірте кількість, назву та категорію.", code: error instanceof AppError ? error.code : "VALIDATION_ERROR", pending, revisionApplied };
+        }
+      }
+      case "clarifyRevision":
+        if (!parsed.data.activeWrite) throw new AppError("Немає активної пропозиції для уточнення.");
+        return { operation: "clarifyRevision", message: plan.message, clarification: prepareClarification(parsed.data, plan.message, command.continuesPrevious) };
+      case "keepTask":
+        if (!parsed.data.activeWrite) throw new AppError("Немає активного завдання. Надішліть повний запит.");
+        return { operation: "keepTask", message: plan.message };
       case "clarify":
         return { operation: "clarify", message: plan.message, clarification: prepareClarification(parsed.data, plan.message, command.continuesPrevious) };
       case "unsupported":

@@ -1227,3 +1227,204 @@ test("relative calendar ranges are computed by the server across month/year boun
   assert.deepEqual(context.dateRanges.lastMonth, { from: "2026-12-01", before: "2027-01-01" });
   assert.deepEqual(context.dateRanges.thisMonth, { from: "2027-01-01", before: "2027-02-01" });
 });
+
+const revisionPlan = (changes) => ({ message: "Уточнюю пропозицію", assumptions: [], command: { kind: "revise", revision: { changes } } });
+const reviseStuff = (stock, extra = {}) => ({ operationIndex: 0, change: { kind: "stuff", patch: stuffPatch({ stock, ...extra }) } });
+
+test("draft stock corrections preserve set/adjust and debit direction unless explicitly changed", async (t) => {
+  for (const [mode, initial, stock, expected] of [
+    ["adjust", 5, { mode: null, value: 7 }, 17],
+    ["set", 5, { mode: null, value: 7 }, 7],
+    ["adjust", -3, { mode: null, value: 5 }, 5],
+    ["adjust", 5, { mode: "set", value: 7 }, 7],
+    ["adjust", -3, { mode: "adjust", value: 7 }, 17],
+  ]) await t.test(`${mode} ${initial} → ${JSON.stringify(stock)}`, async () => {
+    state.records.stuff = stuffRecord();
+    state.rows.stuff = [state.records.stuff];
+    state.plan = mutationPlan({ kind: "updateStuff", targetName: "Слоїчки", patch: stuffPatch({ description: "Вже запропонований опис", stock: { mode, value: initial } }) });
+    const first = await actions.askInventoryAssistant(request({ prompt: "Зміни залишок банки" }));
+    assert.equal(first.ok, true);
+    // A new competing substring match must not steal the already resolved ID.
+    state.rows.stuff.push(stuffRecord({ id: 3, title: "Слоїчки 500 мл" }));
+    state.plan = revisionPlan([reviseStuff(stock)]);
+    const revised = await actions.askInventoryAssistant(request({ prompt: "Краще 7", activeWrite: { phase: "draft", pending: first.data.resolved } }));
+    assert.equal(revised.ok, true);
+    assert.equal(revised.data.operation, "mutation");
+    assert.equal(revised.data.continuesTask, true);
+    assert.equal(revised.data.preview.target.id, 2);
+    assert.equal(revised.data.preview.after.inStock, expected);
+    assert.equal(revised.data.preview.after.description, "Вже запропонований опис");
+    assert.deepEqual(revised.data.resolved.decisions, first.data.resolved.decisions);
+    assert.deepEqual(JSON.parse(state.apiCalls.at(-1).input).activeWrite.pending, first.data.resolved);
+    assert.equal(state.writes.length, 0);
+  });
+});
+
+test("creation revisions retain every supplied field, zero and false without applying defaults again", async () => {
+  const data = { title: "Chili Mix", description: "Мій опис", category: "OTHER", isInStock: true, isSaved: false };
+  const pending = { command: { kind: "mutation", intent: { kind: "createIngredient", data } }, selected: null, decisions: [], assumptions: [] };
+  state.plan = revisionPlan([{ operationIndex: 0, change: { kind: "ingredient", patch: ingredientPatch({ title: "Chili Mix 2" }) } }]);
+  const revised = await actions.askInventoryAssistant(request({ prompt: "Назва Chili Mix 2", activeWrite: { pending, phase: "draft" } }));
+  assert.equal(revised.ok, true);
+  assert.deepEqual(revised.data.preview.after, { ...data, title: "Chili Mix 2" });
+  assert.deepEqual(pending.command.intent.data, data, "revision does not mutate its source");
+  assert.equal(state.writes.length, 0);
+});
+
+test("mixed batch revisions preserve unrelated operations and selected IDs", async () => {
+  state.records.stuff = stuffRecord();
+  state.records.ingredient = ingredientRecord();
+  const pending = {
+    command: { kind: "batch", intent: { kind: "list", operations: [
+      { kind: "updateStuff", targetName: "Слоїчки", patch: stuffPatch({ stock: { mode: "adjust", value: 5 } }) },
+      { kind: "updateIngredient", targetName: "Куркума", patch: ingredientPatch({ isInStock: false }) },
+    ] } }, selected: null, assumptions: [], decisions: [
+      { key: "0:target", selection: { entity: "stuff", id: 2 }, title: state.records.stuff.title },
+      { key: "1:target", selection: { entity: "ingredient", id: 1 }, title: state.records.ingredient.title },
+    ],
+  };
+  state.plan = revisionPlan([reviseStuff({ mode: null, value: 7 })]);
+  const revised = await actions.askInventoryAssistant(request({ prompt: "Для банки краще 7", activeWrite: { pending, phase: "draft" } }));
+  assert.equal(revised.ok, true);
+  assert.equal(revised.data.operation, "batch");
+  assert.equal(revised.data.preview.items.find((item) => item.kind === "updateStuff").after.inStock, 17);
+  assert.equal(revised.data.preview.items.find((item) => item.kind === "updateIngredient").after.isInStock, false);
+  assert.deepEqual(revised.data.resolved.command.intent.operations[1], pending.command.intent.operations[1]);
+  assert.equal(state.writes.length, 0);
+});
+
+test("recipe draft amount edits preserve other ingredients and remap their explicit choices after removal", () => {
+  const { revisePendingWrite } = require("../lib/ai/write-revision.ts");
+  const pending = {
+    command: { kind: "mutation", intent: { kind: "createRecipe", data: { title: "Приправа", description: "Мій опис", notes: "Нотатки", confirmationNotes: null, category: "SPICES", series: "DEFAULT", spicy: 0, isHidden: true, isConfirmed: false, isSaved: true }, ingredients: [
+      { title: "сіль", amount: "3 г", category: null }, { title: "часник", amount: "5 г", category: null }, { title: "перець", amount: "2 г", category: null },
+    ] } }, selected: null, assumptions: [], decisions: [
+      { key: "0:ingredient:0", selection: { entity: "ingredient", id: 1 }, title: "Сіль морська" },
+      { key: "0:ingredient:1", selection: { entity: "ingredient", id: 2 }, title: "Часник сушений" },
+      { key: "0:ingredient:2", selection: { entity: "ingredient", id: 3 }, title: "Перець чорний" },
+    ],
+  };
+  const revised = revisePendingWrite(pending, { changes: [{ operationIndex: 0, change: { kind: "recipe", patch: { title: null, description: null, notes: null, confirmationNotes: null, category: null, series: null, spicy: null, isHidden: null, isConfirmed: null, isSaved: null }, composition: { mode: "patch", items: [
+    { action: "remove", title: "Сіль морська", amount: null, category: null }, { action: "setAmount", title: "Часник сушений", amount: "7 г", category: null },
+  ] } } }] });
+  assert.deepEqual(revised.command.intent.ingredients, [{ title: "часник", amount: "7 г", category: null }, { title: "перець", amount: "2 г", category: null }]);
+  assert.deepEqual(revised.command.intent.data, pending.command.intent.data);
+  assert.deepEqual(revised.decisions, [
+    { ...pending.decisions[1], key: "0:ingredient:0" }, { ...pending.decisions[2], key: "0:ingredient:1" },
+  ]);
+  assert.equal(pending.command.intent.ingredients.length, 3);
+});
+
+test("revision failures cannot confirm an invalid stock change or turn a delete into an update", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.stuff = stuffRecord();
+  const pending = { command: { kind: "mutation", intent: { kind: "updateStuff", targetName: null, patch: stuffPatch({ stock: { mode: "adjust", value: 5 } }) } }, selected: { entity: "stuff", id: 2 }, decisions: [], assumptions: [] };
+  state.plan = revisionPlan([reviseStuff({ mode: null, value: -20 })]);
+  const invalid = await actions.askInventoryAssistant(request({ activeWrite: { phase: "draft", pending } }));
+  assert.equal(invalid.data.operation, "revisionFailed");
+  assert.equal(invalid.data.pending.command.intent.patch.stock.value, -20, "retry retains the corrected operation instead of restoring +5");
+  const deleting = { ...pending, command: { kind: "mutation", intent: { kind: "deleteStuff", targetName: null } } };
+  const mismatch = await actions.askInventoryAssistant(request({ activeWrite: { phase: "draft", pending: deleting } }));
+  assert.equal(mismatch.data.operation, "revisionFailed");
+  assert.equal(mismatch.data.pending.command.intent.kind, "deleteStuff");
+  const absent = await actions.askInventoryAssistant(request());
+  assert.equal(absent.ok, false);
+  assert.equal(state.writes.length, 0);
+  state.admin = false;
+  const calls = state.apiCalls.length;
+  assert.equal((await actions.askInventoryAssistant(request({ activeWrite: { phase: "draft", pending } }))).ok, false);
+  assert.equal(state.apiCalls.length, calls);
+});
+
+test("revision clarification and button reminders retain task context without writes", async () => {
+  const pending = { command: { kind: "mutation", intent: { kind: "createStuff", data: { title: "Банка", description: "Мій опис", category: "JARS", inStock: 3 } } }, selected: null, decisions: [], assumptions: [] };
+  state.plan = { message: "Який опис? Наприклад: скляна банка.", assumptions: [], command: { kind: "clarifyRevision", continuesPrevious: false } };
+  const question = await actions.askInventoryAssistant(request({ prompt: "Зміни опис", activeWrite: { pending, phase: "draft" } }));
+  assert.equal(question.data.operation, "clarifyRevision");
+  state.plan = revisionPlan([reviseStuff(null, { description: "Мій новий опис" })]);
+  const answer = await actions.askInventoryAssistant(request({ prompt: "Мій новий опис", clarification: question.data.clarification, activeWrite: { pending, phase: "clarification" } }));
+  assert.equal(answer.data.preview.after.inStock, 3);
+  assert.equal(answer.data.preview.after.description, "Мій новий опис");
+  state.plan = { message: "Оберіть запис кнопкою у списку.", assumptions: [], command: { kind: "keepTask" } };
+  const reads = state.reads.length;
+  const reminder = await actions.askInventoryAssistant(request({ prompt: "Банка 250 мл", activeWrite: { pending, phase: "choice" } }));
+  assert.equal(reminder.data.operation, "keepTask");
+  assert.equal(state.reads.length, reads);
+  assert.equal(state.writes.length, 0);
+});
+
+test("selection refresh retains the explicitly selected record across batches and clears it on deletion", async () => {
+  const { refreshAfterSave } = require("../lib/ai/refresh-after-save.ts");
+  const selected = { entity: "recipe", id: 99 };
+  const reads = [];
+  const readers = { invalidate: async () => {}, record: async (target) => { reads.push(target); return { ok: true, data: target }; }, search: async () => { throw new Error("no search"); } };
+  const writes = [{ entity: "stuff", id: 2, operation: "updated", title: "Банка" }, { entity: "ingredient", id: 1, operation: "created", title: "Сіль" }];
+  assert.deepEqual((await refreshAfterSave(writes, null, readers, selected)).selected, selected);
+  assert.deepEqual(reads, [selected]);
+  const deleted = await refreshAfterSave([...writes, { ...selected, operation: "deleted", title: "Рецепт" }], null, readers, selected);
+  assert.equal(deleted.selected, null);
+  assert.equal(reads.length, 1);
+});
+
+test("renaming a batch ingredient creation preserves its recipe dependency instead of creating an extra ingredient", async () => {
+  const data = { title: "Початкова спеція", description: "Мій опис", category: "SPICES", isInStock: true, isSaved: false };
+  const fields = { title: "Нова приправа", description: "", notes: "", confirmationNotes: null, category: "SPICES", series: "DEFAULT", spicy: 0, isHidden: true, isConfirmed: false, isSaved: false };
+  const pending = { command: { kind: "batch", intent: { kind: "list", operations: [
+    { kind: "createIngredient", data }, { kind: "createRecipe", data: fields, ingredients: [{ title: data.title, amount: "5 г", category: null }] },
+  ] } }, selected: null, assumptions: [], decisions: [] };
+  state.plan = revisionPlan([{ operationIndex: 0, change: { kind: "ingredient", patch: ingredientPatch({ title: "Перейменована спеція" }) } }]);
+  const revised = await actions.askInventoryAssistant(request({ prompt: "Назви новий інгредієнт Перейменована спеція", activeWrite: { pending, phase: "draft" } }));
+  assert.equal(revised.ok, true);
+  assert.equal(revised.data.preview.items.length, 2);
+  assert.deepEqual(revised.data.preview.items[0].after, { ...data, title: "Перейменована спеція" });
+  assert.equal(revised.data.preview.items[1].after.ingredients[0].title, "Перейменована спеція");
+  assert.equal(revised.data.preview.items[1].after.ingredients[0].amount, "5 г");
+  assert.equal(state.writes.length, 0);
+});
+
+test("renaming a target preserves its chosen ID while explicit retargeting invalidates only that operation's choices", () => {
+  const { revisePendingWrite } = require("../lib/ai/write-revision.ts");
+  const pending = { command: { kind: "batch", intent: { kind: "list", operations: [
+    { kind: "updateStuff", targetName: "Банка", patch: stuffPatch({ stock: { mode: "adjust", value: 5 } }) },
+    { kind: "updateIngredient", targetName: "Куркума", patch: ingredientPatch({ isInStock: false }) },
+  ] } }, selected: null, assumptions: [], decisions: [
+    { key: "0:target", selection: { entity: "stuff", id: 2 }, title: "Банка 250 мл" },
+    { key: "1:target", selection: { entity: "ingredient", id: 1 }, title: "Куркума" },
+  ] };
+  const renamed = revisePendingWrite(pending, { changes: [reviseStuff(null, { title: "Нова назва банки" })] });
+  assert.deepEqual(renamed.decisions, pending.decisions);
+  assert.equal(renamed.command.intent.operations[0].targetName, "Банка");
+  const retargeted = revisePendingWrite(pending, { changes: [{ operationIndex: 0, change: { kind: "target", targetName: "Кришка" } }] });
+  assert.deepEqual(retargeted.decisions, [pending.decisions[1]]);
+  assert.deepEqual(retargeted.command.intent.operations[0].patch, pending.command.intent.operations[0].patch);
+});
+
+test("active task validation rejects nested context, invalid phases and excessive frozen targets before planning", async (t) => {
+  t.mock.method(console, "error", () => {});
+  const pending = { command: { kind: "mutation", intent: { kind: "createStuff", data: { title: "Банка", description: "", category: "JARS", inStock: 0 } } }, selected: null, decisions: [], assumptions: [] };
+  for (const activeWrite of [
+    { pending, phase: "uncertain" },
+    { pending, phase: "draft", source: request() },
+    { pending: { ...pending, targets: Array.from({ length: 21 }, (_, id) => ({ entity: "stuff", id: id + 1 })) }, phase: "draft" },
+  ]) assert.equal((await actions.askInventoryAssistant(request({ activeWrite }))).ok, false);
+  assert.equal(state.apiCalls.length, 0);
+  assert.equal(state.reads.length, 0);
+});
+
+test("missing creation fields must be explicitly completed and never use hidden base values", async () => {
+  const pending = { command: { kind: "mutation", intent: { kind: "createStuff", data: { title: "Банка", description: "Поточний опис", category: "DECOR", inStock: 10 } } }, selected: null, assumptions: [], decisions: [] };
+  const activeWrite = { pending, phase: "draft", incompleteFields: ["title", "stock"] };
+  state.plan = revisionPlan([reviseStuff({ mode: null, value: 7 })]);
+  const missingTitle = await actions.askInventoryAssistant(request({ activeWrite }));
+  assert.equal(missingTitle.data.operation, "revisionFailed");
+  assert.equal(missingTitle.data.revisionApplied, false);
+  assert.match(missingTitle.data.message, /назву/);
+  state.plan = revisionPlan([reviseStuff({ mode: "adjust", value: 7 }, { title: "Нова банка" })]);
+  assert.equal((await actions.askInventoryAssistant(request({ activeWrite }))).data.revisionApplied, false);
+  state.plan = revisionPlan([reviseStuff({ mode: null, value: 7 }, { title: "Нова банка" })]);
+  const completed = await actions.askInventoryAssistant(request({ activeWrite }));
+  assert.deepEqual(completed.data.preview.after, { ...pending.command.intent.data, title: "Нова банка", inStock: 7 });
+  state.plan = plan(stuff);
+  assert.equal((await actions.askInventoryAssistant(request({ activeWrite, prompt: "Інший запит: покажи всі матеріали" }))).data.operation, "search");
+  assert.equal(state.writes.length, 0);
+});

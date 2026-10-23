@@ -104,7 +104,13 @@ Implemented draft retention through failed planning and confirmation. Edited cre
 
 Validation: 75 existing AI tests, 13 component recovery tests and 41 integration tests pass. TypeScript, lint for changed code/tests and whitespace checks pass. Recovery tests include rendered markup and mocked component event flows; browser smoke checks remain manual.
 
-Steps 2–5 remain pending review and approval. Text-based draft revisions and the proposed replacement planner instructions have not been applied.
+### Step 2 implementation
+
+Implemented a typed active write task and patch-based text revisions. Form edits, original task context and resolution choices remain together; short corrections preserve other fields and stock set/adjust/debit meaning. Recipe composition edits preserve/remap ingredient choices. Filtered revisions retain the original cohort, including unchanged rows. Recipe previews, mixed batches and record choices retain explicit selection. Pending revision questions disable the old confirmation, and every successful revision requires a fresh preview confirmation. See [active task behavior and manual checks](ai-active-task.md).
+
+Validation: 91 AI tests, 21 component recovery/task tests and 44 integration tests pass (156 total), along with TypeScript, lint for changed code/tests and whitespace checks. These include missing creation fields, dependency renames, refresh retries and independent-task replacement. Live model interpretation and browser smoke checks remain manual.
+
+Steps 3–5 remain pending review and approval. The current planner received the commands/context needed for revisions; the full proposed replacement instructions have not been applied.
 
 ## Acceptance scenarios
 

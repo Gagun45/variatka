@@ -2,6 +2,7 @@ import z from "zod";
 import { aiPromptSchema } from "./ai.schema";
 import { batchIntentSchema } from "./ai-batch.schema";
 import { inventoryMutationIntentSchema } from "./ai-mutation.schema";
+import { activeWriteSchema, writeRevisionSchema } from "./ai-task.schema";
 
 import { inventorySearchSchema } from "./inventory-filters.schema";
 export { ingredientSearchSchema, recipeSearchSchema, stuffSearchSchema, inventorySearchSchema } from "./inventory-filters.schema";
@@ -27,6 +28,7 @@ export const assistantRequestSchema = z.strictObject({
   selected: recordSelectionSchema.nullable(),
   previousSearch: inventorySearchSchema.nullable(),
   clarification: clarificationSchema.nullable(),
+  activeWrite: activeWriteSchema.nullable().default(null),
 });
 
 // A command carries exactly the fields its handler needs; incompatible payloads cannot coexist.
@@ -38,6 +40,9 @@ export const assistantPlanSchema = z.strictObject({
     z.strictObject({ kind: z.literal("viewSelected") }),
     z.strictObject({ kind: z.literal("mutation"), intent: inventoryMutationIntentSchema }),
     z.strictObject({ kind: z.literal("batch"), intent: batchIntentSchema }),
+    z.strictObject({ kind: z.literal("revise"), revision: writeRevisionSchema }),
+    z.strictObject({ kind: z.literal("clarifyRevision"), continuesPrevious: z.boolean() }),
+    z.strictObject({ kind: z.literal("keepTask") }),
     z.strictObject({ kind: z.literal("clarify"), continuesPrevious: z.boolean() }),
     z.strictObject({ kind: z.literal("unsupported") }),
   ]),

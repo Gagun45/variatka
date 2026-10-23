@@ -16,6 +16,8 @@ Errors carry an optional structured code in the shared action envelope, preservi
 
 Request/context recovery is held in the mounted page, not persisted across reloads. **Новий чат** clears it.
 
+[Active tasks](ai-active-task.md) also retain text corrections and their scoped clarification questions. A revision that cannot be prepared disables the old confirmation and keeps the corrected structured operation for another preparation attempt when valid. Uncertain save references are never sent as active revision context. Selected-record identity is retained separately for refresh retries.
+
 ## Manual checks
 
 1. Submit a request that causes a validation error, e.g. stock below zero. Verify the prompt is back in the input and Редагувати запит focuses it.

@@ -10,6 +10,8 @@ The assistant uses a vocabulary built from the same entity, category and series 
 
 The collapsed context section near the input shows the selected record and last search with filters when present. Pending clarification appears separately. Search context is used for explicit refinements, not every new request. The conversation display is not persistent general chat memory.
 
+The [active task](ai-active-task.md) is shown separately near the input. Short corrections revise its current proposed values; explicit independent requests start a new task. Selection remains independent of single/batch preview layout, including recipe previews and candidate choices.
+
 **Новий чат** clears messages, selection, last search/results, clarification, pending target choice, previews, assumptions, notices, errors and the draft input. It focuses the input and does not delete saved records. Reset is disabled while a request is running.
 
 ## Manual smoke check

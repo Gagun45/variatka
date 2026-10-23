@@ -19,6 +19,8 @@ export const pendingWriteSchema = z.strictObject({
   selected: selection.nullable(),
   assumptions: z.array(z.string().max(300)).max(10),
   decisions: z.array(decision).max(1020),
+  // A filtered draft keeps the entire resolved cohort, including unchanged rows.
+  targets: z.array(selection).min(1).max(20).optional(),
 });
 export const resumeWriteSchema = z.strictObject({
   pending: pendingWriteSchema,

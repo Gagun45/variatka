@@ -689,6 +689,80 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal((await actions.searchInventoryRecords(packaging)).data.items.length, 4);
     });
 
+    await t.test("short draft stock revision preserves a resolved target and needs fresh confirmation", async () => {
+      const jar = await client.stuff.create({ data: stuffData("Task correction jar") });
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent: { kind: "updateStuff", targetName: "Task correction", patch: stuffPatch({ description: "Keep the proposed description", stock: { mode: "adjust", value: 5 } }) } } };
+      const first = await actions.askInventoryAssistant({ prompt: "Додай 5 до залишку Task correction", selected: null, previousSearch: null, clarification: null });
+      assert.equal(first.data.preview.after.inStock, 15);
+      const other = await client.stuff.create({ data: stuffData("Task correction other jar") });
+      modelPlan = { message: "Уточнюю", assumptions: [], command: { kind: "revise", revision: { changes: [{ operationIndex: 0, change: { kind: "stuff", patch: stuffPatch({ stock: { mode: null, value: 7 } }) } }] } } };
+      const revised = await actions.askInventoryAssistant({ prompt: "Краще 7", selected: null, previousSearch: null, clarification: null, activeWrite: { phase: "draft", pending: first.data.resolved } });
+      assert.equal(revised.ok, true);
+      assert.equal(revised.data.operation, "mutation");
+      assert.equal(revised.data.preview.target.id, jar.id);
+      assert.equal(revised.data.preview.after.inStock, 17);
+      assert.equal(revised.data.preview.after.description, "Keep the proposed description");
+      assert.equal((await client.stuff.findUnique({ where: { id: jar.id } })).inStock, 10);
+      assert.equal((await actions.confirmInventoryMutation(revised.data.preview)).ok, true);
+      assert.equal((await client.stuff.findUnique({ where: { id: jar.id } })).inStock, 17);
+      assert.equal((await client.stuff.findUnique({ where: { id: other.id } })).inStock, 10);
+    });
+
+    await t.test("recipe revision keeps chosen ingredient IDs when removing and editing draft composition", async () => {
+      const salt = await client.ingredient.create({ data: ingredientData("Task recipe salt") });
+      await client.ingredient.create({ data: ingredientData("Task recipe garlic fresh") });
+      const garlic = await client.ingredient.create({ data: ingredientData("Task recipe garlic dried", { category: "OTHER" }) });
+      const pepper = await client.ingredient.create({ data: ingredientData("Task recipe pepper") });
+      const intent = { kind: "createRecipe", data: recipeData("Task revised blend", { category: "SPICES", description: "User description", notes: "Keep notes", isSaved: true }), ingredients: [
+        { title: salt.title, amount: "3 г", category: null }, { title: "Task recipe garlic", amount: "5 г", category: null }, { title: pepper.title, amount: "2 г", category: null },
+      ] };
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "mutation", intent } };
+      const choice = await actions.askInventoryAssistant({ prompt: "Створи рецепт", selected: null, previousSearch: null, clarification: null });
+      assert.equal(choice.data.operation, "chooseRecord");
+      const calls = apiCalls;
+      const ready = await actions.resumeInventoryWrite({ pending: choice.data.pending, choice: { key: choice.data.question.key, selection: { entity: "ingredient", id: garlic.id } }, page: null });
+      assert.equal(ready.data.operation, "batch");
+      assert.equal(apiCalls, calls);
+      // A competing literal name must not replace a prior explicit ingredient choice.
+      await client.ingredient.create({ data: ingredientData("Task recipe garlic ground") });
+      modelPlan = { message: "Уточнюю", assumptions: [], command: { kind: "revise", revision: { changes: [{ operationIndex: 0, change: { kind: "recipe", patch: recipePatch(), composition: { mode: "patch", items: [
+        { action: "remove", title: salt.title, amount: null, category: null }, { action: "setAmount", title: garlic.title, amount: "7 г", category: null },
+      ] } } }] } } };
+      const revised = await actions.askInventoryAssistant({ prompt: "Прибери сіль, часнику 7 г", selected: null, previousSearch: null, clarification: null, activeWrite: { phase: "draft", pending: ready.data.resolved } });
+      assert.equal(revised.ok, true);
+      assert.equal(revised.data.operation, "batch");
+      const snapshot = revised.data.preview.items.find((item) => item.kind === "createRecipe").after;
+      assert.deepEqual(snapshot.ingredients.map((item) => [item.id, item.amount]), [[garlic.id, "7 г"], [pepper.id, "2 г"]]);
+      assert.equal(snapshot.ingredients[0].category, "OTHER");
+      assert.deepEqual(snapshot.fields, intent.data);
+      assert.equal(await client.recipe.count({ where: { title: intent.data.title } }), 0);
+      assert.equal((await actions.confirmInventoryBatch(revised.data.preview)).ok, true);
+      const saved = await client.recipe.findUnique({ where: { title: intent.data.title }, include: { ingredients: true } });
+      assert.equal(saved.ingredients.length, 2);
+      assert.equal(saved.ingredients.find((item) => item.ingredientId === garlic.id).amount, "7 г");
+      assert.equal(saved.notes, "Keep notes");
+    });
+
+    await t.test("filtered revisions retain their original cohort including unchanged rows and exclude later matches", async () => {
+      const a = await client.stuff.create({ data: stuffData("Frozen task A", { inStock: 0 }) });
+      const b = await client.stuff.create({ data: stuffData("Frozen task B", { inStock: 5 }) });
+      const search = { entity: "stuff", text: null, titleText: "Frozen task", category: null, isInStock: null, stockMin: null, stockMax: null };
+      modelPlan = { message: "Перегляд", assumptions: [], command: { kind: "batch", intent: { kind: "filter", search, change: { kind: "updateStuff", patch: stuffPatch({ stock: { mode: "set", value: 5 } }) } } } };
+      const first = await actions.askInventoryAssistant({ prompt: "Встанови 5 для Frozen task", selected: null, previousSearch: null, clarification: null });
+      assert.equal(first.data.preview.items.length, 1);
+      assert.equal(first.data.preview.unchanged.length, 1);
+      assert.deepEqual(first.data.resolved.targets, [{ entity: "stuff", id: a.id }, { entity: "stuff", id: b.id }]);
+      const later = await client.stuff.create({ data: stuffData("Frozen task C", { inStock: 0 }) });
+      modelPlan = { message: "Уточнюю", assumptions: [], command: { kind: "revise", revision: { changes: [{ operationIndex: 0, change: { kind: "stuff", patch: stuffPatch({ stock: { mode: null, value: 7 } }) } }] } } };
+      const revised = await actions.askInventoryAssistant({ prompt: "Краще 7", selected: null, previousSearch: null, clarification: null, activeWrite: { phase: "draft", pending: first.data.resolved } });
+      assert.equal(revised.ok, true);
+      assert.deepEqual(revised.data.preview.items.map((item) => item.target.id), [a.id, b.id]);
+      assert.equal((await actions.confirmInventoryBatch(revised.data.preview)).ok, true);
+      assert.equal((await client.stuff.findUnique({ where: { id: a.id } })).inStock, 7);
+      assert.equal((await client.stuff.findUnique({ where: { id: b.id } })).inStock, 7);
+      assert.equal((await client.stuff.findUnique({ where: { id: later.id } })).inStock, 0);
+    });
+
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
       subtest.mock.method(console, "error", () => {});
       admin = false;

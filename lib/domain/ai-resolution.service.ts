@@ -48,9 +48,12 @@ async function record(entity: Entity, id: number) {
 // Request-local state, sent back only while a user is resolving names. No writes or AI calls.
 export class WriteResolution {
   readonly decisions: PendingWrite["decisions"];
+  targets: PendingWrite["targets"];
   private consumedChoice = false;
-  constructor(pending: Pick<PendingWrite, "decisions">, private readonly input?: Pick<ResumeWrite, "choice" | "page">) {
+  constructor(pending: Pick<PendingWrite, "decisions" | "targets">, private readonly input?: Pick<ResumeWrite, "choice" | "page">) {
     this.decisions = [...pending.decisions];
+    this.targets = pending.targets;
+    if (this.targets && new Set(this.targets.map((item) => `${item.entity}:${item.id}`)).size !== this.targets.length) throw new AppError("Повторні записи у пропозиції. Підготуйте новий запит.");
     if (new Set(this.decisions.map((item) => item.key)).size !== this.decisions.length) throw new AppError("Повторні рішення у запиті. Підготуйте новий запит.");
   }
   private chosen(key: string, entity: Entity) {

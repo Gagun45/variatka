@@ -42,9 +42,11 @@ export async function prepareInventoryBatch(intent: BatchIntent, selected: Recor
   } else {
     const expectedEntity = { updateIngredients: "ingredient", deleteIngredients: "ingredient", updateStuff: "stuff", deleteStuff: "stuff", updateRecipes: "recipe", deleteRecipes: "recipe" }[intent.change.kind];
     if (intent.search.entity !== expectedEntity) throw new AppError("Тип пошуку не відповідає пакетній операції.");
-    const results = await searchInventory(intent.search);
+    const results = state.targets ? { items: state.targets, hasMore: false } : await searchInventory(intent.search);
     if (results.hasMore) throw new AppError(`Знайдено більше ${MAX_BATCH_OPERATIONS} записів. Звузьте фільтри; пакет не буде обрізано автоматично.`);
     if (!results.items.length) throw new AppError("За цими фільтрами не знайдено записів.");
+    if (results.items.some((item) => item.entity !== expectedEntity)) throw new AppError("Тип збережених записів не відповідає пакетній операції.");
+    state.targets = results.items.map(({ entity, id }) => ({ entity, id }));
     for (const item of results.items) {
       const change = intent.change;
       let operation: InventoryMutationIntent;

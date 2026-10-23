@@ -14,7 +14,7 @@ export async function prepareAssistantWrite(pending: PendingWrite, input?: Pick<
     if (pending.command.kind === "batch") {
       const preview = await prepareInventoryBatch(pending.command.intent, pending.selected, state);
       state.validateChoice();
-      return { operation: "batch", message: "Перевірте всі операції. Ще нічого не збережено.", preview, assumptions: pending.assumptions, resolved: { ...pending, decisions: state.decisions } };
+      return { operation: "batch", message: "Перевірте всі операції. Ще нічого не збережено.", preview, assumptions: pending.assumptions, resolved: { ...pending, decisions: state.decisions, ...(state.targets ? { targets: state.targets } : {}) } };
     }
     const prepared = await prepareInventoryMutation(pending.command.intent, pending.selected, false, false, undefined, { state, index: 0 });
     state.validateChoice();

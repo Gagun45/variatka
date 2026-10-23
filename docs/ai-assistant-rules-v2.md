@@ -2,6 +2,8 @@
 
 Status: review draft. This is a replacement for the instruction body in `lib/ai/inventory-assistant.ts`, with the existing generated `inventoryVocabularyInstructions` appended once. The command and response schemas remain authoritative. These rules use only context the current implementation actually sends; conversational draft editing requires the application changes described in [the review](ai-assistant-review.md).
 
+Implementation note after step 2: the runtime now supports `activeWrite`, `revise`, `clarifyRevision` and `keepTask`. This earlier draft must be updated to retain those additions when step 4 is approved; it is not the active runtime prompt. See [active task behavior](ai-active-task.md).
+
 ## Replacement instruction body
 
 ```text

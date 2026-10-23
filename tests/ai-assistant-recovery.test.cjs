@@ -54,6 +54,7 @@ const compile = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(f
 require.extensions[".ts"] = compile;
 require.extensions[".tsx"] = compile;
 const Assistant = require(componentFile).default;
+const { revisePendingWrite } = require("../lib/ai/write-revision.ts");
 
 const data = { title: "Банка", description: "Скляна", category: "JARS", inStock: 10 };
 const edited = { title: "Банка 250 мл", description: "Мій опис", category: "DECOR", inStock: 17 };
@@ -289,4 +290,189 @@ test("cancel and new chat remove retained drafts and their recovery state", asyn
   assert.equal(request.selected, null);
   assert.equal(request.clarification, null);
   assert.equal(request.previousSearch, null);
+  assert.equal(request.activeWrite, null);
+});
+
+test("text corrections receive current form edits and preserve unrelated creation values", async () => {
+  await submit("Створи матеріал Банка");
+  editDraft();
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.deepEqual(request.activeWrite.pending.command.intent.data, edited);
+    const revised = revisePendingWrite(request.activeWrite.pending, { changes: [{ operationIndex: 0, change: { kind: "stuff", patch: { title: null, description: null, category: null, stock: { mode: null, value: 7 } } } }] });
+    return ok({ ...creation(revised.command.intent.data, revised), continuesTask: true });
+  };
+  await submit("Краще 7");
+  assert.deepEqual(view("InventoryMutationView").preview.after, { ...edited, inStock: 7 });
+  assert.equal(view("InventoryMutationView").status, "ready");
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  await view("InventoryMutationView").onConfirm();
+  assert.deepEqual(harness.calls.confirmInventoryBatch[0][0].items[0].after, { ...edited, inStock: 7 });
+});
+
+test("short stock revisions preserve adjustment intent, resolved targets and the original task source", async () => {
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "mutation", message: "Перевірте", preview: stockPreview(), assumptions: [], resolved: stockPending });
+  await submit("Додай 5 до залишку банки");
+  harness.actions.askInventoryAssistant = async (request) => {
+    const revised = revisePendingWrite(request.activeWrite.pending, { changes: [{ operationIndex: 0, change: { kind: "stuff", patch: { title: null, description: null, category: null, stock: { mode: null, value: 7 } } } }] });
+    assert.deepEqual(revised.decisions, stockPending.decisions);
+    assert.equal(revised.command.intent.patch.stock.mode, "adjust");
+    return ok({ operation: "mutation", message: "Перевірте", preview: { ...stockPreview(), after: { ...data, inStock: 17 } }, assumptions: [], resolved: revised, continuesTask: true });
+  };
+  await submit("Краще 7");
+  assert.equal(view("InventoryMutationView").preview.after.inStock, 17);
+  harness.actions.confirmInventoryBatch = async () => fail("CONFLICT");
+  await view("InventoryMutationView").onConfirm();
+  view("AssistantErrorPanel").onEdit();
+  assert.equal(input().value, "Додай 5 до залишку банки", "a short correction does not replace the task's full source");
+  assert.equal(view("InventoryMutationView").preview.after.inStock, 17);
+});
+
+test("revision questions retain the task and disable its old confirmation until answered or cancelled", async () => {
+  await submit("Створи матеріал Банка");
+  editDraft();
+  const clarification = { originalPrompt: "Зміни опис", turns: [], question: "Який опис? Наприклад: скляна банка.", selected: null, previousSearch: null };
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "clarifyRevision", message: clarification.question, clarification });
+  await submit("Зміни опис");
+  assert.equal(view("InventoryMutationView").status, "invalid");
+  assert.equal(view("InventoryMutationView").onPrepare, undefined);
+  assert.deepEqual(view("InventoryMutationView").preview.after, edited);
+  await view("InventoryMutationView").onConfirm();
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.activeWrite.phase, "clarification");
+    assert.deepEqual(request.clarification, clarification);
+    const values = { ...request.activeWrite.pending.command.intent.data, description: request.prompt };
+    return ok({ ...creation(values), continuesTask: true });
+  };
+  await submit("Новий опис");
+  assert.deepEqual(view("InventoryMutationView").preview.after, { ...edited, description: "Новий опис" });
+  assert.equal(view("InventoryMutationView").status, "ready");
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "clarifyRevision", message: clarification.question, clarification });
+  await submit("Зміни опис");
+  const cancel = tree().find((node) => node.type?.marker === "Button" && node.props.children === "Скасувати уточнення");
+  cancel.props.onClick();
+  assert.equal(view("InventoryMutationView").status, "ready");
+  assert.equal(view("InventoryMutationView").preview.after.description, "Новий опис");
+});
+
+test("button reminders retain candidate choices and a later explicit independent request replaces the task", async () => {
+  const question = { key: "0:target", name: "Банка", context: "Операція 1", candidates: [record], page: 0, hasMore: false };
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "chooseRecord", message: "Оберіть", question, pending: stockPending });
+  await submit("Додай 5 до залишку банки");
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.activeWrite.phase, "choice");
+    return ok({ operation: "keepTask", message: "Оберіть запис кнопкою." });
+  };
+  await submit("Банка 250 мл");
+  assert.deepEqual(view("RecordChoiceView").question, question);
+  assert.equal(view("RecordChoiceView").prompt, "Додай 5 до залишку банки");
+  assert.equal(harness.calls.resumeInventoryWrite.length, 0);
+  harness.actions.resumeInventoryWrite = async () => ok({ operation: "mutation", message: "Перевірте", preview: stockPreview(), assumptions: [], resolved: stockPending });
+  view("RecordChoiceView").onChoose({ entity: "stuff", id: 2 });
+  await finishPreparation();
+  assert.equal(harness.calls.askInventoryAssistant.length, 2, "the button does not call the planner again");
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "keepTask", message: "Натисніть кнопку підтвердження." });
+  await submit("Так, збережи");
+  assert.ok(view("InventoryMutationView"));
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  harness.actions.askInventoryAssistant = async () => ok(searchReply);
+  await submit("Інший запит: покажи всі матеріали");
+  assert.equal(view("InventoryMutationView"), undefined);
+  assert.ok(view("Results"));
+  await submit("Покажи всі матеріали");
+  assert.equal(harness.calls.askInventoryAssistant.at(-1)[0].activeWrite, null);
+});
+
+test("failed revision preparation retains its revised operation and blocks the old confirmation", async () => {
+  await submit("Створи матеріал Банка");
+  editDraft();
+  harness.actions.askInventoryAssistant = async (request) => {
+    const revised = revisePendingWrite(request.activeWrite.pending, { changes: [{ operationIndex: 0, change: { kind: "stuff", patch: { title: null, description: null, category: null, stock: { mode: null, value: 7 } } } }] });
+    return ok({ operation: "revisionFailed", pending: revised, code: "CONFLICT", message: "Підготуйте новий перегляд", revisionApplied: true });
+  };
+  await submit("Краще 7");
+  assert.equal(input().value, "Краще 7");
+  assert.equal(view("InventoryMutationView").status, "invalid");
+  assert.deepEqual(view("InventoryMutationView").preview.after, { ...edited, inStock: 7 });
+  await view("InventoryMutationView").onConfirm();
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  view("InventoryMutationView").onPrepare();
+  await finishPreparation();
+  assert.equal(harness.calls.resumeInventoryWrite[0][0].pending.command.intent.data.inStock, 7);
+  assert.equal(view("InventoryMutationView").status, "ready");
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("recipe previews, mixed batches and candidate choices retain explicit selection through saving", async () => {
+  const selected = { entity: "recipe", id: 99, title: "Обраний рецепт", fields: [], ingredients: [], summary: "Спеції" };
+  harness.actions.askInventoryAssistant = async () => ok({ ...searchReply, results: { ...searchReply.results, items: [selected] } });
+  harness.actions.getInventoryRecord = async () => ok(selected);
+  await submit("Покажи рецепти");
+  await view("Results").onSelect(selected);
+  const fields = { title: selected.title, description: "", notes: "", confirmationNotes: null, category: "SPICES", series: "DEFAULT", spicy: 0, isHidden: true, isConfirmed: false, isSaved: false };
+  const preview = { items: [{ kind: "updateRecipe", target: { id: 99, title: selected.title, updatedAt: "2026-10-24T00:00:00.000Z" }, before: { fields, ingredients: [] }, after: { fields: { ...fields, description: "Новий опис" }, ingredients: [] } }], unchanged: [] };
+  const pending = { command: { kind: "mutation", intent: { kind: "updateRecipe", targetName: null, patch: { title: null, description: "Новий опис", notes: null, confirmationNotes: null, category: null, series: null, spicy: null, isHidden: null, isConfirmed: null, isSaved: null }, composition: null } }, selected: { entity: "recipe", id: 99 }, assumptions: [], decisions: [] };
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "batch", message: "Перевірте", preview, assumptions: [], resolved: pending });
+  await submit("Зміни опис на Новий опис");
+  assert.deepEqual(view("Record").record, selected, "a single recipe's batch container must not clear selection");
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "chooseRecord", message: "Оберіть", question: { key: "0:target", name: "Банка", candidates: [record], page: 0, hasMore: false }, pending: stockPending });
+  await submit("Інший запит: додай 5 до залишку банки");
+  assert.deepEqual(view("Record").record, selected);
+  harness.actions.resumeInventoryWrite = async () => ok({ operation: "batch", message: "Перевірте", preview: { items: [stockPreview(), { kind: "createStuff", after: data }], unchanged: [] }, assumptions: [], resolved: { ...stockPending, command: { kind: "batch", intent: { kind: "list", operations: [stockPending.command.intent, pendingCreation().command.intent] } } } });
+  view("RecordChoiceView").onChoose({ entity: "stuff", id: 2 });
+  await finishPreparation();
+  assert.deepEqual(view("Record").record, selected);
+  harness.actions.confirmInventoryBatch = async () => ok({ results: [{ entity: "stuff", id: 2, operation: "updated", title: "Банка" }, { entity: "stuff", id: 3, operation: "created", title: "Етикетка" }] });
+  harness.actions.getInventoryRecord = async () => fail("INTERNAL_ERROR");
+  await view("InventoryBatchView").onConfirm();
+  assert.equal(view("AssistantErrorPanel").code, "REFRESH_FAILED");
+  harness.actions.getInventoryRecord = async () => ok(selected);
+  await view("AssistantErrorPanel").onRefresh();
+  assert.deepEqual(view("Record").record, selected);
+  assert.deepEqual(harness.calls.getInventoryRecord.at(-1)[0], { entity: "recipe", id: 99 });
+  assert.equal(harness.calls.confirmInventoryBatch.length, 1, "refreshing selection must not repeat the batch");
+});
+
+test("incomplete creation fields remain visible and corrections can complete them without losing valid edits", async () => {
+  await submit("Створи матеріал Банка");
+  editDraft();
+  editDraft({ ...edited, title: "", description: "Останній опис", inStock: NaN });
+  await view("InventoryMutationView").onConfirm();
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  const clarification = { originalPrompt: "Кількість 7", question: "Яка назва? Наприклад: Банка 250 мл.", turns: [], selected: null, previousSearch: null };
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.deepEqual(request.activeWrite.incompleteFields, ["title", "stock"]);
+    assert.equal(request.activeWrite.pending.command.intent.data.inStock, edited.inStock);
+    assert.equal(request.activeWrite.pending.command.intent.data.description, "Останній опис");
+    return ok({ operation: "clarifyRevision", message: clarification.question, clarification });
+  };
+  await submit("Кількість 7");
+  assert.equal(view("InventoryMutationView").preview.after.title, "");
+  assert.ok(Number.isNaN(view("InventoryMutationView").preview.after.inStock));
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.deepEqual(request.clarification, clarification);
+    const revised = revisePendingWrite(request.activeWrite.pending, { changes: [{ operationIndex: 0, change: { kind: "stuff", patch: { title: "Завершена назва", description: null, category: null, stock: { mode: null, value: 7 } } } }] });
+    return ok({ ...creation(revised.command.intent.data, revised), continuesTask: true });
+  };
+  await submit("Завершена назва");
+  assert.deepEqual(view("InventoryMutationView").preview.after, { ...edited, title: "Завершена назва", description: "Останній опис", inStock: 7 });
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("invalid form inputs do not block independent requests or get overwritten by rejected corrections", async () => {
+  const { assistantRequestSchema } = require("../zod/ai-search.schema.ts");
+  await submit("Створи матеріал Банка");
+  editDraft({ ...edited, title: "", inStock: NaN });
+  harness.actions.askInventoryAssistant = async (request) => ok({ operation: "revisionFailed", pending: request.activeWrite.pending, code: "VALIDATION_ERROR", revisionApplied: false, message: "Вкажіть назву" });
+  await submit("Зміни категорію на Слоїчки");
+  assert.equal(view("InventoryMutationView").preview.after.title, "");
+  assert.ok(Number.isNaN(view("InventoryMutationView").preview.after.inStock));
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(assistantRequestSchema.safeParse(request).success, true);
+    return ok(searchReply);
+  };
+  await submit("Інший запит: покажи всі матеріали");
+  assert.equal(view("InventoryMutationView"), undefined);
+  assert.ok(view("Results"));
 });
