@@ -1,3 +1,4 @@
+import { getDataSession } from "@/lib/data/server";
 import QueryPrefetcher from "@/components/QueryPrefetcher";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -31,11 +32,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getDataSession();
+
   return (
     <html
       lang="en"
@@ -49,13 +52,14 @@ export default function RootLayout({
       )}
     >
       <body>
-        <Providers>
-          <QueryPrefetcher />
-          <AppSidebar />
-          <div className="flex flex-col min-h-screen w-full">
-            <Header />
-            {children}
-          </div>
+        <Providers session={session}>
+          <QueryPrefetcher session={session}>
+            <AppSidebar />
+            <div className="flex flex-col min-h-screen w-full">
+              <Header />
+              {children}
+            </div>
+          </QueryPrefetcher>
         </Providers>
         <Toaster richColors />
       </body>

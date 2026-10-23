@@ -1,12 +1,8 @@
+import { readCollection } from "@/lib/data/client";
 import { unwrapAction } from "@/lib/actions/action.unwrapper";
 import {
   createRecipe,
   deleteRecipe,
-  getPublicRecipes,
-  getPublicRecipe,
-  getRecipe,
-  getRecipes,
-  getWishlistIds,
   removeRecipeImage,
   toggleConfirmedRecipe,
   toggleHiddenRecipe,
@@ -26,8 +22,13 @@ import {
 import { IRecipeDto } from "@/zod/recipe.schema";
 
 export const recipeService = {
-  get: (): Promise<IRecipe[]> => unwrapAction(() => getRecipes()),
-  getOne: (id: number): Promise<IRecipe> => unwrapAction(() => getRecipe(id)),
+  get: (): Promise<IRecipe[]> => readCollection("recipes"),
+  getOne: (id: number): Promise<IRecipe> =>
+    readCollection("recipes").then((recipes) => {
+      const recipe = recipes.find((recipe) => recipe.id === id);
+      if (!recipe) throw new Error("Recipe not found");
+      return recipe;
+    }),
   create: (dto: ICreateRecipeDto): Promise<IRecipe> =>
     unwrapAction(() => createRecipe(dto)),
 
@@ -56,10 +57,14 @@ export const recipeService = {
   toggleHidden: (id: number): Promise<IRecipe> =>
     unwrapAction(() => toggleHiddenRecipe(id)),
   getPublicRecipes: (): Promise<IPublicRecipe[]> =>
-    unwrapAction(() => getPublicRecipes()),
+    readCollection("publicRecipes"),
   getPublicRecipe: (id: number): Promise<IPublicRecipe> =>
-    unwrapAction(() => getPublicRecipe(id)),
-  getWishlistIds: (): Promise<number[]> => unwrapAction(() => getWishlistIds()),
+    readCollection("publicRecipes").then((recipes) => {
+      const recipe = recipes.find((recipe) => recipe.id === id);
+      if (!recipe) throw new Error("Recipe not found");
+      return recipe;
+    }),
+  getWishlistIds: (): Promise<number[]> => readCollection("wishlistIds"),
   toggleWishlist: (recipeId: number): Promise<boolean> =>
     unwrapAction(() => toggleWishlist(recipeId)),
 };

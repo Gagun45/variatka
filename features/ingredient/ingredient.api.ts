@@ -1,9 +1,9 @@
+import { readCollection } from "@/lib/data/client";
 import { unwrapAction } from "@/lib/actions/action.unwrapper";
 import {
   createIngredient,
   deleteIngredient,
   editIngredient,
-  getIngredients,
   removeIngredientImage,
   toggleIngredientInStockValue,
   toggleSavedIngredient,
@@ -13,7 +13,7 @@ import { IIngredient } from "@/lib/prisma.args";
 import { IIngredientFormValues } from "@/zod/ingredient.schema";
 
 export const ingredientService = {
-  get: (): Promise<IIngredient[]> => unwrapAction(() => getIngredients()),
+  get: (): Promise<IIngredient[]> => readCollection("ingredients"),
   create: (dto: IIngredientFormValues): Promise<IIngredient> =>
     unwrapAction(() => createIngredient(dto)),
 

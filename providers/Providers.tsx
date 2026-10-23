@@ -1,3 +1,4 @@
+import type { Session } from "next-auth";
 import { ReactNode } from "react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -6,9 +7,12 @@ import { AuthProvider } from "./AuthProvider";
 import QueryProvider from "./QueryProvider";
 import { ThemeProvider } from "./ThemeProvider";
 
-const Providers = ({ children }: { children: ReactNode }) => {
+const Providers = ({ children, session }: {
+  children: ReactNode;
+  session: Session | null;
+}) => {
   return (
-    <AuthProvider>
+    <AuthProvider session={session}>
       <QueryProvider>
         <TooltipProvider>
           <SidebarProvider>

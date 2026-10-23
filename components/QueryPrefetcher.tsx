@@ -1,57 +1,22 @@
-"use client";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import type { Session } from "next-auth";
+import type { ReactNode } from "react";
+import { availableCollections, collectionLoaders } from "@/lib/data/server";
+import { collectionKeys } from "@/lib/data/collections";
 
-import { ingredientService } from "@/features/ingredient/ingredient.api";
-import { ingredientKeys } from "@/features/ingredient/ingredient.keys";
-import { orderService } from "@/features/order/order.api";
-import { orderKeys } from "@/features/order/order.keys";
-import { recipeService } from "@/features/recipe/recipe.api";
-import { recipeKeys } from "@/features/recipe/recipe.keys";
-import { stuffService } from "@/features/stuff/stuff.api";
-import { stuffKeys } from "@/features/stuff/stuff.keys";
-import { useAuth } from "@/hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-
-const QueryPrefetcher = () => {
-  const { isAdmin, isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    queryClient.prefetchQuery({
-      queryKey: recipeKeys.public,
-      queryFn: recipeService.getPublicRecipes,
-    });
-    if (!isAuthenticated) return;
-    queryClient.prefetchQuery({
-      queryKey: recipeKeys.wishlistIds,
-      queryFn: recipeService.getWishlistIds,
-    });
-    queryClient.prefetchQuery({
-      queryKey: orderKeys.myOrders,
-      queryFn: orderService.myOrders,
-    });
-    if (!isAdmin) return;
-
-    queryClient.prefetchQuery({
-      queryKey: orderKeys.allOrders,
-      queryFn: orderService.allOrders,
-    });
-
-    queryClient.prefetchQuery({
-      queryKey: ingredientKeys.ingredients,
-      queryFn: ingredientService.get,
-    });
-
-    queryClient.prefetchQuery({
-      queryKey: recipeKeys.recipes,
-      queryFn: recipeService.get,
-    });
-
-    queryClient.prefetchQuery({
-      queryKey: stuffKeys.stuff,
-      queryFn: stuffService.get,
-    });
-  }, [queryClient, isAdmin, isAuthenticated]);
-  return null;
-};
-
-export default QueryPrefetcher;
+export default async function QueryPrefetcher({ session, children }: {
+  session: Session | null;
+  children: ReactNode;
+}) {
+  const queryClient = new QueryClient();
+  const loaders = collectionLoaders(session);
+  // Start every permitted read together. Failed reads retain the existing client
+  // error/retry UI rather than taking down the entire application shell.
+  await Promise.allSettled(availableCollections(session).map((collection) =>
+    queryClient.fetchQuery({
+      queryKey: collectionKeys[collection],
+      queryFn: async () => loaders[collection](),
+    }),
+  ));
+  return <HydrationBoundary state={dehydrate(queryClient)}>{children}</HydrationBoundary>;
+}
