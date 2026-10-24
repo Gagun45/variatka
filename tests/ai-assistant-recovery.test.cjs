@@ -637,3 +637,133 @@ test("verified expiry of an unchanged filtered member disables the whole batch c
   await view("InventoryBatchView").onConfirm();
   assert.equal(harness.calls.confirmInventoryBatch.length, 0);
 });
+
+const deletionPending = {
+  command: { kind: "batch", intent: { kind: "list", operations: [{ kind: "deleteIngredient", targetName: "Спеція" }] } },
+  selected: null, assumptions: [], decisions: [{ key: "0:target", selection: { entity: "ingredient", id: 1 }, title: "Спеція" }],
+};
+const blockedReply = (pending = deletionPending, continuesTask = false) => ({ operation: "writeBlocked", code: "CONFLICT", message: "Спеція використовується в рецепті «Соус».", pending, continuesTask });
+const deletionReady = (pending = deletionPending) => {
+  const target = pending.decisions.find((decision) => decision.key === "0:target");
+  return { operation: "batch", message: "Перевірте", assumptions: [], resolved: pending, preview: { items: [{ kind: "deleteIngredient", target: { id: target.selection.id, title: target.title, updatedAt: "2026-10-24T00:00:00.000Z" }, before: { title: target.title, description: "", category: "SPICES", isInStock: false, isSaved: false } }], unchanged: [] } };
+};
+const blockedSection = () => tree().find((node) => node.props?.["aria-label"] === "Видалення заблоковано");
+const button = (label) => tree().find((node) => node.type?.marker === "Button" && node.props.children === label)?.props;
+
+test("initial blocked deletion retains its structured task and only a successful recheck offers confirmation", async () => {
+  harness.actions.askInventoryAssistant = async () => ok(blockedReply());
+  await submit("Видали спецію");
+  assert.ok(blockedSection());
+  assert.equal(view("InventoryMutationView"), undefined);
+  assert.equal(view("InventoryBatchView"), undefined);
+  assert.match(view("AssistantErrorPanel").error, /Соус/);
+  assert.equal(input().value, "Видали спецію");
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.activeWrite.phase, "blocked");
+    assert.deepEqual(request.activeWrite.pending, deletionPending);
+    return ok({ operation: "keepTask", message: "Виправте блокування та перевірте знову" });
+  };
+  await submit("так");
+  assert.ok(blockedSection());
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+  harness.actions.resumeInventoryWrite = async ({ pending }) => {
+    assert.deepEqual(pending, deletionPending);
+    return ok(deletionReady(pending));
+  };
+  button("Перевірити знову").onClick();
+  await finishPreparation();
+  assert.equal(blockedSection(), undefined);
+  assert.equal(view("InventoryBatchView").status, "ready");
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0, "rechecking never performs a save");
+});
+
+test("candidate continuation into a blocked task retains the clicked ID through retries", async () => {
+  const question = { key: "0:target", name: "Спеція", context: "Операція 1", candidates: [{ entity: "ingredient", id: 4, title: "Залежна спеція", summary: "Спеції" }], page: 0, hasMore: false };
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "chooseRecord", message: "Оберіть", question, pending: { ...deletionPending, decisions: [] } });
+  await submit("Видали спецію");
+  const resolved = { ...deletionPending, decisions: [{ key: "0:target", selection: { entity: "ingredient", id: 4 }, title: "Залежна спеція" }] };
+  harness.actions.resumeInventoryWrite = async () => ok(blockedReply(resolved, true));
+  view("RecordChoiceView").onChoose({ entity: "ingredient", id: 4 });
+  await finishPreparation();
+  assert.ok(blockedSection());
+  assert.equal(view("RecordChoiceView"), undefined);
+  harness.actions.resumeInventoryWrite = async ({ pending }) => {
+    assert.deepEqual(pending, resolved);
+    return ok(blockedReply(pending, true));
+  };
+  button("Перевірити знову").onClick();
+  await finishPreparation();
+  assert.ok(blockedSection());
+  assert.equal(harness.calls.askInventoryAssistant.length, 1);
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("a blocked revision removes the old confirmation and keeps revised identity through later planning failure", async () => {
+  harness.actions.askInventoryAssistant = async () => ok(deletionReady());
+  await submit("Видали спецію");
+  const changed = { ...deletionPending, command: { kind: "batch", intent: { kind: "list", operations: [{ kind: "deleteIngredient", targetName: "Залежна спеція" }] } }, decisions: [{ key: "0:target", selection: { entity: "ingredient", id: 4 }, title: "Залежна спеція" }] };
+  harness.actions.askInventoryAssistant = async () => ok(blockedReply(changed, true));
+  await submit("Ні, залежну спецію");
+  assert.equal(view("InventoryBatchView"), undefined);
+  assert.ok(blockedSection());
+  assert.equal(input().value, "Ні, залежну спецію");
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.activeWrite.phase, "blocked");
+    assert.deepEqual(request.activeWrite.pending, changed);
+    return fail();
+  };
+  await submit("Покажи всі матеріали");
+  assert.ok(blockedSection());
+  assert.equal(input().value, "Покажи всі матеріали");
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("a blocked independent replacement preserves the prior edited draft", async () => {
+  await submit("Створи банку");
+  editDraft();
+  harness.actions.askInventoryAssistant = async () => ok(blockedReply());
+  await submit("Інший запит: видали спецію");
+  assert.equal(blockedSection(), undefined);
+  assert.deepEqual(view("InventoryMutationView").preview.after, edited);
+  assert.equal(view("InventoryMutationView").status, "ready");
+  assert.equal(input().value, "Інший запит: видали спецію");
+  harness.actions.resumeInventoryWrite = async ({ pending }) => {
+    assert.deepEqual(pending.command.intent.data, edited);
+    return ok(creation(edited, pending));
+  };
+  view("InventoryMutationView").onPrepare();
+  await finishPreparation();
+  assert.deepEqual(view("InventoryMutationView").preview.after, edited);
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("a blocked independent request leaves uncertain saves read-only", async () => {
+  await submit("Створи банку");
+  editDraft();
+  harness.actions.confirmInventoryBatch = async () => { throw new Error("lost response"); };
+  await view("InventoryMutationView").onConfirm();
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.activeWrite, null);
+    return ok(blockedReply());
+  };
+  await submit("Інший запит: видали спецію");
+  assert.equal(blockedSection(), undefined);
+  assert.equal(view("InventoryMutationView").status, "uncertain");
+  assert.equal(view("InventoryMutationView").onPrepare, undefined);
+  await view("InventoryMutationView").onConfirm();
+  assert.equal(harness.calls.confirmInventoryBatch.length, 1);
+  assert.equal(harness.calls.resumeInventoryWrite.length, 0);
+});
+
+test("a blocked deletion can be cancelled without sending or saving it", async () => {
+  harness.actions.askInventoryAssistant = async () => ok(blockedReply());
+  await submit("Видали спецію");
+  button("Скасувати завдання").onClick();
+  assert.equal(blockedSection(), undefined);
+  harness.actions.askInventoryAssistant = async (request) => {
+    assert.equal(request.activeWrite, null);
+    return ok(searchReply);
+  };
+  await submit("Покажи матеріали");
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});

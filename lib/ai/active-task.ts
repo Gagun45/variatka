@@ -14,6 +14,7 @@ export type ActiveTask = {
   status: DraftStatus;
   clarification: Clarification | null;
   view:
+    | { kind: "blocked"; message: string }
     | { kind: "mutation"; preview: InventoryMutationPreview }
     | { kind: "batch"; preview: BatchPreview }
     | { kind: "choice"; reply: Extract<AssistantReply, { operation: "chooseRecord" }> };
@@ -62,6 +63,7 @@ export function incompleteTaskFields(task: ActiveTask): ("title" | "stock")[] {
 export function activeTaskLabel(task: ActiveTask) {
   if (task.status === "uncertain") return "Результат збереження потребує перевірки";
   if (task.clarification) return "Уточнюємо зміни до пропозиції";
+  if (task.view.kind === "blocked") return "Видалення заблоковано зв’язками";
   if (task.view.kind === "choice") return "Оберіть запис для поточного завдання";
   if (task.status !== "ready") return "Пропозиція потребує нового перегляду";
   return "Пропозиція очікує підтвердження";

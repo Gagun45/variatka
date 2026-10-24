@@ -34,7 +34,7 @@ Composition edits support adding an ingredient, changing its amount and removing
 
 > Повністю заміни склад рецепта «Тестова приправа» на: сіль 15 г, перець 3 г.
 
-Amounts are stored as text, preserving supplied units. Spiciness must be an integer from 0 to 4. Unmentioned fields and ingredients remain unchanged. Recipe previews are read-only: cancel and send a revised prompt to change the proposal.
+Amounts are stored as text, preserving supplied units. Spiciness must be an integer from 0 to 4. Unmentioned fields and ingredients remain unchanged. Recipe preview cards are read-only; [text revisions](ai-active-task.md) change the proposal while preserving other fields and require a fresh preview confirmation.
 
 Why: editing one amount should not accidentally replace the rest of a recipe.
 
@@ -60,7 +60,7 @@ Why: a bounded, inspectable transaction is easier to verify and retry.
 
 ## 5. Delete carefully
 
-Deleting a recipe used by an order is blocked. A standalone ingredient deletion is blocked while any recipe references it. An explicit batch may remove a recipe reference or delete an unused recipe before deleting its ingredient. No related recipe, order or composition is silently removed.
+Deleting a recipe used by an order is blocked. Single and batch ingredient deletions validate all stored and proposed recipe references before confirmation. An explicit batch may remove every reference or delete the referencing recipes before deleting an ingredient, provided those recipes are not protected by orders. External, retained or newly proposed references still block the batch. No related recipe, order or composition is silently removed. [Blocked tasks](ai-deletion-preflight.md) retain their choices and frozen targets for correction/rechecking and have no confirmation until validation succeeds.
 
 Concurrent changes invalidate stale previews. The transaction rolls back and you must prepare a fresh preview. Image cleanup runs only after successful database commit; storage failures are logged separately.
 

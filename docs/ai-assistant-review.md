@@ -4,12 +4,12 @@ Initial review: 24 October 2026. Scope: planner instructions, vocabulary, schema
 
 The confirmation boundary was sound in the paths checked: preparation did not write, approximate write matches required a choice, confirmations validated versions, and batches used a transaction. The largest initial usability problem was that the conversation looked continuous while the planner lacked pending task context. Step 2 now sends a typed active task and supports text revisions; live language interpretation still needs evaluation.
 
-| Finding | Current status through checkpoint 3A |
+| Finding | Current status through checkpoint 3B |
 | --- | --- |
 | 1 — Lost follow-up context | Application fix implemented in step 2; live interpretation checks pending. |
 | 2 — Lost edited drafts on failure | Implemented in step 1, preserved by step 2; browser checks pending. |
 | 3 — Expired selection blocks unrelated requests | Implemented in 3A; live interpretation/browser checks pending. |
-| 4 — Known deletion blockers appear confirmable | Open; checkpoint 3B. |
+| 4 — Known deletion blockers appear confirmable | Implemented in 3B; live interpretation/browser checks pending. |
 | 5 — Recipe previews clear selection | Implemented in step 2; browser checks pending. |
 | 6 — Conflicting title/lookup rules | Open; step 4. |
 | 7 — Stale help/search copy | Partly updated in steps 1 and 2; remaining capability/copy audit in step 4. |
@@ -80,7 +80,7 @@ Evidence: `docs/ai-assistant.md:61–63, 75` says duplicate errors keep the prev
 
 [Proposed replacement planner instructions](ai-assistant-rules-v2.md) were drafted before step 2. They propose a fixed decision order, literal title preservation, search refinement as a filter edit, and more useful clarification questions. They do not yet include active-task commands/context and must be reconciled before adoption in step 4.
 
-Instructions alone cannot fix findings 1–5. Application changes in steps 1 and 2 addressed findings 1, 2 and 5; checkpoint 3A addressed finding 3. Batch dependency validation remains checkpoint 3B. Do not claim proposed behavior in the active planner prompt until it exists.
+Instructions alone cannot fix findings 1–5. Application changes in steps 1 and 2 addressed findings 1, 2 and 5; checkpoint 3A addressed finding 3 and 3B addressed finding 4. Full instruction/copy reconciliation remains step 4. Do not claim proposed behavior in the active planner prompt until it exists.
 
 ## Recommended interaction contract
 
@@ -95,7 +95,7 @@ Instructions alone cannot fix findings 1–5. Application changes in steps 1 and
 | Selection expired | Clear or reselect explicitly; independent requests remain usable without changing active-task targets. Implemented in 3A; live interpretation/browser checks pending. |
 | No matching records | State that no records matched. Offer removing a specific filter; do not silently broaden. |
 | No changes needed | Show a neutral result and no confirmation button. |
-| Known validation conflict | Keep recoverable input and explain what must change. Batch deletion preflight remains pending checkpoint 3B. |
+| Known validation conflict | Keep recoverable input and explain what must change. Implemented batch deletion preflight retains blocked tasks without confirmation. |
 | Save outcome unknown | Disable the attempted confirmation, show affected-record links, and inspect the outcome. |
 
 Step 2 added a current-task summary near the input showing phase and targets. Category, availability and intent clarifications could eventually use typed quick replies; that is outside the current plan and would need a schema/UI extension rather than instructions to invent buttons.
@@ -106,7 +106,7 @@ See the [revised execution plan](ai-assistant-plan.md) for detailed scope and ac
 
 1. **Implemented:** retain drafts through failures and distinguish definite, stale and uncertain saves.
 2. **Implemented:** active tasks, typed revisions, stable resolved/filter targets and selection across preview types.
-3. **Partially implemented, split into separate checkpoints:** 3A recovers incidental expired selection while preserving task identity; 3B remains pending and validates final-state deletion blockers before confirmation.
+3. **Implemented as separate checkpoints:** 3A recovers incidental expired selection while preserving task identity; 3B validates final-state deletion blockers before confirmation and retains blocked task context.
 4. **Pending:** reconcile proposed rules with steps 1–3, capture/compare interpretation before adoption, then align capability/help text.
 5. **Pending:** make live interpretation evaluation repeatable and complete browser UX checks. Durable save idempotency is a separately specified follow-up, not part of this testing step.
 
@@ -128,7 +128,13 @@ Implemented structured missing-record lookup, independent-versus-continuing clar
 
 Validation: 101 AI tests, 30 component tests and 48 integration tests pass (179 total), plus TypeScript, lint for changed code/tests and whitespace checks. Live interpretation and browser checks remain unverified.
 
-Checkpoint 3B and steps 4–5 remain pending approval. The current planner received the context/scope additions needed for 3A; the full proposed replacement instructions have not been applied.
+### Checkpoint 3B implementation
+
+Implemented a shared final-state deletion preflight after batch resolution and inside the save transaction. Explicit recipe deletions/composition changes can remove blockers; external, retained and newly proposed references still block. Blocked tasks preserve choices and frozen targets without a confirmable preview; revisions, candidate continuation and rechecks use the same validation. Failed independent replacements retain earlier drafts/uncertain references. See [deletion preflight behavior and manual checks](ai-deletion-preflight.md).
+
+Validation: 104 AI tests, 36 component tests and 59 integration tests pass (199 total), plus TypeScript, lint for changed code/tests and whitespace checks. Live interpretation and browser checks remain unverified.
+
+Steps 4–5 remain pending approval. The current planner received only the context/scope additions needed for implemented checkpoints; the full proposed replacement instructions have not been applied.
 
 ## Acceptance scenarios
 

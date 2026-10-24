@@ -1,18 +1,18 @@
 # Inventory assistant implementation plan
 
-Revised after steps 1 and 2; implementation status updated through checkpoint 3A. This is the current execution plan; the [review](ai-assistant-review.md) records the original findings. The [version 2 rules](ai-assistant-rules-v2.md) are an earlier proposal, not the active prompt or an adoption-ready replacement.
+Revised after steps 1 and 2; implementation status updated through checkpoint 3B. This is the current execution plan; the [review](ai-assistant-review.md) records the original findings. The [version 2 rules](ai-assistant-rules-v2.md) are an earlier proposal, not the active prompt or an adoption-ready replacement.
 
 ## Approval boundaries and order
 
-Implement one checkpoint, report changes and validation, then wait for the user's confirmation before starting the next. Checkpoint 3A is implemented; 3B remains a separate approval boundary.
+Implement one checkpoint, report changes and validation, then wait for the user's confirmation before starting the next. Checkpoints 3A and 3B are implemented; step 4 awaits approval.
 
 | Checkpoint | Status | Result |
 | --- | --- | --- |
 | 1 — Draft recovery | Implemented | Failed planning retains edited drafts; failed/uncertain confirmations have distinct recovery controls. |
 | 2 — Active tasks and revisions | Implemented | Typed patches preserve fields, resolved IDs, stock intent and filtered cohorts; selection survives recipe/batch previews. |
 | 3A — Expired selection | Implemented | Independent requests survive incidental expiry; task/clarification identities stay bound; missing frozen targets block saving. |
-| 3B — Deletion preflight | Next, awaiting separate approval | Known references block confirmation unless explicitly requested batch operations remove all of them. |
-| 4 — Rules and help | Pending 3A and 3B | Reconcile rules with the implemented contract, compare interpretation, then adopt and align help. |
+| 3B — Deletion preflight | Implemented | Final-state blockers prevent confirmation; blocked tasks retain choices; saves recheck dependencies transactionally. |
+| 4 — Rules and help | Next, awaiting approval | Reconcile rules with the implemented contract, compare interpretation, then adopt and align help. |
 | 5 — Repeatable interpretation evaluation | Pending step 4 | Turn the comparison cases into a reusable evaluation workflow and finish browser UX checks. |
 
 The original step 3 is split into 3A and 3B because selection recovery and deletion dependency validation touch different contracts. Approval for 3A does not authorize 3B. Steps 4 and 5 keep their numbering, but a baseline interpretation comparison moves into step 4 before changing the active prompt.
@@ -23,7 +23,7 @@ Step 1 retains drafts, form edits, candidate choices and source context through 
 
 Step 2 adds `activeWrite` and the `revise`, `clarifyRevision` and `keepTask` planner commands. Server-side patches preserve unaffected fields/operations, resolved identities, recipe ingredient choices, stock set/adjust/debit meaning and the original filtered cohort, including initially unchanged records. Candidate buttons remain the resolution mechanism; typed names/save requests retain the task and explain which button to use. Every revised preview requires new confirmation. See [active task behavior](ai-active-task.md).
 
-The recorded step 2 baseline was 91 AI tests, 21 component tests and 44 integration tests: **156 passing tests**. After 3A, there are **179 passing tests** (101 AI, 30 component, 48 integration), plus passing TypeScript, lint for changed code/tests and whitespace checks. Those suites mock planner output; the component harness is not a browser. They establish application behavior for supplied plans, not reliable interpretation of Ukrainian phrases. Live interpretation, browser focus/layout and accessibility interactions remain unverified.
+The recorded step 2 baseline was **156 passing tests**; after 3A it was **179**. After 3B, there are **199 passing tests** (104 AI, 36 component, 59 integration), plus passing TypeScript, lint for changed code/tests and whitespace checks. Those suites mock planner output; the component harness is not a browser. They establish application behavior for supplied plans, not reliable interpretation of Ukrainian phrases. Live interpretation, browser focus/layout and accessibility interactions remain unverified.
 
 Preserve these constraints in every remaining checkpoint:
 
@@ -65,7 +65,9 @@ Preserve these constraints in every remaining checkpoint:
 
 ## 3B — Reject known deletion blockers before confirmation
 
-**Problem:** batch preparation passes `allowReferencedDelete=true` to ingredient deletions without validating whether the batch removes their recipe references. Confirmation already rejects protected deletes; the defect is a misleading confirmable preview.
+**Implemented.** See [deletion preflight and blocked-task behavior](ai-deletion-preflight.md). The scope and acceptance checks below remain the regression contract. The runtime received the blocked-task phase and explicit-cleanup clarification needed for 3B; full prompt adoption remains step 4.
+
+**Original problem:** batch preparation deferred ingredient reference checks without validating whether the batch removed those references. Confirmation rejected protected deletes, leaving a misleading confirmable preview.
 
 **Scope:**
 

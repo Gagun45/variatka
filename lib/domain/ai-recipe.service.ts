@@ -5,6 +5,7 @@ import type { RecordSelection } from "@/zod/ai-search.schema";
 import { AppError, NoChangesError } from "../error";
 import { prisma } from "../prisma";
 import { resolveMutationTarget } from "./ai-target.service";
+import { DeletionBlocked, recipeOrderBlocker } from "./ai-deletion-preflight.service";
 
 type RecipeIntent = Extract<InventoryMutationIntent, { kind: "createRecipe" | "updateRecipe" | "deleteRecipe" }>;
 type Reference = RecipeSnapshot["ingredients"][number];
@@ -46,7 +47,7 @@ export async function prepareRecipeMutation(intent: RecipeIntent, selected: Reco
   const before: RecipeSnapshot = { fields: recipeWriteSchema.parse(fields), ingredients: ingredients.map(({ amount, ingredient }) => ({ ...ingredient, updatedAt: ingredient.updatedAt.toISOString(), amount })) };
   const identity = { id, title: record.title, updatedAt: updatedAt.toISOString() };
   if (intent.kind === "deleteRecipe") {
-    if (_count.orderItems > 0) throw new AppError("Неможливо видалити рецепт, використаний у замовленнях.", "CONFLICT");
+    if (_count.orderItems > 0) throw new DeletionBlocked(`Неможливо видалити: ${recipeOrderBlocker(record.title, _count.orderItems)}. Замовлення не буде змінено.`);
     const preview: InventoryMutationPreview = { kind: intent.kind, target: identity, before };
     return { kind: "ready" as const, preview };
   }

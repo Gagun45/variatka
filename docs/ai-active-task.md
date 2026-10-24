@@ -26,6 +26,8 @@ For several operations, name the record to change. Planner operation indexes ref
 
 The **Поточне завдання** area near the input shows the task phase and targets so the user can see what a short correction will affect.
 
+Checkpoint 3B adds a [blocked deletion phase](ai-deletion-preflight.md). A known dependency conflict retains the structured task, chosen IDs and frozen targets without confirmation. **Перевірити знову** rechecks the same task without a model call or writes; only a valid fresh preview can be confirmed. A blocked revision removes the preceding confirmation. A failed independent replacement still retains the prior edited draft or uncertain-save reference.
+
 ## Stable targets and selection
 
 Resolved record IDs are retained until the user explicitly changes a target. Renaming a record uses its title patch and keeps its ID; retargeting is a separate explicit change that drops only that operation's resolution decisions. Deleted/renamed resolved records still fail validation rather than being silently replaced.

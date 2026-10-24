@@ -14,7 +14,7 @@ For details or an unnamed write that needs the deleted selection, the assistant 
 - A verified missing target/dependency immediately marks an affected draft stale; unrelated drafts remain usable and uncertain saves remain read-only. A missing actual task target blocks revision/re-preparation instead of resolving a replacement with the same title. Filtered previews also carry their complete frozen cohort, including unchanged rows; confirmation checks that every member still exists inside its transaction. No newly matching records are acquired and no deleted members are silently omitted.
 - Unknown save outcomes retain their read-only inspection controls. Selection recovery does not enable preparation or another confirmation attempt for that save.
 
-This behavior does not add persistent tasks or idempotent writes. Reload/new chat still clears local task context. Checkpoint 3B's final-state deletion dependency preflight remains pending.
+This behavior does not add persistent tasks or idempotent writes. Reload/new chat still clears local task context. Checkpoint 3B now also provides [final-state deletion preflight](ai-deletion-preflight.md).
 
 ## Validation
 

@@ -6,7 +6,7 @@ import { compositionChangeSchema, recipePatchSchema } from "./ai-recipe.schema";
 // No source requests, chat history or old snapshots: task context cannot nest.
 export const activeWriteSchema = z.strictObject({
   pending: pendingWriteSchema,
-  phase: z.enum(["draft", "choice", "clarification"]),
+  phase: z.enum(["draft", "choice", "clarification", "blocked"]),
   incompleteFields: z.array(z.enum(["title", "stock"])).max(2).default([]),
 });
 

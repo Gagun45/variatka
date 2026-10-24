@@ -12,6 +12,7 @@ import { cleanupInventoryImages, guarded } from "./inventory-write.service";
 import type { IngredientResolutionCache } from "./ai-recipe.service";
 import { validateIngredientDuplicateReview } from "./ai-ingredient-duplicates.service";
 import { completeBatchPreview } from "../ai/batch-preview";
+import { validateBatchDeletions } from "./ai-deletion-preflight.service";
 
 const key = (title: string) => title.toLocaleLowerCase("uk");
 export { completeBatchPreview } from "../ai/batch-preview";
@@ -66,6 +67,7 @@ export async function prepareInventoryBatch(intent: BatchIntent, selected: Recor
     if (reused.has(index)) { unchanged.push(reused.get(index)!); continue; }
     if (creations.has(index)) { items.push(creations.get(index)!); continue; }
     try {
+      // Defer ingredient reference checks until every explicit recipe change is resolved.
       const prepared = await prepareInventoryMutation(operation.intent, operation.selected, operation.chosen, true, cache, { state, index });
       items.push(prepared.preview);
     } catch (error) {
@@ -73,7 +75,9 @@ export async function prepareInventoryBatch(intent: BatchIntent, selected: Recor
       unchanged.push("targetName" in operation.intent ? operation.intent.targetName ?? `${operation.selected?.entity} #${operation.selected?.id}` : "Без змін");
     }
   }
-  return { ...completeBatchPreview(items, unchanged), ...(state.targets ? { targets: state.targets } : {}) };
+  const preview = completeBatchPreview(items, unchanged);
+  await validateBatchDeletions(preview.items);
+  return { ...preview, ...(state.targets ? { targets: state.targets } : {}) };
 }
 
 export async function applyInventoryBatch(preview: BatchPreview) {
@@ -91,6 +95,7 @@ export async function applyInventoryBatch(preview: BatchPreview) {
         if (!current) throw new AppError("Запис із початкового переліку змін було видалено. Підготуйте новий перегляд; перелік не буде скорочено автоматично.", "STALE_PREVIEW");
       }
     }
+    await validateBatchDeletions(normalized.items, tx);
     // Recheck edited titles and newly appeared candidates before any writes.
     for (const item of normalized.items) if (item.kind === "createIngredient") await validateIngredientDuplicateReview(item, tx);
     const newIds = new Map<string, number>();

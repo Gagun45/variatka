@@ -121,7 +121,7 @@ export default function AiAssistant() {
     if (pending.current || !prompt.trim()) return;
     await requestProposal({
       prompt: prompt.trim(), selected: selected ? { entity: selected.entity, id: selected.id } : null, previousSearch, clarification,
-      activeWrite: activeTask && activeTask.status !== "uncertain" ? { pending: activeTask.pending, incompleteFields: incompleteTaskFields(activeTask), phase: activeTask.clarification ? "clarification" : activeTask.view.kind === "choice" ? "choice" : "draft" } : null,
+      activeWrite: activeTask && activeTask.status !== "uncertain" ? { pending: activeTask.pending, incompleteFields: incompleteTaskFields(activeTask), phase: activeTask.clarification ? "clarification" : activeTask.view.kind === "choice" ? "choice" : activeTask.view.kind === "blocked" ? "blocked" : "draft" } : null,
     });
   }
 
@@ -167,6 +167,18 @@ export default function AiAssistant() {
     if (reply.operation === "requestBlocked") {
       setPrompt(lastRequest.current?.prompt ?? "");
       setError(reply.message, reply.code);
+      return;
+    }
+    if (reply.operation === "writeBlocked") {
+      setPrompt(lastRequest.current?.prompt ?? "");
+      // A failed independent replacement must not discard the prior edited task.
+      if (!source || (activeTask && !reply.continuesTask)) {
+        setError(reply.message, reply.code);
+        return;
+      }
+      setInitialClarification(null);
+      setActiveTask({ pending: reply.pending, source, status: "invalid", clarification: null, view: { kind: "blocked", message: reply.message } });
+      setError("");
       return;
     }
     if (reply.operation !== "noChanges" && reply.operation !== "revisionFailed") setMessages((old) => [...old, { role: "assistant", text: reply.message }]);
@@ -366,6 +378,14 @@ export default function AiAssistant() {
       {results && !pendingWrite && <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} />}
       {pendingWrite && <RecordChoiceView question={pendingWrite.question} prompt={activeTask?.source.request.clarification?.originalPrompt ?? activeTask?.source.request.prompt ?? ""} busy={busy || Boolean(activeTask?.clarification)} onChoose={(selection) => { void resumeWrite({ key: pendingWrite.question.key, selection }); }} onCreateNew={() => { void resumeWrite({ key: pendingWrite.question.key, createNew: true }); }} onPage={(number) => { void resumeWrite(null, { key: pendingWrite.question.key, number }); }} onCancel={cancelWrite} />}
       {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); clearClarification(); cancelWrite(); }} />}
+      {activeTask?.view.kind === "blocked" && <section aria-label="Видалення заблоковано" className="space-y-3">
+        <AssistantErrorPanel error={activeTask.view.message} code="CONFLICT" busy={busy} canEdit={lastRequest.current !== null} onEdit={editRequest} onPrepare={prepareAgain} onRefresh={retryRefresh} />
+        <p className="text-sm text-muted-foreground">Запит і вибрані записи збережено. Виправте запит або повторіть перевірку після зміни пов’язаних записів. Підтвердження з’явиться лише після успішної перевірки.</p>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" disabled={busy || Boolean(activeTask.clarification)} onClick={prepareAgain}>Перевірити знову</Button>
+          <Button type="button" variant="ghost" disabled={busy} onClick={cancelWrite}>Скасувати завдання</Button>
+        </div>
+      </section>}
       {mutation && <InventoryMutationView preview={mutation} assumptions={assumptions} busy={busy} status={draftStatus} onChange={setMutation} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" || activeTask?.clarification ? undefined : prepareAgain} onCancel={cancelWrite} />}
       {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} status={draftStatus} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" || activeTask?.clarification ? undefined : prepareAgain} onCancel={cancelWrite} />}
 

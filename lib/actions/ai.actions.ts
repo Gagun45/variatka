@@ -157,6 +157,6 @@ export async function resumeInventoryWrite(input: ResumeWrite) {
     await requireAdmin();
     const parsed = resumeWriteSchema.safeParse(input);
     if (!parsed.success) throw new AppError("Некоректний вибір. Підготуйте новий запит.");
-    return prepareAssistantWrite(parsed.data.pending, parsed.data);
+    return { ...await prepareAssistantWrite(parsed.data.pending, parsed.data), continuesTask: true };
   });
 }

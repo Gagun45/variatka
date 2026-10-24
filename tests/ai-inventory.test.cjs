@@ -81,6 +81,11 @@ const prisma = Object.fromEntries(["ingredient", "recipe", "stuff"].map((entity)
   },
 }]));
 
+prisma.recipeIngredient = { findMany: async (args) => {
+  state.reads.push({ entity: "recipeIngredient", args });
+  return state.references.filter((item) => args.where.ingredientId.in.includes(item.ingredientId));
+} };
+
 prisma.$transaction = async (callback) => {
   const records = structuredClone(state.records);
   const writes = [...state.writes];
@@ -120,7 +125,7 @@ const request = (extra = {}) => ({ prompt: "Покажи спеції", selected
 const row = (id) => ({ id, title: `Запис ${id}`, category: "SPICES", isInStock: true, inStock: 3, spicy: 1, isHidden: false, isConfirmed: true });
 
 beforeEach(() => {
-  state = { admin: true, authChecks: 0, apiCalls: [], reads: [], writes: [], storageDeletes: [], allowWrites: false, rows: { ingredient: [], recipe: [], stuff: [] }, records: { ingredient: null, recipe: null, stuff: null }, plan: plan(ingredient) };
+  state = { admin: true, authChecks: 0, apiCalls: [], reads: [], writes: [], storageDeletes: [], references: [], allowWrites: false, rows: { ingredient: [], recipe: [], stuff: [] }, records: { ingredient: null, recipe: null, stuff: null }, plan: plan(ingredient) };
   process.env.OPENAI_API_KEY = "mock-key";
   process.env.OPENAI_MODEL = "gpt-6-luna";
   global.fetch = async (_url, options) => {
@@ -473,11 +478,15 @@ test("stuff creation remains a draft until confirmed and duplicate titles return
 test("used ingredients cannot be deleted, including if attached after the preview", async (t) => {
   t.mock.method(console, "error", () => {});
   state.records.ingredient = ingredientRecord({ _count: { recipeIngredients: 1 }, imageKey: "ingredient-image" });
+  const reference = { ingredientId: 1, recipeId: 7, recipe: { title: "Соус" } };
+  state.references = [reference];
   const intent = { kind: "deleteIngredient", targetName: null };
   assert.equal((await previewMutation(intent)).ok, false);
   state.records.ingredient._count.recipeIngredients = 0;
+  state.references = [];
   const preview = await previewMutation(intent);
   state.records.ingredient._count.recipeIngredients = 1;
+  state.references = [reference];
   state.allowWrites = true;
   assert.equal((await actions.confirmInventoryMutation(preview.data)).ok, false);
   assert.equal(state.writes.length, 0);
@@ -1561,5 +1570,51 @@ test("provider failures after verified expiry retain their code alongside the se
   assert.equal(failed.data.operation, "requestBlocked");
   assert.equal(failed.data.code, "PROVIDER_UNAVAILABLE");
   assert.deepEqual(failed.data.selectionExpired.selection, selected);
+  assert.equal(state.writes.length, 0);
+});
+
+test("single and one-item batch deletion return the same recoverable blocker without a preview or writes", async () => {
+  state.records.ingredient = ingredientRecord();
+  state.rows.ingredient = [state.records.ingredient];
+  state.references = [{ ingredientId: 1, recipeId: 10, recipe: { title: "Соус з куркумою" } }];
+  const intent = { kind: "deleteIngredient", targetName: "Куркума" };
+  const messages = [];
+  for (const command of [{ kind: "mutation", intent }, { kind: "batch", intent: { kind: "list", operations: [intent] } }]) {
+    state.plan = { message: "Перегляд", assumptions: [], command };
+    const reply = await actions.askInventoryAssistant(request());
+    assert.equal(reply.ok, true);
+    assert.equal(reply.data.operation, "writeBlocked");
+    assert.equal(reply.data.code, "CONFLICT");
+    assert.equal("preview" in reply.data, false);
+    assert.deepEqual(reply.data.pending.command, command);
+    assert.deepEqual(reply.data.pending.decisions[0].selection, { entity: "ingredient", id: 1 });
+    assert.match(reply.data.message, /Соус з куркумою/);
+    messages.push(reply.data.message);
+  }
+  assert.equal(messages[0], messages[1]);
+  assert.equal(state.writes.length, 0);
+});
+
+test("blocker messages retain actual counts with bounded examples", async () => {
+  state.records.ingredient = ingredientRecord();
+  state.references = Array.from({ length: 5 }, (_, index) => ({ ingredientId: 1, recipeId: index + 10, recipe: { title: `Залежний рецепт ${index}` } }));
+  state.plan = mutationPlan({ kind: "deleteIngredient", targetName: null });
+  const reply = await actions.askInventoryAssistant(request({ selected: { entity: "ingredient", id: 1 } }));
+  assert.equal(reply.data.operation, "writeBlocked");
+  assert.match(reply.data.message, /рецептах \(5\)/);
+  assert.match(reply.data.message, /Залежний рецепт 0/);
+  assert.match(reply.data.message, /ще 2/);
+  assert.equal(reply.data.message.includes("Залежний рецепт 4"), false);
+  assert.equal(state.writes.length, 0);
+});
+
+test("failed dependency reads are errors rather than permission to prepare a deletion", async (t) => {
+  t.mock.method(console, "error", () => {});
+  state.records.ingredient = ingredientRecord();
+  t.mock.method(prisma.recipeIngredient, "findMany", async () => { throw new Error("database read failed"); });
+  state.plan = mutationPlan({ kind: "deleteIngredient", targetName: null });
+  const reply = await actions.askInventoryAssistant(request({ selected: { entity: "ingredient", id: 1 } }));
+  assert.equal(reply.ok, false);
+  assert.equal(reply.code, "INTERNAL_ERROR");
   assert.equal(state.writes.length, 0);
 });

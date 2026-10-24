@@ -10,6 +10,7 @@ import { createRecipeInTransaction, updateRecipeInTransaction, deleteRecipeInTra
 import type { Prisma } from "@prisma/client";
 import { ingredientWrites, stuffWrites } from "./inventory-write.service";
 import { assertNever, mutationDefinitions } from "../ai/mutation-definitions";
+import { validateBatchDeletions } from "./ai-deletion-preflight.service";
 
 type PreparedMutation = { kind: "ready"; preview: InventoryMutationPreview };
 
@@ -20,7 +21,7 @@ function ensureChanged(before: object, after: object) {
   if (JSON.stringify(before) === JSON.stringify(after)) throw new NoChangesError(`Змін не потрібно. ${"title" in before ? `«${before.title}»` : "Запис"} уже має потрібні значення.`);
 }
 
-export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false, allowReferencedDelete = false, cache?: IngredientResolutionCache, resolution?: OperationResolution): Promise<PreparedMutation> {
+export async function prepareInventoryMutation(intent: InventoryMutationIntent, selected: RecordSelection | null, explicitlyChosen = false, deferDeletionValidation = false, cache?: IngredientResolutionCache, resolution?: OperationResolution): Promise<PreparedMutation> {
   switch (intent.kind) {
     case "createRecipe": case "updateRecipe": case "deleteRecipe": return prepareRecipeMutation(intent, selected, explicitlyChosen, cache, resolution);
     case "createIngredient": {
@@ -40,15 +41,15 @@ export async function prepareInventoryMutation(intent: InventoryMutationIntent, 
   if (entity === "ingredient" && (intent.kind === "updateIngredient" || intent.kind === "deleteIngredient")) {
     const record = await prisma.ingredient.findUnique({ where: { id: selection.id }, select: {
       id: true, updatedAt: true, title: true, description: true, category: true, isInStock: true, isSaved: true,
-      _count: { select: { recipeIngredients: true } },
     } });
     if (!record) throw new AppError("Інгредієнт більше не існує. Повторіть пошук.", "STALE_PREVIEW");
-    const { id, updatedAt, _count, ...data } = record;
+    const { id, updatedAt, ...data } = record;
     const before = ingredientWriteSchema.parse(data);
     const target = { id, title: record.title, updatedAt: updatedAt.toISOString() };
     if (intent.kind === "deleteIngredient") {
-      if (_count.recipeIngredients > 0 && !allowReferencedDelete) throw new AppError("Неможливо видалити інгредієнт, який використовується в рецептах.", "CONFLICT");
-      return { kind: "ready", preview: { kind: intent.kind, target, before } };
+      const preview: InventoryMutationPreview = { kind: intent.kind, target, before };
+      if (!deferDeletionValidation) await validateBatchDeletions([preview]);
+      return { kind: "ready", preview };
     }
     const after = ingredientWriteSchema.parse({ ...before, ...patchValues(intent.patch) });
     ensureChanged(before, after);

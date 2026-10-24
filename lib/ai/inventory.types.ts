@@ -34,6 +34,7 @@ export type AssistantReply = (
   | { operation: "clarifyRevision"; message: string; clarification: Clarification }
   | { operation: "keepTask"; message: string }
   | { operation: "requestBlocked"; message: string; code: ActionErrorCode }
+  | { operation: "writeBlocked"; message: string; code: ActionErrorCode; pending: PendingWrite }
   | { operation: "revisionFailed"; message: string; code: ActionErrorCode; pending: PendingWrite; revisionApplied: boolean }
   | { operation: "mutation"; message: string; assumptions: string[]; preview: InventoryMutationPreview; resolved: PendingWrite }
   | { operation: "batch"; message: string; assumptions: string[]; preview: BatchPreview; resolved: PendingWrite }

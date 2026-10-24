@@ -188,7 +188,9 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
 
     await t.test("a late protected delete rolls back earlier deletions and keeps their image files", async () => {
       await client.ingredient.create({ data: ingredientData("Free image spice", { imageKey: "free-image.webp" }) });
-      const preview = await prepareInventoryBatch({ kind: "list", operations: [{ kind: "deleteIngredient", targetName: "Free image spice" }, { kind: "deleteIngredient", targetName: "Test salt" }] }, null);
+      const later = await client.ingredient.create({ data: ingredientData("Late referenced spice") });
+      const preview = await prepareInventoryBatch({ kind: "list", operations: [{ kind: "deleteIngredient", targetName: "Free image spice" }, { kind: "deleteIngredient", targetName: later.title }] }, null);
+      await client.recipe.create({ data: { ...recipeData("Late referencing recipe"), ingredients: { create: { ingredientId: later.id, amount: "1 г" } } } });
       const previousCleanups = cleaned.length;
       await assert.rejects(applyInventoryBatch(preview), /використовується/);
       assert.equal(await client.ingredient.count({ where: { title: "Free image spice" } }), 1);
@@ -852,6 +854,204 @@ test("recipe and batch integration", { timeout: 120000 }, async (t) => {
       assert.equal(oldConfirmation.code, "STALE_PREVIEW");
       assert.equal((await client.stuff.findUnique({ where: { id: a.id } })).inStock, 0);
       assert.equal((await client.stuff.findUnique({ where: { id: c.id } })).inStock, 0);
+    });
+
+    const linkedRecipe = (title, ingredients) => client.recipe.create({ data: { ...recipeData(title), ingredients: { create: ingredients.map((ingredient) => ({ ingredientId: ingredient.id, amount: "1 г" })) } } });
+    const askCommand = (command, extra = {}) => {
+      modelPlan = { message: "Перегляд", assumptions: [], command };
+      return actions.askInventoryAssistant({ prompt: "Перевір запит", selected: null, previousSearch: null, clarification: null, ...extra });
+    };
+    const removal = (recipe, title) => ({ kind: "updateRecipe", targetName: recipe.title, patch: recipePatch(), composition: { mode: "patch", items: [{ action: "remove", title, amount: null, category: null }] } });
+
+    await t.test("single and one-item batch deletions identify stored blockers before any confirmable preview", async () => {
+      const ingredient = await client.ingredient.create({ data: ingredientData("Preflight protected spice", { imageKey: "protected-preflight.webp" }) });
+      const recipe = await linkedRecipe("Preflight protected recipe", [ingredient]);
+      const intent = { kind: "deleteIngredient", targetName: ingredient.title };
+      const messages = [];
+      for (const command of [{ kind: "mutation", intent }, { kind: "batch", intent: { kind: "list", operations: [intent] } }]) {
+        const blocked = await askCommand(command);
+        assert.equal(blocked.data.operation, "writeBlocked");
+        assert.equal(blocked.data.code, "CONFLICT");
+        assert.equal("preview" in blocked.data, false);
+        assert.ok(blocked.data.message.includes(recipe.title));
+        assert.equal(blocked.data.pending.decisions[0].selection.id, ingredient.id);
+        messages.push(blocked.data.message);
+      }
+      assert.equal(messages[0], messages[1]);
+      assert.equal(await client.recipeIngredient.count({ where: { recipeId: recipe.id, ingredientId: ingredient.id } }), 1);
+      assert.equal(await client.ingredient.count({ where: { id: ingredient.id } }), 1);
+      assert.equal(cleaned.includes("protected-preflight.webp"), false);
+    });
+
+    await t.test("explicit removals from every referencing recipe allow deletion and preserve unrelated recipe data", async () => {
+      const ingredient = await client.ingredient.create({ data: ingredientData("Preflight removed from all") });
+      const retained = await client.ingredient.create({ data: ingredientData("Preflight retained spice") });
+      const a = await linkedRecipe("Preflight removal recipe A", [ingredient, retained]);
+      const b = await linkedRecipe("Preflight removal recipe B", [ingredient]);
+      const reply = await askCommand({ kind: "batch", intent: { kind: "list", operations: [
+        { kind: "deleteIngredient", targetName: ingredient.title }, removal(a, ingredient.title), removal(b, ingredient.title),
+      ] } });
+      assert.equal(reply.data.operation, "batch");
+      assert.deepEqual(reply.data.preview.items.map((item) => item.kind), ["updateRecipe", "updateRecipe", "deleteIngredient"]);
+      assert.equal(await client.ingredient.count({ where: { id: ingredient.id } }), 1, "preparation is read-only");
+      assert.equal((await actions.confirmInventoryBatch(reply.data.preview)).ok, true);
+      assert.equal(await client.ingredient.count({ where: { id: ingredient.id } }), 0);
+      assert.equal(await client.recipe.count({ where: { id: { in: [a.id, b.id] } } }), 2);
+      const after = await client.recipe.findUnique({ where: { id: a.id }, include: { ingredients: true } });
+      assert.equal(after.ingredients.length, 1);
+      assert.equal(after.ingredients[0].ingredientId, retained.id);
+      assert.equal(after.notes, a.notes);
+    });
+
+    await t.test("one reference outside explicit cleanup blocks the whole batch without changing relationships", async () => {
+      const ingredient = await client.ingredient.create({ data: ingredientData("Preflight external reference") });
+      const a = await linkedRecipe("Preflight explicit delete", [ingredient]);
+      const b = await linkedRecipe("Preflight explicit removal", [ingredient]);
+      const c = await linkedRecipe("Preflight external blocker", [ingredient]);
+      const reply = await askCommand({ kind: "batch", intent: { kind: "list", operations: [
+        { kind: "deleteIngredient", targetName: ingredient.title }, { kind: "deleteRecipe", targetName: a.title }, removal(b, ingredient.title),
+      ] } });
+      assert.equal(reply.data.operation, "writeBlocked");
+      assert.ok(reply.data.message.includes(c.title));
+      assert.equal(reply.data.message.includes(a.title), false);
+      assert.equal(reply.data.message.includes(b.title), false);
+      assert.equal(reply.data.pending.command.intent.operations.length, 3);
+      assert.equal(await client.recipeIngredient.count({ where: { ingredientId: ingredient.id } }), 3);
+    });
+
+    await t.test("proposed recipe creations, additions and retained references all block ingredient deletion", async () => {
+      const ingredient = await client.ingredient.create({ data: ingredientData("Preflight proposed reference") });
+      const existing = await linkedRecipe("Preflight retained reference", [ingredient]);
+      const empty = await linkedRecipe("Preflight added reference", []);
+      const proposals = [
+        recipeIntent("Preflight proposed new recipe", [ingredient.title]),
+        { kind: "updateRecipe", targetName: empty.title, patch: recipePatch(), composition: { mode: "patch", items: [{ action: "add", title: ingredient.title, amount: "2 г", category: null }] } },
+        { kind: "updateRecipe", targetName: existing.title, patch: recipePatch({ description: "Залишити склад" }), composition: null },
+      ];
+      for (const proposal of proposals) {
+        const operations = [{ kind: "deleteIngredient", targetName: ingredient.title }, proposal];
+        if (proposal.kind === "createRecipe" || proposal.targetName === empty.title) operations.push(removal(existing, ingredient.title));
+        const blocked = await askCommand({ kind: "batch", intent: { kind: "list", operations } });
+        assert.equal(blocked.data.operation, "writeBlocked");
+        const title = proposal.kind === "createRecipe" ? proposal.data.title : proposal.targetName;
+        assert.ok(blocked.data.message.includes(title));
+        assert.match(blocked.data.message, /рецептах \(1\)/);
+      }
+      assert.equal(await client.recipe.count({ where: { title: "Preflight proposed new recipe" } }), 0);
+      assert.equal(await client.recipeIngredient.count({ where: { ingredientId: ingredient.id } }), 1);
+      assert.equal((await client.recipe.findUnique({ where: { id: existing.id } })).description, "");
+    });
+
+    await t.test("candidate continuation retains the last resolved choice in a blocked task and explicit retargeting can recover", async () => {
+      const free = await client.ingredient.create({ data: ingredientData("Preflight choice free") });
+      const used = await client.ingredient.create({ data: ingredientData("Preflight choice used") });
+      await linkedRecipe("Preflight choice blocker", [used]);
+      const first = await askCommand({ kind: "batch", intent: { kind: "list", operations: [{ kind: "deleteIngredient", targetName: "Preflight choice" }] } });
+      assert.equal(first.data.operation, "chooseRecord");
+      const calls = apiCalls;
+      const blocked = await actions.resumeInventoryWrite({ pending: first.data.pending, choice: { key: first.data.question.key, selection: { entity: "ingredient", id: used.id } }, page: null });
+      assert.equal(blocked.data.operation, "writeBlocked");
+      assert.equal(blocked.data.continuesTask, true);
+      assert.equal(blocked.data.pending.decisions[0].selection.id, used.id);
+      const again = await actions.resumeInventoryWrite({ pending: blocked.data.pending, choice: null, page: null });
+      assert.equal(again.data.operation, "writeBlocked");
+      assert.deepEqual(again.data.pending.decisions, blocked.data.pending.decisions);
+      assert.equal(apiCalls, calls);
+      const recovered = await askCommand({ kind: "revise", revision: { changes: [{ operationIndex: 0, change: { kind: "target", targetName: free.title } }] } }, { activeWrite: { pending: blocked.data.pending, phase: "blocked" } });
+      assert.equal(recovered.data.operation, "batch");
+      assert.equal(recovered.data.preview.items[0].target.id, free.id);
+      assert.equal(await client.ingredient.count({ where: { id: { in: [free.id, used.id] } } }), 2);
+    });
+
+    await t.test("a revision restoring a reference becomes blocked and keeps its corrected structured task", async () => {
+      const ingredient = await client.ingredient.create({ data: ingredientData("Preflight revision dependency") });
+      const recipe = await linkedRecipe("Preflight revision recipe", [ingredient]);
+      const first = await askCommand({ kind: "batch", intent: { kind: "list", operations: [
+        { kind: "deleteIngredient", targetName: ingredient.title }, removal(recipe, ingredient.title),
+      ] } });
+      assert.equal(first.data.operation, "batch");
+      const blocked = await askCommand({ kind: "revise", revision: { changes: [{ operationIndex: 1, change: { kind: "recipe", patch: recipePatch(), composition: { mode: "replace", items: [{ action: "add", title: ingredient.title, amount: "3 г", category: null }] } } }] } }, { activeWrite: { pending: first.data.resolved, phase: "draft" } });
+      assert.equal(blocked.data.operation, "writeBlocked");
+      assert.equal(blocked.data.continuesTask, true);
+      assert.equal("preview" in blocked.data, false);
+      assert.equal(blocked.data.pending.command.intent.operations[1].composition.items[0].amount, "3 г");
+      const again = await actions.resumeInventoryWrite({ pending: blocked.data.pending, choice: null, page: null });
+      assert.equal(again.data.operation, "writeBlocked");
+      assert.equal(await client.recipeIngredient.count({ where: { ingredientId: ingredient.id } }), 1);
+    });
+
+    await t.test("blocked filtered deletions preserve their cohort through re-preparation and exclude new matches", async () => {
+      const a = await client.ingredient.create({ data: ingredientData("Preflight filter A") });
+      const b = await client.ingredient.create({ data: ingredientData("Preflight filter B") });
+      const recipe = await linkedRecipe("Preflight filter blocker", [b]);
+      const search = { entity: "ingredient", text: null, titleText: "Preflight filter", category: null, isInStock: null, isSaved: null };
+      const blocked = await askCommand({ kind: "batch", intent: { kind: "filter", search, change: { kind: "deleteIngredients" } } });
+      assert.equal(blocked.data.operation, "writeBlocked");
+      const targets = [{ entity: "ingredient", id: a.id }, { entity: "ingredient", id: b.id }];
+      assert.deepEqual(blocked.data.pending.targets, targets);
+      const later = await client.ingredient.create({ data: ingredientData("Preflight filter C") });
+      await client.recipe.delete({ where: { id: recipe.id } });
+      const ready = await actions.resumeInventoryWrite({ pending: blocked.data.pending, choice: null, page: null });
+      assert.equal(ready.data.operation, "batch");
+      assert.deepEqual(ready.data.preview.targets, targets);
+      assert.equal((await actions.confirmInventoryBatch(ready.data.preview)).ok, true);
+      assert.equal(await client.ingredient.count({ where: { id: { in: [a.id, b.id] } } }), 0);
+      assert.equal(await client.ingredient.count({ where: { id: later.id } }), 1);
+    });
+
+    await t.test("order-protected recipe blocks initial batch preparation without creating other records", async () => {
+      const blocked = await askCommand({ kind: "batch", intent: { kind: "list", operations: [
+        { kind: "createStuff", data: stuffData("Preflight order unwritten jar") }, { kind: "deleteRecipe", targetName: "Ordered sauce" },
+      ] } });
+      assert.equal(blocked.data.operation, "writeBlocked");
+      assert.match(blocked.data.message, /замовленнях \(позицій: 1\)/);
+      assert.equal(await client.stuff.count({ where: { title: "Preflight order unwritten jar" } }), 0);
+      assert.equal(await client.recipe.count({ where: { title: "Ordered sauce" } }), 1);
+    });
+
+    await t.test("a reference added after preview rejects explicit cleanup and deletion atomically and preserves images", async () => {
+      const ingredient = await client.ingredient.create({ data: ingredientData("Preflight race dependency", { imageKey: "race-preflight.webp" }) });
+      const recipe = await linkedRecipe("Preflight race original recipe", [ingredient]);
+      const preview = await prepareInventoryBatch({ kind: "list", operations: [removal(recipe, ingredient.title), { kind: "deleteIngredient", targetName: ingredient.title }] }, null);
+      await linkedRecipe("Preflight race late recipe", [ingredient]);
+      const beforeCleanup = cleaned.length;
+      const blocked = await actions.confirmInventoryBatch(preview);
+      assert.equal(blocked.ok, false);
+      assert.equal(blocked.code, "CONFLICT");
+      assert.ok(blocked.message.includes("Preflight race late recipe"));
+      assert.equal(await client.recipeIngredient.count({ where: { ingredientId: ingredient.id } }), 2);
+      assert.equal((await client.recipe.findUnique({ where: { id: recipe.id } })).updatedAt.toISOString(), recipe.updatedAt.toISOString());
+      assert.equal(cleaned.length, beforeCleanup);
+    });
+
+    await t.test("both confirmation actions reject forbidden references in browser-supplied previews", async () => {
+      const ingredient = await client.ingredient.create({ data: ingredientData("Preflight tamper dependency") });
+      const recipe = await linkedRecipe("Preflight tamper recipe", [ingredient]);
+      const preview = await prepareInventoryBatch({ kind: "list", operations: [removal(recipe, ingredient.title), { kind: "deleteIngredient", targetName: ingredient.title }] }, null);
+      const tampered = structuredClone(preview);
+      const update = tampered.items.find((item) => item.kind === "updateRecipe");
+      update.after.ingredients = update.before.ingredients;
+      const batch = await actions.confirmInventoryBatch(tampered);
+      assert.equal(batch.ok, false);
+      assert.equal(batch.code, "CONFLICT");
+      const single = await actions.confirmInventoryMutation(preview.items.find((item) => item.kind === "deleteIngredient"));
+      assert.equal(single.ok, false);
+      assert.equal(single.code, "CONFLICT");
+      assert.equal(await client.recipeIngredient.count({ where: { ingredientId: ingredient.id } }), 1);
+    });
+
+    await t.test("dependency preflight compares resolved IDs rather than case-folded titles", async () => {
+      const free = await client.ingredient.create({ data: ingredientData("Preflight ID pepper") });
+      const used = await client.ingredient.create({ data: ingredientData("Preflight ID PEPPER") });
+      await linkedRecipe("Preflight ID reference recipe", [used]);
+      const reply = await askCommand({ kind: "batch", intent: { kind: "list", operations: [
+        { kind: "deleteIngredient", targetName: free.title }, recipeIntent("Preflight ID new recipe", [used.title]),
+      ] } });
+      assert.equal(reply.data.operation, "batch");
+      assert.equal(reply.data.preview.items.find((item) => item.kind === "createRecipe").after.ingredients[0].id, used.id);
+      assert.equal((await actions.confirmInventoryBatch(reply.data.preview)).ok, true);
+      assert.equal(await client.ingredient.count({ where: { id: free.id } }), 0);
+      assert.equal(await client.recipeIngredient.count({ where: { ingredientId: used.id } }), 2);
     });
 
     await t.test("unauthorized batch confirmation performs no writes", async (subtest) => {
