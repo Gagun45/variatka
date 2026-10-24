@@ -34,7 +34,7 @@ Why: the model translates language into a restricted query description. The serv
 
 ## 3. Select a record
 
-Click **Обрати** on a result. A detail panel shows its type, ID, title and stored fields. Recipes include their composition with amounts and ingredient availability, notes, statuses, and variant stock. Ingredient details show how many recipes reference them; stuff details show numeric stock.
+Click **Обрати** on a result. A compact panel shows its type/title; expand **Дані запису** to inspect stored fields. Recipes include their composition with amounts and ingredient availability, notes, statuses, and variant stock. Ingredient details show how many recipes reference them; stuff details show numeric stock. Previous search results collapse while a record/task is active and remain available on demand. See [UI behavior](ai-ui-polish.md).
 
 **Відкрити** opens the original page in another tab, preserving your current chat. **Скасувати вибір** clears the selection.
 
@@ -48,7 +48,7 @@ After selecting a recipe, send:
 Покажи її склад.
 ```
 
-Or ask `Покажи опис` / `Який залишок?` for the selected record. The assistant refreshes the detail panel with the current stored values. This first version displays the record's full details rather than generating a free-form analysis. It cannot calculate production quantities from ingredient amounts or answer arbitrary analytical questions.
+Or ask `Покажи опис` / `Який залишок?` for the selected record. The assistant refreshes and opens the detail panel with current stored values. It displays full details rather than generating a free-form analysis. It cannot calculate production quantities from ingredient amounts or answer arbitrary analytical questions.
 
 Why: follow-up context contains the selected entity and ID. The server reloads the record on every follow-up; the model only receives its identity/title, not private descriptions, notes, composition, or the whole inventory. If the record was deleted, clear the selection and search again.
 

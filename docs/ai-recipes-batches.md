@@ -48,7 +48,7 @@ Filtered update:
 
 > Познач усі інгредієнти категорії спеції як наявні.
 
-Single updates, deletions and recipe previews use the same change cards as batches, with an action-specific heading such as **Оновлення матеріалу** instead of a one-operation package. Single ingredient/material creation remains editable. Multi-operation previews summarize creation/update/deletion counts and counts by entity. Cards stay in execution order so dependencies remain visible. Updates show changed fields and composition entries only; expand **Усі дані запису** to inspect unchanged values too. New ingredient cards identify the recipes that need them. Deletions have a distinct warning and require confirmation through the same atomic batch flow.
+Single updates, deletions and recipe previews use the same change cards as batches, with an action-specific heading such as **Оновлення матеріалу**. Single ingredient/material creation remains editable. Multi-operation previews summarize creation/update/deletion counts; each card identifies its record type. Cards stay in execution order so dependencies remain visible. Updates show changed fields and composition entries only; expand **Усі дані запису** to inspect unchanged values too. New ingredient cards identify the recipes that need them. Initial assumption explanations start collapsed while actual proposed values remain visible. Deletions have a distinct warning and require confirmation through the same atomic batch flow.
 
 The confirmation bar stays near the bottom of the viewport while reviewing a long batch, with the total and deletion count. Keyboard focus moves to a new preview heading and to errors. Nothing is saved by opening details or focusing the preview.
 

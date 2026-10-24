@@ -95,6 +95,16 @@ function flatten(node) {
   return [node, ...flatten(node.props?.children)];
 }
 function tree() { harness.cursor = 0; return flatten(Assistant()); }
+function visibleTree() {
+  harness.cursor = 0;
+  const visible = (node) => {
+    if (!node || typeof node !== "object") return [];
+    if (Array.isArray(node)) return node.flatMap(visible);
+    if (node.type === "details" && !node.props.open) return [node, ...visible(React.Children.toArray(node.props.children).find((child) => child.type === "summary"))];
+    return [node, ...visible(node.props?.children)];
+  };
+  return visible(Assistant());
+}
 function view(name) { return tree().find((node) => node.type?.marker === name)?.props; }
 function input() { return view("Textarea"); }
 async function submit(prompt) {
@@ -765,5 +775,53 @@ test("a blocked deletion can be cancelled without sending or saving it", async (
     return ok(searchReply);
   };
   await submit("Покажи матеріали");
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("history and previous search results recede while the current preview and task remain visible", async () => {
+  await selectFixture();
+  assert.equal(view("Record").expanded, false);
+  harness.actions.askInventoryAssistant = async () => ok(creation());
+  await submit("Створи нову банку");
+  const visible = visibleTree();
+  assert.ok(visible.some((node) => node.type?.marker === "InventoryMutationView"));
+  assert.ok(visible.some((node) => node.props?.["aria-label"] === "Поточне завдання"));
+  assert.equal(visible.some((node) => node.type?.marker === "Results"), false);
+  assert.equal(visible.some((node) => node.props?.role === "log"), false);
+  assert.deepEqual(view("Results").results.items, [record], "collapsing results does not discard them");
+  assert.equal(harness.calls.confirmInventoryBatch.length, 0);
+});
+
+test("an explicit details request expands the selected record and a later write compacts it again", async () => {
+  await selectFixture();
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "viewSelected", message: "Актуальний опис", record });
+  await submit("Покажи опис обраного запису");
+  assert.equal(view("Record").expanded, true);
+  assert.ok(visibleTree().some((node) => node.props?.role === "status" && node.props.children === "Актуальний опис"));
+  harness.actions.askInventoryAssistant = async () => ok(creation());
+  await submit("Створи іншу банку");
+  assert.equal(view("Record").expanded, false);
+  assert.deepEqual(view("Record").record, record);
+});
+
+test("button reminders, unsupported replies and clarification questions stay visible outside collapsed history", async () => {
+  await submit("Створи банку");
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "keepTask", message: "Використайте кнопку підтвердження" });
+  await submit("так");
+  assert.ok(visibleTree().some((node) => node.props?.role === "status" && node.props.children === "Використайте кнопку підтвердження"));
+  assert.ok(view("InventoryMutationView"));
+  view("InventoryMutationView").onCancel();
+  assert.equal(visibleTree().some((node) => node.props?.role === "status" && node.props.children === "Використайте кнопку підтвердження"), false, "cancelled tasks must not leave a stale confirmation reminder");
+  harness.actions.askInventoryAssistant = async () => ok(creation());
+  await submit("Створи банку знову");
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "clarifyRevision", message: "Який опис?", clarification: { originalPrompt: "Зміни опис", question: "Який опис?", turns: [], selected: null, previousSearch: null } });
+  await submit("Зміни опис");
+  assert.ok(visibleTree().some((node) => node.props?.["aria-label"] === "Уточнення запиту"));
+  assert.equal(visibleTree().some((node) => node.type?.marker === "InventoryMutationView"), false, "the pending question takes precedence over its old preview");
+  assert.equal(view("InventoryMutationView").autoFocus, false, "the hidden preview must not take focus from the question");
+  assert.equal(view("InventoryMutationView").status, "invalid");
+  harness.actions.askInventoryAssistant = async () => ok({ operation: "unsupported", message: "Зміна цін недоступна" });
+  await submit("Інший запит: зміни ціну");
+  assert.ok(visibleTree().some((node) => node.props?.role === "status" && node.props.children === "Зміна цін недоступна"));
   assert.equal(harness.calls.confirmInventoryBatch.length, 0);
 });

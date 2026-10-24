@@ -916,12 +916,16 @@ test("single and batch previews render shared cards while creation forms remain 
     assert.ok(single.includes("Усі дані запису"));
     assert.equal(single.includes("<table"), false);
     const batch = renderToStaticMarkup(React.createElement(Batch, { ...callbacks, preview: { items: [item, { kind: "createStuff", after: { ...before, title: "Етикетка" } }], unchanged: [] } }));
-    assert.ok(batch.includes("Перегляд пакета · 2 операції"));
+    assert.ok(batch.includes("Запропоновані зміни"));
     assert.ok(batch.includes("Підтвердити всі 2"));
     const creation = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: { kind: "createStuff", after: before } }));
     assert.ok(creation.includes("<input"));
     assert.ok(creation.includes("<textarea"));
     assert.equal(creation.includes("disabled="), false);
+    const defaults = renderToStaticMarkup(React.createElement(View, { ...callbacks, assumptions: ["Початковий залишок 10"], preview: { kind: "createStuff", after: before } }));
+    assert.ok(defaults.includes("Початковий залишок 10"));
+    assert.ok(defaults.includes('value="10"'), "actual proposed values remain visible/editable");
+    assert.equal(/<details[^>]* open=""/.test(defaults), false, "explanations stay available without covering the form");
     const invalid = renderToStaticMarkup(React.createElement(View, { ...callbacks, preview: { kind: "createStuff", after: before }, status: "invalid", onPrepare() {} }));
     assert.ok(invalid.includes("<input"));
     assert.ok(invalid.includes("Перевірити пропозицію"));
@@ -964,6 +968,20 @@ test("single and batch previews render shared cards while creation forms remain 
     assert.ok(exactDuplicate.includes("Ця назва вже зайнята"));
     assert.ok(choice.includes("Далі"));
     assert.equal(choice.includes('type="submit"'), false);
+    assert.equal(choice.includes("#2"), false, "unique candidates do not expose internal IDs");
+    const sameTitle = renderToStaticMarkup(React.createElement(Choice, { ...duplicateProps, question: { ...duplicateQuestion, candidates: [...duplicateQuestion.candidates, { ...duplicateQuestion.candidates[0], id: 2, title: "куркума" }] } }));
+    assert.ok(sameTitle.includes("#1") && sameTitle.includes("#2"), "otherwise identical candidates remain distinguishable");
+    const { InventoryRecordView } = require("../app/(admin)/admin/ai/_components/InventorySearchView.tsx");
+    const selected = { entity: "recipe", id: 77, title: "Соус", summary: "Соуси", fields: [{ label: "Опис", value: "Гострий" }], ingredients: [{ id: 1, title: "Куркума", amount: "5 г", isInStock: true }] };
+    const compact = renderToStaticMarkup(React.createElement(InventoryRecordView, { record: selected, busy: false, onClear() {} }));
+    assert.equal(/<details[^>]* open=""/.test(compact), false);
+    assert.ok(compact.includes("Куркума") && compact.includes("Гострий"), "collapsed record data remains available");
+    const expanded = renderToStaticMarkup(React.createElement(InventoryRecordView, { record: selected, expanded: true, busy: false, onClear() {} }));
+    assert.equal(/<details[^>]* open=""/.test(expanded), true, "explicit detail requests can expose composition immediately");
+    const ErrorPanel = require("../app/(admin)/admin/ai/_components/AssistantErrorPanel.tsx").default;
+    const recovery = renderToStaticMarkup(React.createElement(ErrorPanel, { error: "Запис змінився", code: "STALE_PREVIEW", busy: false, canEdit: true, showPrepare: false, onEdit() {}, onPrepare() {}, onRefresh() {} }));
+    assert.ok(recovery.includes("Редагувати запит"));
+    assert.equal(recovery.includes("Підготувати новий перегляд"), false, "the retained preview owns its primary recovery action");
   } finally {
     if (originalTsx) require.extensions[".tsx"] = originalTsx;
     else delete require.extensions[".tsx"];

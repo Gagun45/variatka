@@ -26,6 +26,8 @@ For several operations, name the record to change. Planner operation indexes ref
 
 The **Поточне завдання** area near the input shows the task phase and targets so the user can see what a short correction will affect.
 
+The [polished layout](ai-ui-polish.md) places this summary inside the composer. History, previous results and incidental record details collapse; questions, blockers, confirmation and uncertain-save recovery stay visible. An explicit details request opens stored data automatically.
+
 Checkpoint 3B adds a [blocked deletion phase](ai-deletion-preflight.md). A known dependency conflict retains the structured task, chosen IDs and frozen targets without confirmation. **Перевірити знову** rechecks the same task without a model call or writes; only a valid fresh preview can be confirmed. A blocked revision removes the preceding confirmation. A failed independent replacement still retains the prior edited draft or uncertain-save reference.
 
 ## Stable targets and selection

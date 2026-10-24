@@ -27,7 +27,7 @@ import { InventoryRecordView, InventorySearchView } from "./InventorySearchView"
 import InventoryMutationView from "./InventoryMutationView";
 import type { InventoryMutationPreview } from "@/zod/ai-mutation.schema";
 
-type Message = { role: "user" | "assistant"; text: string };
+type Message = { role: "user" | "assistant"; text: string; operation?: AssistantReply["operation"] };
 
 export default function AiAssistant() {
   const [prompt, setPrompt] = useState("");
@@ -49,6 +49,7 @@ export default function AiAssistant() {
   }
   const [results, setResults] = useState<InventorySearchResult | null>(null);
   const [selected, setSelected] = useState<InventoryRecord | null>(null);
+  const [recordExpanded, setRecordExpanded] = useState(false);
   const [selectionExpiry, setSelectionExpiry] = useState<SelectionExpiry | null>(null);
   const expiredSelections = useRef(new Set<string>());
   const [initialClarification, setInitialClarification] = useState<Clarification | null>(null);
@@ -64,6 +65,14 @@ export default function AiAssistant() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pending = useRef(false);
   const queryClient = useQueryClient();
+  const lastMessage = messages.at(-1);
+  const latestRequest = [...messages].reverse().find((message) => message.role === "user");
+  const inlineReply = lastMessage?.role === "assistant" && (
+    lastMessage.operation === "unsupported" ||
+    (lastMessage.operation === "keepTask" && activeTask) ||
+    (lastMessage.operation === "viewSelected" && selected)
+  ) ? lastMessage.text : null;
+  const showPreviousResults = Boolean(activeTask || clarification || selected || inlineReply);
 
   function setDraftStatus(status: DraftStatus) {
     setActiveTask((task) => task ? { ...task, status } : null);
@@ -101,6 +110,7 @@ export default function AiAssistant() {
     setError("");
     setResults(null);
     setSelected(null);
+    setRecordExpanded(false);
     setSelectionExpiry(null);
     expiredSelections.current.clear();
     setInitialClarification(null);
@@ -181,7 +191,7 @@ export default function AiAssistant() {
       setError("");
       return;
     }
-    if (reply.operation !== "noChanges" && reply.operation !== "revisionFailed") setMessages((old) => [...old, { role: "assistant", text: reply.message }]);
+    if (reply.operation !== "noChanges" && reply.operation !== "revisionFailed") setMessages((old) => [...old, { role: "assistant", text: reply.message, operation: reply.operation }]);
     if (reply.operation === "keepTask") return;
     if (reply.operation === "clarifyRevision") {
       setActiveTask((task) => task ? { ...task, clarification: reply.clarification } : null);
@@ -204,6 +214,7 @@ export default function AiAssistant() {
       return;
     }
     setInitialClarification(reply.operation === "clarify" ? reply.clarification : null);
+    setRecordExpanded(reply.operation === "viewSelected");
     if ((reply.operation === "mutation" || reply.operation === "batch" || reply.operation === "chooseRecord") && source) {
       setActiveTask({
         source, status: "ready", clarification: null,
@@ -270,6 +281,7 @@ export default function AiAssistant() {
       setActiveTask(null);
       setInitialClarification(null);
       setSelected(result.data);
+      setRecordExpanded(false);
       setSelectionExpiry(null);
       expiredSelections.current.delete(`${result.data.entity}:${result.data.id}`);
       setMessages((old) => [...old, { role: "assistant", text: `Обрано: ${result.data.title}. Дані завантажено з бази.` }]);
@@ -356,69 +368,79 @@ export default function AiAssistant() {
     }
   }
 
+  const searchView = results && !pendingWrite ? <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} /> : null;
+  const previewView = mutation ? <InventoryMutationView preview={mutation} assumptions={assumptions} busy={busy} status={draftStatus} autoFocus={!activeTask?.clarification} onChange={setMutation} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" || activeTask?.clarification ? undefined : prepareAgain} onCancel={cancelWrite} /> : batch ? <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} status={draftStatus} autoFocus={!activeTask?.clarification} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" || activeTask?.clarification ? undefined : prepareAgain} onCancel={cancelWrite} /> : null;
+  const clarificationView = clarification && <section aria-label="Уточнення запиту" aria-live="polite" className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+    <p className="text-xs font-medium text-primary">Потрібне уточнення</p>
+    <h2 className="font-semibold leading-relaxed">{clarification.question}</h2>
+    <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">Запит, який уточнюємо</summary><p className="mt-2 whitespace-pre-wrap break-words">{clarification.originalPrompt}</p></details>
+    <Button type="button" variant="ghost" className="min-h-10 px-0 text-muted-foreground" disabled={busy} onClick={() => { clearClarification(); setError(""); }}>Скасувати уточнення</Button>
+  </section>;
+  const renderNotice = (notice: MutationResult, index: number) => <li key={index} className="break-words text-sm">{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline decoration-current/30 underline-offset-4 hover:decoration-current" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : notice.entity === "recipe" ? frontendUrls.recipes.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</li>;
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-8" lang="uk">
-      <h1 className="text-2xl font-semibold">AI-помічник</h1>
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-5 space-y-0 px-4 py-6 sm:px-6 sm:py-8" lang="uk">
+      <header className="flex items-center justify-between gap-4 pb-2">
+        <div className="flex min-w-0 items-center gap-3">
+          <span aria-hidden="true" className="hidden size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold tracking-tight text-primary sm:flex">AI</span>
+          <div><h1 className="text-xl font-semibold sm:text-2xl">AI-помічник</h1><p className="text-sm text-muted-foreground">Пошук і зміни в інвентарі</p></div>
+        </div>
+        <Button type="button" variant="ghost" className="min-h-10 shrink-0 gap-2 text-muted-foreground" disabled={busy} onClick={newRequest}>
+          <MessageSquarePlus aria-hidden="true" />
+          Новий чат
+        </Button>
+      </header>
 
-      <div role="log" aria-label="Повідомлення" aria-live="polite" className="space-y-3">
-        {messages.map((message, index) => (
-          <div key={index} className={`whitespace-pre-wrap break-words rounded-xl p-4 ${message.role === "user" ? "ml-6 bg-primary text-primary-foreground" : "mr-6 bg-muted"}`}>
-            <p className="mb-1 text-xs font-semibold">{message.role === "user" ? "Ви" : "Помічник"}</p>
-            {message.text}
-          </div>
-        ))}
-      </div>
 
-      {selectionExpiry && <section role="status" aria-label="Вибір запису недоступний" className="space-y-2 rounded-lg border p-4">
+      {latestRequest && <details className="rounded-xl bg-muted/50 px-4 py-3 text-sm">
+        <summary className="flex cursor-pointer items-center gap-3"><span className="shrink-0 text-xs font-medium text-muted-foreground">Ваш запит</span><span className="min-w-0 flex-1 truncate">{latestRequest.text}</span><span aria-hidden="true" className="shrink-0 text-muted-foreground">⌄</span></summary>
+        <p className="mt-3 whitespace-pre-wrap break-words border-t pt-3 leading-relaxed">{latestRequest.text}</p>
+      </details>}
+      {inlineReply && <p role="status" className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-4 py-3 text-sm leading-relaxed">{inlineReply}</p>}
+
+      {selectionExpiry && <section role="status" aria-label="Вибір запису недоступний" className="space-y-2 rounded-xl border border-warning/30 bg-warning/5 p-4 text-sm">
         <p>{selectionExpiry.message}</p>
-        <p className="text-sm text-muted-foreground">Для нового вибору виконайте пошук і натисніть потрібний запис із результатів.</p>
         <Button type="button" variant="outline" disabled={busy} onClick={() => inputRef.current?.focus()}>Ввести назву або пошук</Button>
         <Button type="button" variant="ghost" disabled={busy} onClick={() => setSelectionExpiry(null)}>Приховати повідомлення</Button>
       </section>}
-      {results && !pendingWrite && <InventorySearchView results={results} selected={selected} busy={busy} onSelect={selectRecord} onMore={loadMore} />}
+      {!showPreviousResults && searchView}
+      {clarificationView}
       {pendingWrite && <RecordChoiceView question={pendingWrite.question} prompt={activeTask?.source.request.clarification?.originalPrompt ?? activeTask?.source.request.prompt ?? ""} busy={busy || Boolean(activeTask?.clarification)} onChoose={(selection) => { void resumeWrite({ key: pendingWrite.question.key, selection }); }} onCreateNew={() => { void resumeWrite({ key: pendingWrite.question.key, createNew: true }); }} onPage={(number) => { void resumeWrite(null, { key: pendingWrite.question.key, number }); }} onCancel={cancelWrite} />}
-      {selected && <InventoryRecordView record={selected} busy={busy} onClear={() => { setSelected(null); clearClarification(); cancelWrite(); }} />}
+      {selected && <InventoryRecordView record={selected} busy={busy} expanded={recordExpanded} onExpandedChange={setRecordExpanded} onClear={() => { setSelected(null); clearClarification(); cancelWrite(); }} />}
       {activeTask?.view.kind === "blocked" && <section aria-label="Видалення заблоковано" className="space-y-3">
         <AssistantErrorPanel error={activeTask.view.message} code="CONFLICT" busy={busy} canEdit={lastRequest.current !== null} onEdit={editRequest} onPrepare={prepareAgain} onRefresh={retryRefresh} />
-        <p className="text-sm text-muted-foreground">Запит і вибрані записи збережено. Виправте запит або повторіть перевірку після зміни пов’язаних записів. Підтвердження з’явиться лише після успішної перевірки.</p>
+        <p className="text-sm text-muted-foreground">Виправте запит або перевірте знову після зміни пов’язаних записів.</p>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" disabled={busy || Boolean(activeTask.clarification)} onClick={prepareAgain}>Перевірити знову</Button>
           <Button type="button" variant="ghost" disabled={busy} onClick={cancelWrite}>Скасувати завдання</Button>
         </div>
       </section>}
-      {mutation && <InventoryMutationView preview={mutation} assumptions={assumptions} busy={busy} status={draftStatus} onChange={setMutation} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" || activeTask?.clarification ? undefined : prepareAgain} onCancel={cancelWrite} />}
-      {batch && <InventoryBatchView preview={batch} assumptions={assumptions} busy={busy} status={draftStatus} onConfirm={confirmMutation} onPrepare={draftStatus === "uncertain" || activeTask?.clarification ? undefined : prepareAgain} onCancel={cancelWrite} />}
+      {activeTask?.clarification && previewView ? <details className="rounded-xl border bg-card/50 p-3 text-sm"><summary className="cursor-pointer px-1 font-medium text-muted-foreground">Пропозиція, яку уточнюємо</summary><div className="mt-3">{previewView}</div></details> : previewView}
 
-      {notices.length > 0 && <div role="status" className="space-y-2 rounded-xl border p-4"><p className="font-medium">Виконано операцій: {notices.length}</p><ul className="space-y-1">{notices.map((notice, index) => <li key={index}>{notice.operation === "deleted" ? "Видалено" : notice.operation === "created" ? "Створено" : "Оновлено"}: {notice.operation === "deleted" ? notice.title : <Link className="underline" href={notice.entity === "ingredient" ? frontendUrls.ingredients.view(notice.id) : notice.entity === "recipe" ? frontendUrls.recipes.view(notice.id) : frontendUrls.stuff.view(notice.id)}>{notice.title}</Link>}</li>)}</ul></div>}
-      {neutral && <div role="status" className="rounded-xl border bg-muted/40 p-4 text-sm">{neutral}</div>}
-      {error && <AssistantErrorPanel error={error} code={errorCode} busy={busy} canEdit={lastRequest.current !== null} showInspectionLinks={draftStatus !== "uncertain" || (!mutation && !batch)} onEdit={editRequest} onPrepare={prepareAgain} onRefresh={retryRefresh} />}
-      {busy && <p role="status" aria-live="polite" className="text-muted-foreground">{requestPhaseLabels[phase]}</p>}
+      {notices.length > 0 && <div role="status" className="space-y-2 rounded-2xl border border-success/20 bg-success/5 p-4"><p className="font-medium text-success">Зміни збережено · {notices.length}</p><ul className="space-y-1">{notices.slice(0, 3).map(renderNotice)}</ul>{notices.length > 3 && <details className="pt-1 text-sm"><summary className="cursor-pointer text-muted-foreground">Ще {notices.length - 3}</summary><ul className="mt-2 space-y-1">{notices.slice(3).map(renderNotice)}</ul></details>}</div>}
+      {neutral && <div role="status" className="rounded-xl bg-muted/60 px-4 py-3 text-sm">{neutral}</div>}
+      {error && <AssistantErrorPanel error={error} code={errorCode} busy={busy} canEdit={lastRequest.current !== null} showPrepare={!mutation && !batch} showInspectionLinks={draftStatus !== "uncertain" || (!mutation && !batch)} onEdit={editRequest} onPrepare={prepareAgain} onRefresh={retryRefresh} />}
 
-      {clarification && <section aria-label="Уточнення запиту" className="space-y-2 rounded-lg border p-4">
-        <p className="font-medium">{clarification.question}</p>
-        <p className="text-sm text-muted-foreground">Відповідь нижче продовжить попередній запит. Ще нічого не збережено.</p>
-        <details className="text-sm"><summary className="cursor-pointer">Запит, який уточнюємо</summary><p className="mt-2 whitespace-pre-wrap break-words">{clarification.originalPrompt}</p></details>
-        <Button type="button" variant="outline" disabled={busy} onClick={() => { clearClarification(); setError(""); }}>Скасувати уточнення</Button>
-      </section>}
+      {showPreviousResults && searchView && <details className="rounded-xl border bg-card/50 p-3 text-sm"><summary className="cursor-pointer px-1 font-medium text-muted-foreground">Попередні результати · {results?.items.length}</summary><div className="mt-3">{searchView}</div></details>}
+      {messages.length > 0 && <details className="text-sm">
+        <summary className="cursor-pointer py-2 text-muted-foreground">Історія запитів · {messages.filter((message) => message.role === "user").length}</summary>
+        <div role="log" aria-label="Історія повідомлень" aria-live="off" className="mt-2 max-h-80 space-y-4 overflow-y-auto rounded-xl border bg-muted/30 p-4">
+          {messages.map((message, index) => <div key={index} className="whitespace-pre-wrap break-words text-sm leading-relaxed"><p className="mb-1 text-xs font-medium text-muted-foreground">{message.role === "user" ? "Ви" : "Помічник"}</p>{message.text}</div>)}
+          <AssistantContext selected={selected} previousSearch={previousSearch} />
+        </div>
+      </details>}
 
-      <AssistantContext selected={selected} previousSearch={previousSearch} />
-
-      {activeTask && <section aria-label="Поточне завдання" className="space-y-1 rounded-lg border bg-muted/40 p-3 text-sm">
-        <p className="font-medium">{activeTaskLabel(activeTask)}</p>
-        <p className="break-words">{activeTaskTargets(activeTask)}</p>
-        {activeTask.status !== "uncertain" && <p className="text-muted-foreground">Короткі уточнення змінюють цю пропозицію. Для нового завдання напишіть повний запит. Збереження потребує кнопки підтвердження.</p>}
-      </section>}
-
-      <form onSubmit={propose} className="space-y-3">
-        <label htmlFor="ai-prompt" className="font-medium">{clarification ? "Ваша відповідь" : activeTask && activeTask.status !== "uncertain" ? "Уточнення або новий запит" : "Ваш запит"}</label>
-        <Textarea ref={inputRef} id="ai-prompt" required maxLength={12000} disabled={busy} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={clarification ? "Напишіть відповідь на уточнення" : "Покажи приховані непідтверджені соуси"} />
+      <form onSubmit={propose} className="space-y-3 rounded-2xl border bg-card p-4 shadow-surface transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/15 sm:p-5">
+        {activeTask && <section aria-label="Поточне завдання" className="space-y-1 border-b pb-3 text-sm">
+          <p className="text-xs font-medium text-muted-foreground">{activeTaskLabel(activeTask)}</p>
+          <p className="break-words font-medium">{activeTaskTargets(activeTask)}</p>
+        </section>}
+        <label htmlFor="ai-prompt" className="block text-sm font-medium">{clarification ? "Ваша відповідь" : activeTask && activeTask.status !== "uncertain" ? "Уточнення або новий запит" : "Ваш запит"}</label>
+        <Textarea ref={inputRef} id="ai-prompt" required rows={3} maxLength={12000} disabled={busy} className="min-h-24 resize-y border-0 bg-transparent p-0 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-base dark:bg-transparent" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={clarification ? "Напишіть відповідь…" : activeTask && activeTask.status !== "uncertain" ? "Уточніть пропозицію або опишіть інше завдання…" : "Знайдіть запис або опишіть, що потрібно змінити…"} />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button type="button" variant="ghost" className="min-h-11 gap-2 text-muted-foreground" disabled={busy} onClick={newRequest}>
-            <MessageSquarePlus aria-hidden="true" />
-            Новий чат
-          </Button>
-          <Button type="submit" className="min-h-11 gap-2 px-5" disabled={busy || !prompt.trim()}>
+          <p role={busy ? "status" : undefined} aria-live="polite" className="min-w-0 flex-1 text-xs text-muted-foreground">{busy ? requestPhaseLabels[phase] : activeTask ? "" : "Зміни — лише після підтвердження"}</p>
+          <Button type="submit" className="min-h-11 gap-2 rounded-xl px-5" disabled={busy || !prompt.trim()}>
             Надіслати
             <Send aria-hidden="true" />
           </Button>

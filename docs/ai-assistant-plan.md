@@ -6,6 +6,8 @@ Revised after steps 1 and 2; implementation status updated through checkpoint 3B
 
 Implement one checkpoint, report changes and validation, then wait for the user's confirmation before starting the next. Checkpoints 3A and 3B are implemented; step 4 awaits approval.
 
+The user requested [UI polish](ai-ui-polish.md) instead of proceeding to step 4. That separate presentation update is implemented; it does not adopt the proposed rules.
+
 | Checkpoint | Status | Result |
 | --- | --- | --- |
 | 1 — Draft recovery | Implemented | Failed planning retains edited drafts; failed/uncertain confirmations have distinct recovery controls. |
@@ -24,6 +26,8 @@ Step 1 retains drafts, form edits, candidate choices and source context through 
 Step 2 adds `activeWrite` and the `revise`, `clarifyRevision` and `keepTask` planner commands. Server-side patches preserve unaffected fields/operations, resolved identities, recipe ingredient choices, stock set/adjust/debit meaning and the original filtered cohort, including initially unchanged records. Candidate buttons remain the resolution mechanism; typed names/save requests retain the task and explain which button to use. Every revised preview requires new confirmation. See [active task behavior](ai-active-task.md).
 
 The recorded step 2 baseline was **156 passing tests**; after 3A it was **179**. After 3B, there are **199 passing tests** (104 AI, 36 component, 59 integration), plus passing TypeScript, lint for changed code/tests and whitespace checks. Those suites mock planner output; the component harness is not a browser. They establish application behavior for supplied plans, not reliable interpretation of Ukrainian phrases. Live interpretation, browser focus/layout and accessibility interactions remain unverified.
+
+After UI polish, the current total is **202 passing tests** (104 AI, 39 component, 59 integration). TypeScript, changed-file lint, stylesheet compilation and whitespace checks also pass. Browser visual/focus checks remain pending.
 
 Preserve these constraints in every remaining checkpoint:
 

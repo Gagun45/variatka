@@ -22,22 +22,21 @@ export function InventorySearchView({ results, selected, busy, onSelect, onMore 
 }) {
   const filters = searchFilters(results.search);
   return (
-    <section aria-label="Результати пошуку" className="space-y-3 rounded-xl border p-5">
-      <h2 className="text-lg font-semibold">{results.search.entity === "all" ? "Усі типи записів" : inventoryEntityLabels[results.search.entity]} — результати</h2>
-      <p className="text-sm text-muted-foreground">{filters.length ? filters.join(" · ") : "Без додаткових фільтрів"}</p>
-      <p className="text-xs text-muted-foreground">До 20 записів кожного типу за сторінку. Пошук за словами в назві та описі.</p>
+    <section aria-label="Результати пошуку" className="space-y-4 rounded-2xl border bg-card p-4 shadow-surface sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">{results.search.entity === "all" ? "Результати пошуку" : inventoryEntityLabels[results.search.entity]}</h2><span className="text-xs text-muted-foreground">Показано {results.items.length}</span></div>
+      {filters.length > 0 && <ul aria-label="Фільтри пошуку" className="flex flex-wrap gap-1.5">{filters.map((filter) => <li key={filter} className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">{filter}</li>)}</ul>}
       {!results.items.length && <p role="status">Нічого не знайдено. Спробуйте коротшу назву або інші фільтри.</p>}
-      <ul className="space-y-2">
+      <ul className="divide-y">
         {results.items.map((record) => {
           const active = selected?.entity === record.entity && selected.id === record.id;
-          return <li key={`${record.entity}:${record.id}`} className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 ${active ? "border-primary" : ""}`}>
+          return <li key={`${record.entity}:${record.id}`} className={`flex flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 ${active ? "bg-primary/5" : ""}`}>
             <div className="min-w-0 flex-1 break-words">
-              <p className="text-xs text-muted-foreground">{inventoryEntityLabels[record.entity]} · #{record.id}</p>
+              {results.search.entity === "all" && <p className="text-xs text-muted-foreground">{inventoryEntityLabels[record.entity]}</p>}
               <p className="font-medium">{record.title}</p>
               <p className="text-sm text-muted-foreground">{record.summary}</p>
             </div>
             <div className="flex items-center gap-3">
-              <Button type="button" variant={active ? "secondary" : "outline"} disabled={busy} aria-pressed={active} onClick={() => onSelect(record)}>{active ? "Обрано" : "Обрати"}</Button>
+              <Button type="button" className="min-h-10" variant={active ? "secondary" : "outline"} disabled={busy} aria-pressed={active} onClick={() => onSelect(record)}>{active ? "Обрано" : "Обрати"}</Button>
               <Link className="text-sm underline" href={recordHref(record)} target="_blank" rel="noopener noreferrer">Відкрити<span className="sr-only"> {record.title} у новій вкладці</span></Link>
             </div>
           </li>;
@@ -48,14 +47,16 @@ export function InventorySearchView({ results, selected, busy, onSelect, onMore 
   );
 }
 
-export function InventoryRecordView({ record, busy, onClear }: { record: InventoryRecord; busy: boolean; onClear: () => void }) {
+export function InventoryRecordView({ record, busy, expanded = false, onExpandedChange, onClear }: { record: InventoryRecord; busy: boolean; expanded?: boolean; onExpandedChange?: (open: boolean) => void; onClear: () => void }) {
   return (
-    <section aria-label="Обраний запис" className="space-y-4 rounded-xl border border-primary p-5">
+    <section aria-label="Обраний запис" className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><p className="text-sm text-muted-foreground">Обрано · {inventoryEntityLabels[record.entity]} · #{record.id}</p><h2 className="text-lg font-semibold break-words">{record.title}</h2></div>
-        <Button type="button" variant="outline" disabled={busy} onClick={onClear}>Скасувати вибір</Button>
+        <div className="min-w-0"><p className="text-xs text-muted-foreground">Обрано · {inventoryEntityLabels[record.entity]}</p><h2 className="break-words font-semibold">{record.title}</h2></div>
+        <Button type="button" variant="ghost" className="min-h-10 shrink-0 text-xs text-muted-foreground" disabled={busy} onClick={onClear}>Скасувати вибір</Button>
       </div>
-      <p className="text-sm text-muted-foreground">Можна запитати «покажи опис»{record.entity === "recipe" ? " або «покажи її склад»" : ""}. Вибір діє до нового пошуку, скасування або перезавантаження сторінки.</p>
+      <details open={expanded} onToggle={(event) => onExpandedChange?.(event.currentTarget.open)} className="text-sm">
+      <summary className="cursor-pointer text-muted-foreground">Дані запису{record.entity === "recipe" ? " та склад" : ""}</summary>
+      <div className="mt-4 space-y-4 border-t pt-4">
       <dl className="space-y-2">
         {record.fields.map((field) => <div key={field.label} className="grid gap-1 sm:grid-cols-[1fr_2fr]">
           <dt className="text-sm text-muted-foreground">{field.label}</dt><dd className="whitespace-pre-wrap break-words text-sm">{field.value}</dd>
@@ -66,6 +67,8 @@ export function InventoryRecordView({ record, busy, onClear }: { record: Invento
         {record.ingredients.length ? <ul className="mt-2 space-y-1">{record.ingredients.map((item) => <li key={item.id} className="break-words text-sm">{item.title} — {item.amount} · {item.isInStock ? "У наявності" : "Немає в наявності"}</li>)}</ul> : <p className="text-sm text-muted-foreground">Інгредієнти не додані.</p>}
       </div>}
       <Link className="inline-block text-sm underline" href={recordHref(record)} target="_blank" rel="noopener noreferrer">Відкрити сторінку запису в новій вкладці</Link>
+      </div>
+      </details>
     </section>
   );
 }
