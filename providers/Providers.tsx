@@ -5,7 +5,6 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./AuthProvider";
 import QueryProvider from "./QueryProvider";
-import { ThemeProvider } from "./ThemeProvider";
 
 const Providers = ({ children, session }: {
   children: ReactNode;
@@ -15,16 +14,7 @@ const Providers = ({ children, session }: {
     <AuthProvider session={session}>
       <QueryProvider>
         <TooltipProvider>
-          <SidebarProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
-          </SidebarProvider>
+          <SidebarProvider>{children}</SidebarProvider>
         </TooltipProvider>
       </QueryProvider>
     </AuthProvider>

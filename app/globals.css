@@ -175,6 +175,10 @@
 }
 
 @layer components {
+  .app-loading-line {
+    animation: app-loading-sweep 1.6s ease-in-out infinite;
+  }
+
   .view-item-card-header {
     @apply space-y-3;
   }
@@ -183,5 +187,21 @@
   }
   .view-item-card-content {
     @apply flex flex-col gap-3;
+  }
+}
+
+@keyframes app-loading-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loading-line {
+    animation: none;
+    margin-inline: auto;
   }
 }

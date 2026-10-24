@@ -1,12 +1,15 @@
 import { getDataSession } from "@/lib/data/server";
 import QueryPrefetcher from "@/components/QueryPrefetcher";
+import AppLoadingScreen from "@/components/loader/AppLoadingScreen";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
+import { Suspense } from "react";
 import Header from "../components/header/Header";
 import { AppSidebar } from "../components/sidebar/AppSidebar";
 import Providers from "../providers/Providers";
+import { ThemeProvider } from "../providers/ThemeProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-app-sans" });
@@ -32,13 +35,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+// Keep session resolution and collection hydration below the loading boundary.
+async function Application({ children }: { children: React.ReactNode }) {
+  const session = await getDataSession();
+
+  return (
+    <Providers session={session}>
+      <QueryPrefetcher session={session}>
+        <AppSidebar />
+        <div className="flex flex-col min-h-screen w-full">
+          <Header />
+          {children}
+        </div>
+      </QueryPrefetcher>
+    </Providers>
+  );
+}
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getDataSession();
-
   return (
     <html
       lang="en"
@@ -52,16 +70,17 @@ export default async function RootLayout({
       )}
     >
       <body>
-        <Providers session={session}>
-          <QueryPrefetcher session={session}>
-            <AppSidebar />
-            <div className="flex flex-col min-h-screen w-full">
-              <Header />
-              {children}
-            </div>
-          </QueryPrefetcher>
-        </Providers>
-        <Toaster richColors />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Suspense fallback={<AppLoadingScreen />}>
+            <Application>{children}</Application>
+          </Suspense>
+          <Toaster richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

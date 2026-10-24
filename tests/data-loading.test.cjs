@@ -42,6 +42,83 @@ function fixture(session) {
   return { mocks, reads };
 }
 
+test("initial HTML streams the themed loader before session and collection reads finish", { timeout: 5000 }, async (t) => {
+  const React = require("react");
+  const { renderToPipeableStream } = require("react-dom/server");
+  const { PassThrough } = require("node:stream");
+  const { finished } = require("node:stream/promises");
+  function deferred() {
+    let resolve;
+    const promise = new Promise((done) => { resolve = done; });
+    return { promise, resolve };
+  }
+  const sessionReady = deferred();
+  const dataReady = deferred();
+  const readsStarted = deferred();
+  const { mocks } = fixture(sessions.admin);
+  const server = load("lib/data/server.ts", mocks);
+  const { collectionKeys } = load("lib/data/collections.ts");
+  const { QueryClient, QueryClientProvider } = require("@tanstack/react-query");
+  const queryClient = new QueryClient();
+  const started = [];
+  let receivedSession;
+  Object.assign(mocks, {
+    "./globals.css": {},
+    "next/font/google": { Inter: () => ({ variable: "sans" }), Geist_Mono: () => ({ variable: "mono" }) },
+    "@/lib/data/server": {
+      ...server,
+      getDataSession: () => sessionReady.promise,
+      collectionLoaders: () => Object.fromEntries(Object.keys(collectionKeys).map((name) => [name, async () => {
+        started.push(name);
+        if (started.length === 7) readsStarted.resolve();
+        await dataReady.promise;
+        return [];
+      }])),
+    },
+    "../providers/Providers": { default: ({ session, children }) => {
+      receivedSession = session;
+      return React.createElement(QueryClientProvider, { client: queryClient }, children);
+    } },
+    "../components/header/Header": { default: () => React.createElement("header", null, "loaded header") },
+    "../components/sidebar/AppSidebar": { AppSidebar: () => null },
+    "@/components/ui/sonner": { Toaster: () => null },
+  });
+  const RootLayout = load("app/layout.tsx", mocks).default;
+  const output = new PassThrough();
+  let html = "";
+  output.on("data", (chunk) => { html += chunk.toString(); });
+  const firstChunk = new Promise((resolve) => output.once("data", resolve));
+  const complete = finished(output);
+  const errors = [];
+  const stream = renderToPipeableStream(
+    React.createElement(RootLayout, null, React.createElement("main", null, "destination content")),
+    {
+      onShellReady() { stream.pipe(output); },
+      onError(error) { errors.push(error); },
+    },
+  );
+  t.after(() => { sessionReady.resolve(sessions.admin); dataReady.resolve(); stream.abort(); queryClient.clear(); });
+
+  await firstChunk;
+  assert.match(html, /role="status"/);
+  assert.match(html, /Nomly/);
+  assert.match(html, /Завантажуємо…/);
+  assert.match(html, /localStorage/, "theme initialization is available in the initial HTML");
+  assert.doesNotMatch(html, /loaded header|destination content/);
+  assert.equal(started.length, 0, "the loading screen does not wait for authentication");
+
+  sessionReady.resolve(sessions.admin);
+  await readsStarted.promise;
+  assert.equal(started.length, 7);
+  assert.doesNotMatch(html, /loaded header|destination content/, "the loading screen covers data hydration too");
+  dataReady.resolve();
+  await complete;
+  assert.equal(receivedSession, sessions.admin);
+  assert.match(html, /loaded header/);
+  assert.match(html, /destination content/);
+  assert.deepEqual(errors, []);
+});
+
 test("bootstrap starts all permitted reads concurrently and hydrates their existing query keys", async () => {
   const { mocks } = fixture(sessions.admin);
   const server = load("lib/data/server.ts", mocks);
